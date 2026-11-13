@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Jogos Educativos - Matemática Salvadora</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    body {
+      background: linear-gradient(135deg, #0f172a, #1e293b);
+      color: #f8fafc;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    header {
+      text-align: center;
+      padding: 40px 20px 25px;
+      max-width: 800px;
+    }
+    header h1 {
+      font-size: 2.2rem;
+      color: #38bdf8;
+      margin-bottom: 8px;
+    }
+    header p {
+      font-size: 1.05rem;
+      color: #cbd5e1;
+    }
+    .grid-jogos {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 24px;
+      width: 100%;
+      max-width: 1000px;
+      padding: 20px;
+      flex: 1;
+    }
+    .card {
+      background: #1e293b;
+      border: 2px solid #334155;
+      border-radius: 16px;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: transform 0.2s, border-color 0.2s;
+      box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+    }
+    .card:hover {
+      transform: translateY(-5px);
+      border-color: #38bdf8;
+    }
+    .tag {
+      display: inline-block;
+      background: #0284c7;
+      color: #fff;
+      font-size: 0.75rem;
+      font-weight: bold;
+      padding: 4px 10px;
+      border-radius: 20px;
+      margin-bottom: 12px;
+      width: fit-content;
+    }
+    .card h2 {
+      font-size: 1.35rem;
+      margin-bottom: 10px;
+      color: #f1f5f9;
+    }
+    .card p {
+      font-size: 0.95rem;
+      color: #94a3b8;
+      line-height: 1.5;
+      margin-bottom: 20px;
+    }
+    .btn-jogar {
+      display: block;
+      text-align: center;
+      background: #22c55e;
+      color: #052e16;
+      font-weight: bold;
+      text-decoration: none;
+      padding: 12px;
+      border-radius: 10px;
+      font-size: 1rem;
+      transition: background 0.2s;
+    }
+    .btn-jogar:hover {
+      background: #4ade80;
+    }
+    footer {
+      text-align: center;
+      padding: 25px;
+      font-size: 0.9rem;
+      color: #94a3b8;
+      border-top: 1px solid #334155;
+      width: 100%;
+      margin-top: 40px;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>🎮 Matemática Salvadora Arcade</h1>
+    <p>Aprenda Matemática jogando! Escolha uma aventura abaixo e teste seus conhecimentos.</p>
+  </header>
+
+  <main class="grid-jogos">
+
+    <!-- INÍCIO DO JOGO 1 -->
+    <div class="card">
+      <div>
+        <span class="tag">Volume 1 • Fundamental II</span>
+        <h2>Detetive Matemático: O Mistério Inicial</h2>
+        <p>Investigue pistas, resolva desafios matemáticos e avance pelas fases para solucionar o caso!</p>
+      </div>
+      <a href="detetive-vol1.html" class="btn-jogar">▶ Jogar Agora</a>
+    </div>
+    <!-- FIM DO JOGO 1 -->
+
+    <!-- QUANDO QUISER ADICIONAR O JOGO 2, COLE O NOVO BLOCO LOGO ABAIXO DESTA LINHA -->
+
+  </main>
+
+  <footer>
+    Todos os direitos reservados ao Professor Thiago Melo • @matematicasalvadora
+  </footer>
+
+</body>
+</html>
