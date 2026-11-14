@@ -1,0 +1,3248 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>A Ilha dos Cristais Matemáticos - Vol. 1 | Prof. Thiago Melo</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; touch-action: manipulation; }
+    body, html { width: 100%; height: 100%; overflow: hidden; background: #0b132b; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    #gameCanvas { width: 100%; height: 100%; display: block; touch-action: none; }
+
+    /* HUD SUPERIOR RESPONSIVO */
+    #hud {
+      position: fixed; top: 10px; left: 10px; right: 10px;
+      display: none; justify-content: space-between; align-items: center;
+      pointer-events: none; z-index: 20; gap: 6px;
+    }
+    .hud-pill {
+      background: rgba(11, 19, 43, 0.9);
+      border: 2.5px solid #38bdf8; border-radius: 16px; padding: 6px 12px;
+      color: #f8fafc; box-shadow: 0 4px 12px rgba(0,0,0,0.45);
+      display: flex; gap: 10px; align-items: center; font-weight: 900; font-size: clamp(12px, 2.5vw, 14px);
+      pointer-events: auto;
+    }
+    .stat-val { color: #fde047; font-size: clamp(14px, 3vw, 17px); font-variant-numeric: tabular-nums; }
+    #muteBtn {
+      background: #0284c7; border: 2px solid #fde047; color: #fff;
+      border-radius: 10px; padding: 3px 8px; font-weight: 900; cursor: pointer; font-size: 12px;
+    }
+
+    /* BARRA DE PROGRESSO + AVISOS */
+    #progressContainer {
+      position: fixed; top: 52px; left: 50%; transform: translateX(-50%);
+      width: min(260px, 68vw); display: none; flex-direction: column; align-items: center; z-index: 20; pointer-events: none;
+    }
+    #progressTitle {
+      background: rgba(11, 19, 43, 0.92); color: #38bdf8; padding: 2px 10px; border-radius: 10px;
+      font-size: 11px; font-weight: 900; margin-bottom: 4px; border: 1px solid #38bdf8;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%;
+    }
+    #progressBarBg {
+      width: 100%; height: 11px; background: rgba(11, 19, 43, 0.85); border: 2px solid #fde047;
+      border-radius: 10px; position: relative;
+    }
+    #progressFill {
+      height: 100%; width: 0%; background: linear-gradient(90deg, #2dd4bf, #38bdf8, #fde047); border-radius: 8px;
+    }
+    .marker-mid { position: absolute; top: -7px; left: 50%; transform: translateX(-50%); font-size: 14px; }
+    .marker-end { position: absolute; top: -7px; right: -4px; font-size: 15px; }
+
+    #superPowerBanner, #modeBanner, #portalHintBanner, #rewardToast {
+      margin-top: 5px; font-weight: 900; font-size: 11px; padding: 3px 10px;
+      border-radius: 10px; border: 2px solid #fff; display: none;
+      animation: pulsePower 0.45s infinite alternate; text-align: center;
+    }
+    #superPowerBanner { background: linear-gradient(90deg, #f59e0b, #fde047, #f59e0b); color: #0f172a; }
+    #modeBanner { background: linear-gradient(90deg, #8b5cf6, #ec4899); color: #fff; }
+    #portalHintBanner { background: linear-gradient(90deg, #06b6d4, #3b82f6); color: #fff; border-color: #fde047; }
+    #rewardToast { background: linear-gradient(90deg, #10b981, #059669); color: #fff; border-color: #fde047; font-size: 12px; }
+    @keyframes pulsePower { from { transform: scale(1); } to { transform: scale(1.06); } }
+
+    #zoneBanner {
+      position: fixed; top: 24%; left: 50%; transform: translateX(-50%);
+      background: linear-gradient(135deg, #0284c7, #1e1b4b);
+      border: 4px solid #fde047; border-radius: 22px; padding: 14px 26px;
+      color: #fff; text-align: center; z-index: 35; display: none; width: 88%; max-width: 480px;
+      box-shadow: 0 14px 35px rgba(0,0,0,0.6);
+    }
+    #zoneBanner h2 { font-size: clamp(18px, 4vw, 24px); font-weight: 900; color: #fde047; }
+    #zoneBanner p { font-size: 13px; margin-top: 4px; color: #e0f2fe; font-weight: 700; }
+
+    /* OVERLAYS */
+    .overlay-screen {
+      position: fixed; inset: 0; display: flex; flex-direction: column;
+      justify-content: center; align-items: center; z-index: 50;
+      background: radial-gradient(circle at center, rgba(14, 165, 233, 0.25), rgba(11, 19, 43, 0.9));
+      backdrop-filter: blur(3px); padding: 14px; text-align: center; overflow-y: auto;
+    }
+    .card-panel {
+      background: linear-gradient(180deg, rgba(15, 23, 42, 0.96), rgba(30, 41, 59, 0.97));
+      border: 4px solid #38bdf8; border-radius: 24px; padding: 20px 22px;
+      max-width: 640px; width: 96%; color: #f8fafc;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.7);
+    }
+    .game-title {
+      font-size: clamp(22px, 5vw, 34px); font-weight: 900; color: #fde047;
+      text-shadow: 0 3px 0 #0369a1; line-height: 1.15; margin-bottom: 6px;
+    }
+    .subtitle { font-size: clamp(13px, 3vw, 15px); color: #7dd3fc; font-weight: 800; margin-bottom: 12px; }
+    .btn-primary {
+      background: linear-gradient(180deg, #2dd4bf, #0284c7); color: #fff;
+      border: 3px solid #fde047; border-radius: 50px; padding: 12px 24px;
+      font-size: clamp(15px, 3.5vw, 17px); font-weight: 900; cursor: pointer; margin: 5px;
+      box-shadow: 0 5px 0 #0c4a6e; transition: transform 0.1s;
+    }
+    .btn-primary:active { transform: translateY(3px); box-shadow: 0 2px 0 #0c4a6e; }
+    .btn-secondary {
+      background: linear-gradient(180deg, #f59e0b, #d97706); color: #fff;
+      border: 2px solid #fff; border-radius: 50px; padding: 8px 16px;
+      font-size: 13px; font-weight: 900; cursor: pointer; margin: 4px;
+      box-shadow: 0 4px 0 #78350f;
+    }
+
+    /* CUTSCENE E DIÁLOGO DA PRINCESA */
+    #cutsceneOverlay {
+      position: fixed; inset: 0; display: none; flex-direction: column;
+      justify-content: flex-start; align-items: center; z-index: 45; padding: 12px;
+      pointer-events: none;
+    }
+    .dialogue-box {
+      background: rgba(15, 23, 42, 0.95); border: 3.5px solid #38bdf8;
+      border-radius: 20px; padding: 12px 18px; max-width: 760px; width: 96%;
+      color: #f8fafc; box-shadow: 0 12px 30px rgba(0,0,0,0.65);
+      pointer-events: auto;
+    }
+    .dialogue-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+    .speaker-tag {
+      display: inline-block; padding: 4px 12px; border-radius: 18px;
+      font-weight: 900; font-size: 12px; letter-spacing: 0.6px;
+    }
+    .scene-counter { font-size: 12px; font-weight: 800; color: #7dd3fc; }
+    .speaker-melina { background: #c084fc; color: #1e1b4b; }
+    .speaker-matheus { background: #2dd4bf; color: #042f2e; }
+    .speaker-narrador { background: #fde047; color: #1e293b; }
+    .speaker-golem { background: #818cf8; color: #0f172a; }
+    #dialogueText { font-size: clamp(14px, 3.2vw, 17px); line-height: 1.4; min-height: 44px; font-weight: 600; }
+    .dialogue-actions { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; }
+
+    #melinaActionBox {
+      position: fixed; top: 96px; left: 50%; transform: translateX(-50%);
+      background: rgba(15, 23, 42, 0.95); border: 3.5px solid #c084fc;
+      border-radius: 20px; padding: 12px 18px; max-width: 540px; width: 92%;
+      color: #fff; text-align: center; z-index: 48; display: none;
+      box-shadow: 0 12px 32px rgba(0,0,0,0.7);
+    }
+
+    /* MODAL DE BRIEFING (FOGUETE / SUPER CORRIDA) */
+    #spaceBriefingModal {
+      position: fixed; inset: 0; display: none; justify-content: center; align-items: center;
+      background: rgba(2, 6, 23, 0.86); backdrop-filter: blur(5px); z-index: 65; padding: 14px;
+    }
+    .space-card {
+      background: linear-gradient(180deg, #0f172a, #1e1b4b);
+      border: 4px solid #38bdf8; border-radius: 24px; padding: 20px 22px;
+      max-width: 580px; width: 96%; color: #f8fafc; text-align: center;
+      box-shadow: 0 0 45px rgba(56, 189, 248, 0.45);
+    }
+    .cmd-grid {
+      display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px;
+      background: rgba(15, 23, 42, 0.75); border: 2px solid #fde047;
+      border-radius: 14px; padding: 10px; margin: 10px 0; text-align: left; font-size: 12px;
+    }
+    .cmd-item strong { color: #fde047; }
+
+    /* MODAL DE DESAFIO MATEMÁTICO */
+    #mathModal {
+      position: fixed; inset: 0; display: none; justify-content: center; align-items: center;
+      background: rgba(11, 19, 43, 0.84); backdrop-filter: blur(4px); z-index: 60; padding: 12px;
+    }
+    .math-card {
+      background: linear-gradient(180deg, #1e293b, #0f172a);
+      border: 4px solid #2dd4bf; border-radius: 24px; padding: 18px;
+      max-width: 600px; width: 96%; color: #f8fafc; text-align: center;
+      box-shadow: 0 16px 40px rgba(0,0,0,0.75);
+      max-height: 92vh; overflow-y: auto;
+    }
+    .math-badge {
+      display: inline-block; background: #fde047; color: #0f172a;
+      font-weight: 900; font-size: 12px; padding: 4px 12px; border-radius: 12px; margin-bottom: 8px;
+    }
+    .melina-hint {
+      background: rgba(192, 132, 252, 0.16); border: 2px solid #c084fc;
+      border-radius: 12px; padding: 6px 10px; font-size: 13px; color: #e9d5ff;
+      margin-bottom: 8px; font-weight: 600; display: none;
+    }
+    #challengeVisualCanvas {
+      display: none; margin: 0 auto 8px auto; background: rgba(15, 23, 42, 0.85);
+      border: 2px solid #38bdf8; border-radius: 12px;
+    }
+    #mathQuestion { font-size: clamp(16px, 3.6vw, 21px); font-weight: 900; margin-bottom: 12px; color: #fde047; line-height: 1.35; }
+    .options-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    .opt-btn {
+      background: linear-gradient(180deg, #38bdf8, #0284c7); color: #fff;
+      border: 3px solid #e0f2fe; border-radius: 14px; padding: 12px 6px;
+      font-size: clamp(15px, 3.5vw, 18px); font-weight: 900; cursor: pointer;
+      box-shadow: 0 4px 0 #075985; transition: transform 0.1s;
+    }
+    .opt-btn:active { transform: translateY(3px); }
+    .opt-btn:disabled { opacity: 0.55; cursor: not-allowed; }
+    #mathFeedback { margin-top: 10px; font-size: 14px; font-weight: 800; min-height: 20px; }
+
+    #resolutionBox {
+      display: none; margin-top: 10px; background: rgba(244, 63, 94, 0.16);
+      border: 2px solid #fb7185; border-radius: 14px; padding: 10px 14px;
+      text-align: left; color: #ffe4e6;
+    }
+    #resolutionBox h4 { color: #fde047; font-size: 13px; margin-bottom: 4px; text-transform: uppercase; }
+    #resolutionText { font-size: 13px; line-height: 1.4; margin-bottom: 8px; font-weight: 600; }
+
+    /* CONTROLES MULTITOQUE */
+    #touchControls {
+      position: fixed; bottom: 16px; left: 14px; right: 14px;
+      display: none; justify-content: space-between; align-items: flex-end;
+      z-index: 30; pointer-events: none;
+    }
+    .touch-row { display: flex; gap: 10px; pointer-events: auto; align-items: center; touch-action: none; }
+    .touch-btn {
+      width: 64px; height: 64px; border-radius: 20px;
+      background: rgba(15, 23, 42, 0.82); border: 3px solid #38bdf8;
+      color: #fff; font-size: 22px; font-weight: 900;
+      display: flex; justify-content: center; align-items: center;
+      box-shadow: 0 5px 0 #0284c7; touch-action: none;
+    }
+    .touch-btn.pressed { background: #38bdf8; color: #0f172a; transform: translateY(3px); }
+    .btn-fire-action {
+      width: 72px; height: 72px; border-radius: 50%; pointer-events: auto;
+      background: linear-gradient(180deg, #f97316, #dc2626); border: 4px solid #fde047;
+      color: #fff; font-size: 13px; font-weight: 900; display: none;
+      justify-content: center; align-items: center; text-align: center;
+      box-shadow: 0 6px 0 #7f1d1d; touch-action: none;
+    }
+    .btn-jump-action {
+      width: 80px; height: 80px; border-radius: 50%; pointer-events: auto;
+      background: linear-gradient(180deg, #2dd4bf, #0d9488); border: 4px solid #fde047;
+      color: #fff; font-size: 14px; font-weight: 900;
+      box-shadow: 0 6px 0 #115e59; touch-action: none;
+    }
+    .btn-jump-action.pressed, .btn-fire-action:active { transform: translateY(4px); }
+
+    .recommendations-box {
+      background: rgba(15, 23, 42, 0.85);
+      border: 2.5px solid #fde047;
+      border-radius: 16px;
+      padding: 12px 16px;
+      margin: 14px 0 8px 0;
+      text-align: left;
+      color: #f8fafc;
+    }
+    .recommendations-title {
+      color: #fde047;
+      font-weight: 900;
+      font-size: 13.5px;
+      margin-bottom: 6px;
+      text-align: center;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .recommendations-list {
+      list-style: none;
+      font-size: 12.5px;
+      line-height: 1.45;
+      color: #e2e8f0;
+    }
+    .recommendations-list li {
+      margin-bottom: 5px;
+      padding-left: 4px;
+    }
+    .good-game-banner {
+      margin-top: 8px;
+      font-size: 15px;
+      font-weight: 900;
+      color: #2dd4bf;
+      text-align: center;
+      letter-spacing: 0.5px;
+    }
+    .copyright { font-size: 11px; color: #94a3b8; margin-top: 10px; font-weight: 600; }
+  </style>
+</head>
+<body>
+
+<canvas id="gameCanvas"></canvas>
+
+<!-- HUD -->
+<div id="hud">
+  <div class="hud-pill">
+    <div title="100 esferas = +1 Vida | 200 esferas = +1 Continue">✨ <span class="stat-val" id="hudCoins">0</span></div>
+    <div title="Continues disponíveis">🔄 <span class="stat-val" id="hudContinues">0</span></div>
+    <div>🏆 <span class="stat-val" id="hudScore">0</span></div>
+  </div>
+  <div class="hud-pill">
+    <div><span class="stat-val" id="hudLives">❤️❤️❤️</span></div>
+    <div>💎 <span class="stat-val" id="hudCrystals">0/10</span></div>
+    <button id="muteBtn" onclick="toggleMute()">🔊</button>
+  </div>
+</div>
+
+<!-- BARRA DE PROGRESSO -->
+<div id="progressContainer">
+  <div id="progressTitle">FASE 1 • ILHA DE ARITHMOS</div>
+  <div id="progressBarBg">
+    <div id="progressFill"></div>
+    <span class="marker-mid" title="Livro Azul - Checkpoint">📘</span>
+    <span class="marker-end" title="Livro Dourado e Portal">📙</span>
+  </div>
+  <div id="superPowerBanner">⚡ SUPER FORÇA INVENCÍVEL: <span id="powerTimerText">14s</span></div>
+  <div id="modeBanner">🚀 FOGUETE ESTELAR • ATIRE NOS COMETAS!</div>
+  <div id="portalHintBanner">🌀 PORTAL ABERTO! ENTRE NELE!</div>
+  <div id="rewardToast">❤️ +1 VIDA EXTRA!</div>
+</div>
+
+<!-- BANNER DA FASE -->
+<div id="zoneBanner">
+  <h2 id="bannerTitle">COSTA DOS CRISTAIS AZUIS</h2>
+  <p id="bannerSub">FASE 1 • O DESPERTAR EM ARITHMOS</p>
+</div>
+
+<!-- CAIXA DE FALA DA PRINCESA DENTRO DA FASE -->
+<div id="melinaActionBox">
+  <div class="speaker-tag speaker-melina" style="margin-bottom:6px;">👑 PRINCESA MELINA</div>
+  <p id="melinaActionText" style="font-size:14px; font-weight:700; line-height:1.4; margin-bottom:10px;"></p>
+  <button class="btn-primary" style="padding:8px 20px; font-size:14px;" onclick="confirmMelinaMessage()">Continuar Aventura ▶</button>
+</div>
+
+<!-- MODAL DE BRIEFING (FOGUETE / SUPER CORRIDA) -->
+<div id="spaceBriefingModal">
+  <div class="space-card">
+    <div id="briefingIcon" style="font-size: 38px; margin-bottom: 6px;">🚀🪐☄️✨</div>
+    <h2 id="briefingTitle" style="font-size: 22px; font-weight: 900; color: #fde047; margin-bottom: 8px;">VIAGEM PELO SISTEMA SOLAR!</h2>
+    <p id="briefingDesc" style="font-size: 14px; color: #e0f2fe; line-height: 1.45; font-weight: 600;"></p>
+    <div class="cmd-grid" id="briefingCmds"></div>
+    <button class="btn-primary" id="briefingBtn" onclick="closeSpaceBriefing()">DECOLAR AGORA 🚀</button>
+  </div>
+</div>
+
+<!-- CONTROLES MULTITOQUE PARA CELULAR / TABLET -->
+<div id="touchControls">
+  <div class="touch-row" id="leftTouchPad">
+    <button class="touch-btn" id="btnLeft">◀</button>
+    <button class="touch-btn" id="btnRight">▶</button>
+    <button class="touch-btn" id="btnDown">▼</button>
+  </div>
+  <div class="touch-row">
+    <button class="btn-fire-action" id="btnFire">ATIRAR<br>🔥</button>
+    <button class="btn-jump-action" id="btnJump">PULAR<br>▲</button>
+  </div>
+</div>
+
+<!-- TELA INICIAL -->
+<div id="startScreen" class="overlay-screen">
+  <div class="card-panel">
+    <div style="font-size: 36px; margin-bottom: 6px;">💎🏝️🚀🏎️👑</div>
+    <h1 class="game-title">A Ilha dos Cristais Matemáticos</h1>
+    <div class="subtitle">Volume 1 • Aventura de Matheus e Princesa Melina (10 Fases Únicas)</div>
+    <p style="font-size: 13.5px; color: #cbd5e1; margin-bottom: 12px; line-height: 1.45;">
+      Guie <strong>Matheus</strong> pelos 10 reinos da Ilha de Arithmos! Pule sobre os monstros para destruí-los, pilote o <strong>Foguete Estelar</strong> pelo Sistema Solar, vença a <strong>Super Corrida de Carros Mágicos</strong> e derrote o vilão!
+    </p>
+    <div>
+      <button class="btn-primary" onclick="startIntroCutscene()">▶ COMEÇAR AVENTURA (FASE 1)</button>
+    </div>
+    <div class="recommendations-box">
+      <div class="recommendations-title">📋 Recomendações Importantes Antes de Jogar</div>
+      <ul class="recommendations-list">
+        <li>✏️ <strong>Prepare seu material:</strong> Tenha em mãos uma <strong>folha de papel e um lápis</strong> (ou caneta), pois você precisará fazer cálculos para abrir os Livros Mágicos!</li>
+        <li>👨‍👩‍👧‍👦 <strong>Jogue em família:</strong> Se possível, chame seus <strong>pais ou responsáveis</strong> para acompanharem sua jornada e ajudarem nos desafios!</li>
+        <li>📘 <strong>Leia com atenção:</strong> Observe cada pergunta com calma antes de responder. Se errar a primeira vez, a <strong>Princesa Melina</strong> dará uma dica especial!</li>
+        <li>✨ <strong>Colete esferas douradas:</strong> Junte <strong>100 esferas</strong> para ganhar +1 Vida Extra e <strong>200 esferas</strong> para conquistar +1 Continue!</li>
+      </ul>
+      <div class="good-game-banner">🎮 BOM JOGO E BOA AVENTURA, GUARDIÃO! ✨</div>
+    </div>
+    <div class="copyright">Todos os direitos reservados ao Professor Thiago Melo • Matemática Salvadora</div>
+  </div>
+</div>
+
+<!-- CUTSCENE DA HISTÓRIA NO TOPO -->
+<div id="cutsceneOverlay">
+  <div class="dialogue-box">
+    <div class="dialogue-header">
+      <div class="speaker-tag speaker-narrador" id="speakerTag">NARRADOR</div>
+      <div class="scene-counter" id="sceneCounter">CENA 1 / 4</div>
+    </div>
+    <div id="dialogueText">Preparando a história...</div>
+    <div class="dialogue-actions">
+      <button class="btn-secondary" onclick="skipCutscene()">Pular ⏭</button>
+      <button class="btn-primary" style="padding: 8px 20px; font-size: 14px;" onclick="nextCutsceneStep()">Próxima Cena ▶</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL DE DESAFIO MATEMÁTICO + RESOLUÇÃO -->
+<div id="mathModal">
+  <div class="math-card">
+    <div class="math-badge" id="mathBadge">📘 LIVRO DO SABER • PONTO DE SALVAMENTO</div>
+    <div class="melina-hint" id="melinaHint">👑 Projeção da Princesa Melina: "Vamos calcular juntos, Matheus!"</div>
+    <canvas id="challengeVisualCanvas" width="240" height="110"></canvas>
+    <div id="mathQuestion">Quanto é 14 + 15?</div>
+    <div class="options-grid" id="mathOptions"></div>
+    <div id="mathFeedback"></div>
+
+    <div id="resolutionBox">
+      <h4>💡 Resolução Passo a Passo:</h4>
+      <p id="resolutionText"></p>
+      <div style="text-align:center;">
+        <button class="btn-primary" style="padding: 8px 20px; font-size: 14px;" onclick="drawNewQuestionAfterError()">Responder Nova Questão Sorteada ▶</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TELA DE GAME OVER -->
+<div id="gameOverScreen" class="overlay-screen" style="display:none;">
+  <div class="card-panel">
+    <div style="font-size: 44px; margin-bottom: 6px;">💔🌑🏰</div>
+    <h1 class="game-title" style="color:#f43f5e;">FIM DE JOGO!</h1>
+    <div class="subtitle" id="gameOverSubtitle">As energias de Matheus se esgotaram!</div>
+    <p id="gameOverDesc" style="font-size: 14px; color: #e2e8f0; margin-bottom: 14px; line-height: 1.5;"></p>
+    <div id="gameOverButtons"></div>
+    <div class="copyright">Todos os direitos reservados ao Professor Thiago Melo • Matemática Salvadora</div>
+  </div>
+</div>
+
+<!-- TELA FINAL / ZERADO -->
+<div id="endScreen" class="overlay-screen" style="display:none;">
+  <div class="card-panel">
+    <div style="font-size: 40px; margin-bottom: 6px;">🌈💎👑🏆✨</div>
+    <h1 class="game-title">ILHA DE ARITHMOS RESTAURADA!</h1>
+    <div class="subtitle">Matheus recebeu o título de Grande Guardião das mãos da Princesa Melina!</div>
+    <p style="font-size: 14px; color: #e2e8f0; margin-bottom: 12px; line-height: 1.5;">
+      Todos os <strong>10 Cristais Matemáticos</strong> voltaram a brilhar no topo da ilha! Você provou ser um verdadeiro Guardião dos Números e das Formas. Prepare-se para novas descobertas no <strong>Volume 2</strong>!
+    </p>
+    <div id="finalStats" style="font-size: 16px; font-weight: 900; color: #2dd4bf; margin-bottom: 14px; background: rgba(15,23,42,0.7); padding: 10px; border-radius: 14px; border: 2px solid #2dd4bf;"></div>
+    <div>
+      <button class="btn-primary" onclick="location.reload()">🔄 JOGAR NOVAMENTE</button>
+    </div>
+    <div class="copyright">Todos os direitos reservados ao Professor Thiago Melo • Matemática Salvadora</div>
+  </div>
+</div>
+
+<script>
+// ============================================================================
+// TRILHA SONORA + SONS DISTINTOS PARA 100 ESFERAS (+1 VIDA) E 200 (+1 CONTINUE)
+// ============================================================================
+const AudioCtx = window.AudioContext || window.webkitAudioContext;
+let audioCtx = null;
+let bgMusicInterval = null;
+let bgStep = 0;
+let isMuted = false;
+
+function ensureAudio() {
+  if (!audioCtx) audioCtx = new AudioCtx();
+  if (audioCtx.state === "suspended") audioCtx.resume();
+}
+
+window.addEventListener("touchstart", () => ensureAudio(), { once: true });
+
+function toggleMute() {
+  isMuted = !isMuted;
+  document.getElementById("muteBtn").textContent = isMuted ? "🔇" : "🔊";
+}
+
+function startBackgroundMusic() {
+  if (bgMusicInterval) return;
+  const adventureTheme = [
+    392.00, 493.88, 587.33, 493.88, 523.25, 659.25, 783.99, 659.25,
+    440.00, 523.25, 659.25, 523.25, 392.00, 493.88, 587.33, 523.25
+  ];
+  const powerTheme = [
+    523.25, 659.25, 783.99, 1046.50, 783.99, 659.25,
+    587.33, 739.99, 880.00, 1174.66, 880.00, 739.99
+  ];
+
+  bgMusicInterval = setInterval(() => {
+    if (isMuted || (gameState !== "PLAYING" && gameState !== "IN_GAME_EVENT")) return;
+    try {
+      ensureAudio();
+      const now = audioCtx.currentTime;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      const isSuper = player.superPowerTimer > 0;
+      const notes = isSuper ? powerTheme : adventureTheme;
+
+      osc.type = isSuper ? "triangle" : "sine";
+      osc.frequency.setValueAtTime(notes[bgStep % notes.length], now);
+      gain.gain.setValueAtTime(isSuper ? 0.08 : 0.045, now);
+      gain.gain.exponentialRampToValueAtTime(0.005, now + 0.18);
+
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start(now);
+      osc.stop(now + 0.19);
+      bgStep++;
+    } catch (e) {}
+  }, 210);
+}
+
+function playSound(type) {
+  if (isMuted) return;
+  try {
+    ensureAudio();
+    const now = audioCtx.currentTime;
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+
+    if (type === "jump" || type === "spring") {
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(type === "spring" ? 320 : 240, now);
+      osc.frequency.exponentialRampToValueAtTime(type === "spring" ? 880 : 620, now + 0.18);
+      gain.gain.setValueAtTime(0.14, now);
+      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+      osc.start(now); osc.stop(now + 0.2);
+    } else if (type === "laser") {
+      osc.type = "sawtooth";
+      osc.frequency.setValueAtTime(920, now);
+      osc.frequency.exponentialRampToValueAtTime(220, now + 0.11);
+      gain.gain.setValueAtTime(0.11, now);
+      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.12);
+      osc.start(now); osc.stop(now + 0.12);
+    } else if (type === "coin") {
+      osc.type = "triangle";
+      osc.frequency.setValueAtTime(880, now);
+      osc.frequency.setValueAtTime(1318.5, now + 0.07);
+      gain.gain.setValueAtTime(0.14, now);
+      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.26);
+      osc.start(now); osc.stop(now + 0.26);
+    } else if (type === "1up") {
+      [659.25, 783.99, 1318.51, 1046.50, 1174.66, 1567.98].forEach((freq, idx) => {
+        const o = audioCtx.createOscillator();
+        const g = audioCtx.createGain();
+        o.type = "square";
+        o.connect(g); g.connect(audioCtx.destination);
+        o.frequency.setValueAtTime(freq, now + idx * 0.06);
+        g.gain.setValueAtTime(0.11, now + idx * 0.06);
+        g.gain.exponentialRampToValueAtTime(0.01, now + idx * 0.06 + 0.18);
+        o.start(now + idx * 0.06); o.stop(now + idx * 0.06 + 0.18);
+      });
+    } else if (type === "continue") {
+      [440, 554.37, 659.25, 880, 1108.73, 1318.51, 1760].forEach((freq, idx) => {
+        const o = audioCtx.createOscillator();
+        const g = audioCtx.createGain();
+        o.type = "triangle";
+        o.connect(g); g.connect(audioCtx.destination);
+        o.frequency.setValueAtTime(freq, now + idx * 0.08);
+        g.gain.setValueAtTime(0.18, now + idx * 0.08);
+        g.gain.exponentialRampToValueAtTime(0.01, now + idx * 0.08 + 0.3);
+        o.start(now + idx * 0.08); o.stop(now + idx * 0.08 + 0.3);
+      });
+    } else if (type === "portal" || type === "spell") {
+      [330, 440, 554.37, 659.25, 880, 1108.73].forEach((freq, idx) => {
+        const o = audioCtx.createOscillator();
+        const g = audioCtx.createGain();
+        o.type = "sine";
+        o.connect(g); g.connect(audioCtx.destination);
+        o.frequency.setValueAtTime(freq, now + idx * 0.07);
+        g.gain.setValueAtTime(0.15, now + idx * 0.07);
+        g.gain.exponentialRampToValueAtTime(0.01, now + idx * 0.07 + 0.35);
+        o.start(now + idx * 0.07); o.stop(now + idx * 0.07 + 0.35);
+      });
+    } else if (type === "stomp" || type === "hurt") {
+      osc.type = "sawtooth";
+      osc.frequency.setValueAtTime(type === "hurt" ? 190 : 340, now);
+      osc.frequency.exponentialRampToValueAtTime(75, now + 0.18);
+      gain.gain.setValueAtTime(0.16, now);
+      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+      osc.start(now); osc.stop(now + 0.2);
+    } else if (type === "win") {
+      [523.25, 659.25, 783.99, 1046.50].forEach((freq, idx) => {
+        const o = audioCtx.createOscillator();
+        const g = audioCtx.createGain();
+        o.type = "triangle";
+        o.connect(g); g.connect(audioCtx.destination);
+        o.frequency.setValueAtTime(freq, now + idx * 0.1);
+        g.gain.setValueAtTime(0.15, now + idx * 0.1);
+        g.gain.exponentialRampToValueAtTime(0.01, now + idx * 0.1 + 0.26);
+        o.start(now + idx * 0.1); o.stop(now + idx * 0.1 + 0.26);
+      });
+    }
+  } catch (e) {}
+}
+
+function showRewardToast(text, bg) {
+  const el = document.getElementById("rewardToast");
+  el.textContent = text;
+  el.style.background = bg;
+  el.style.display = "block";
+  setTimeout(() => { el.style.display = "none"; }, 2600);
+}
+
+// ============================================================================
+// AS 10 FASES ÚNICAS DA ILHA DE ARITHMOS
+// ============================================================================
+const STAGES = [
+  { id: 1, name: "COSTA DOS CRISTAIS AZUIS", sub: "Fase 1 • Travessia Inicial (Adição e Subtração)", sky1: "#0284c7", sky2: "#bae6fd", hill1: "#0ea5e9", hill2: "#38bdf8", groundTop: "#10b981", groundBody: "#b45309", crystal: "#f43f5e", theme: "beach", skill1: "s1_add", skill2: "s1_sub" },
+  { id: 2, name: "ABISMOS DAS PLATAFORMAS ELEVADORAS", sub: "Fase 2 • Plataformas Subindo e Descendo nos Precipícios", sky1: "#0369a1", sky2: "#99f6e4", hill1: "#0d9488", hill2: "#2dd4bf", groundTop: "#14b8a6", groundBody: "#92400e", crystal: "#f43f5e", theme: "coral", skill1: "s2_decomp", skill2: "s2_diff" },
+  { id: 3, name: "DESFILADEIRO DOS VENTOS MÓVEIS", sub: "Fase 3 • Precipícios Maiores e Plataformas Horizontais", sky1: "#065f46", sky2: "#a7f3d0", hill1: "#047857", hill2: "#10b981", groundTop: "#22c55e", groundBody: "#78350f", crystal: "#10b981", theme: "forest", skill1: "s3_mul23", skill2: "s3_groups" },
+  { id: 4, name: "VALE DO SENHOR VULCÃO", sub: "Fase 4 • Vulcões Gigantes Lançando Bolas de Fogo!", sky1: "#7f1d1d", sky2: "#fef08a", hill1: "#9a3412", hill2: "#ea580c", groundTop: "#84cc16", groundBody: "#7c2d12", crystal: "#10b981", theme: "volcano", skill1: "s4_mul45", skill2: "s4_rect" },
+  { id: 5, name: "ÓRBITA DO SISTEMA SOLAR", sub: "Fase 5 • Portal Espacial & Foguete Destruidor de Cometas!", sky1: "#020617", sky2: "#1e1b4b", hill1: "#1e3a8a", hill2: "#3b82f6", groundTop: "#06b6d4", groundBody: "#1e40af", crystal: "#3b82f6", theme: "space", skill1: "s5_balance", skill2: "s5_double_triple" },
+  { id: 6, name: "FORTALEZA DOS QUATRO DESAFIOS", sub: "Fase 6 • Mistura das Fases 1, 2, 3 e 4!", sky1: "#1e1b4b", sky2: "#581c87", hill1: "#3b0764", hill2: "#6b21a8", groundTop: "#a855f7", groundBody: "#2e1065", crystal: "#3b82f6", theme: "cavern", skill1: "s6_half_third", skill2: "s6_div" },
+  { id: 7, name: "GRUTA DOS MORCEGOS E COGUMELOS", sub: "Fase 7 • Cogumelos Pulando e Morcegos Patrulhando", sky1: "#311042", sky2: "#fed7aa", hill1: "#581c87", hill2: "#9333ea", groundTop: "#f59e0b", groundBody: "#451a03", crystal: "#eab308", theme: "bats", skill1: "s7_seq_up", skill2: "s7_seq_down" },
+  { id: 8, name: "SUPER CORRIDA DOS CARROS MÁGICOS", sub: "Fase 8 • Alerta da Princesa & Super Corrida de Carros!", sky1: "#c2410c", sky2: "#ffedd5", hill1: "#d97706", hill2: "#fbbf24", groundTop: "#eab308", groundBody: "#9a3412", crystal: "#eab308", theme: "race", skill1: "s8_clock_visual", skill2: "s8_measure" },
+  { id: 9, name: "SANTUÁRIO DAS 6 BARRAS FLUTUANTES", sub: "Fase 9 • O Grande Penhasco das 6 Barras Aleatórias!", sky1: "#312e81", sky2: "#e0f2fe", hill1: "#4f46e5", hill2: "#818cf8", groundTop: "#38bdf8", groundBody: "#1e3a8a", crystal: "#c084fc", theme: "sky", skill1: "s9_geo_visual", skill2: "s9_money" },
+  { id: 10, name: "GRANDE FAROL & O VILÃO DA NÉVOA", sub: "Fase 10 • Duelo Final de Feitiços Matemáticos!", sky1: "#2e1065", sky2: "#f472b6", hill1: "#4c1d95", hill2: "#7c3aed", groundTop: "#fbbf24", groundBody: "#1e1b4b", crystal: "#ffffff", theme: "lighthouse", skill1: "s10_logic", skill2: "boss" }
+];
+
+// ============================================================================
+// BANCO EXPANDIDO DE QUESTÕES BNCC + RESOLUÇÃO PASSO A PASSO AUTOMÁTICA
+// ============================================================================
+const usedQuestions = new Set();
+let questionErrorCount = 0;
+
+function renderChallengeVisual(visualData) {
+  const vCanvas = document.getElementById("challengeVisualCanvas");
+  if (!visualData) {
+    vCanvas.style.display = "none";
+    return;
+  }
+  vCanvas.style.display = "block";
+  const vctx = vCanvas.getContext("2d");
+  const vw = vCanvas.width, vh = vCanvas.height;
+  vctx.clearRect(0, 0, vw, vh);
+
+  if (visualData.type === "clock") {
+    const cx = vw / 2, cy = vh / 2, r = 44;
+    vctx.fillStyle = "#f8fafc"; vctx.strokeStyle = "#fde047"; vctx.lineWidth = 4;
+    vctx.beginPath(); vctx.arc(cx, cy, r, 0, Math.PI * 2); vctx.fill(); vctx.stroke();
+
+    vctx.fillStyle = "#0f172a"; vctx.font = "900 11px Segoe UI";
+    vctx.textAlign = "center"; vctx.textBaseline = "middle";
+    for (let h = 1; h <= 12; h++) {
+      const ang = (h - 3) * (Math.PI / 6);
+      vctx.fillText(h, cx + Math.cos(ang) * (r - 10), cy + Math.sin(ang) * (r - 10));
+    }
+    const hAng = ((visualData.hour % 12) - 3) * (Math.PI / 6);
+    vctx.strokeStyle = "#e11d48"; vctx.lineWidth = 4;
+    vctx.beginPath(); vctx.moveTo(cx, cy);
+    vctx.lineTo(cx + Math.cos(hAng) * 22, cy + Math.sin(hAng) * 22); vctx.stroke();
+
+    vctx.strokeStyle = "#0284c7"; vctx.lineWidth = 3;
+    vctx.beginPath(); vctx.moveTo(cx, cy); vctx.lineTo(cx, cy - 32); vctx.stroke();
+    vctx.fillStyle = "#0f172a"; vctx.beginPath(); vctx.arc(cx, cy, 4, 0, Math.PI * 2); vctx.fill();
+
+  } else if (visualData.type === "shape") {
+    const cx = vw / 2, cy = vh / 2;
+    vctx.strokeStyle = "#fde047"; vctx.fillStyle = "rgba(56, 189, 248, 0.45)"; vctx.lineWidth = 3;
+    if (visualData.shape === "Hexágono" || visualData.shape === "Pentágono") {
+      const sides = visualData.shape === "Hexágono" ? 6 : 5;
+      vctx.beginPath();
+      for (let i = 0; i < sides; i++) {
+        const ang = -Math.PI / 2 + (i * Math.PI * 2) / sides;
+        const px = cx + Math.cos(ang) * 40, py = cy + Math.sin(ang) * 40;
+        if (i === 0) vctx.moveTo(px, py); else vctx.lineTo(px, py);
+      }
+      vctx.closePath(); vctx.fill(); vctx.stroke();
+    } else if (visualData.shape === "Cubo") {
+      vctx.strokeRect(cx - 26, cy - 16, 42, 42); vctx.fillRect(cx - 26, cy - 16, 42, 42);
+      vctx.strokeRect(cx - 12, cy - 30, 42, 42);
+      vctx.beginPath();
+      vctx.moveTo(cx - 26, cy - 16); vctx.lineTo(cx - 12, cy - 30);
+      vctx.moveTo(cx + 16, cy - 16); vctx.lineTo(cx + 30, cy - 30);
+      vctx.moveTo(cx + 16, cy + 26); vctx.lineTo(cx + 30, cy + 12);
+      vctx.stroke();
+    } else if (visualData.shape === "Pirâmide") {
+      vctx.beginPath();
+      vctx.moveTo(cx, cy - 36); vctx.lineTo(cx - 36, cy + 26);
+      vctx.lineTo(cx + 14, cy + 34); vctx.lineTo(cx + 40, cy + 16);
+      vctx.closePath(); vctx.fill(); vctx.stroke();
+      vctx.beginPath(); vctx.moveTo(cx, cy - 36); vctx.lineTo(cx + 14, cy + 34); vctx.stroke();
+    } else if (visualData.shape === "Cilindro") {
+      vctx.fillRect(cx - 26, cy - 26, 52, 52);
+      vctx.beginPath(); vctx.ellipse(cx, cy - 26, 26, 10, 0, 0, Math.PI * 2); vctx.fill(); vctx.stroke();
+      vctx.beginPath(); vctx.ellipse(cx, cy + 26, 26, 10, 0, 0, Math.PI); vctx.stroke();
+      vctx.beginPath();
+      vctx.moveTo(cx - 26, cy - 26); vctx.lineTo(cx - 26, cy + 26);
+      vctx.moveTo(cx + 26, cy - 26); vctx.lineTo(cx + 26, cy + 26);
+      vctx.stroke();
+    }
+  } else if (visualData.type === "balance") {
+    const cx = vw / 2, cy = vh / 2 + 12;
+    vctx.strokeStyle = "#fde047"; vctx.lineWidth = 4;
+    vctx.beginPath(); vctx.moveTo(cx, cy + 32); vctx.lineTo(cx, cy - 22); vctx.stroke();
+    vctx.beginPath(); vctx.moveTo(cx - 75, cy - 22); vctx.lineTo(cx + 75, cy - 22); vctx.stroke();
+    vctx.fillStyle = "#38bdf8"; vctx.fillRect(cx - 95, cy - 18, 44, 24);
+    vctx.fillStyle = "#c084fc"; vctx.fillRect(cx + 51, cy - 18, 44, 24);
+    vctx.fillStyle = "#ffffff"; vctx.font = "900 13px Segoe UI"; vctx.textAlign = "center";
+    vctx.fillText(visualData.left, cx - 73, cy - 2);
+    vctx.fillText(visualData.right, cx + 73, cy - 2);
+  }
+}
+
+function generateMathChallenge(skill, bossStage = 0) {
+  let q = "", ans = 0, opts = [], hint = "", resolution = "", visual = null;
+  const rand = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+
+  for (let attempt = 0; attempt < 40; attempt++) {
+    if (skill === "s1_add") {
+      const a = rand(18, 65), b = rand(14, 48);
+      ans = a + b;
+      const templates = [
+        `Na Costa Azul, Matheus recolheu ${a} conchas brilhantes e achou mais ${b}. Quantas conchas ele tem agora?`,
+        `Um baú guarda ${a} moedas de ouro e outro guarda ${b} moedas. Juntando os dois baús, quantas moedas temos?`,
+        `Matheus deu ${a} passos pela praia e depois mais ${b} passos até a ponte. Quantos passos deu ao todo?`
+      ];
+      q = templates[rand(0, templates.length - 1)];
+      hint = `Junte as duas quantidades somando ${a} + ${b}.`;
+      resolution = `Para descobrir o total, somamos as duas quantidades: ${a} + ${b} = ${ans}.`;
+    } else if (skill === "s1_sub") {
+      const a = rand(55, 98), b = rand(16, 42);
+      ans = a - b;
+      const templates = [
+        `Havia ${a} esferas de luz na ponte, mas ${b} voaram para o farol. Quantas ficaram?`,
+        `Matheus tinha ${a} cristais na mochila e usou ${b} para abrir um portão. Com quantos cristais ficou?`,
+        `De ${a} estrelas que brilhavam no céu, ${b} se esconderam atrás das nuvens. Quantas continuam visíveis?`
+      ];
+      q = templates[rand(0, templates.length - 1)];
+      hint = `Faça a conta de diminuir: ${a} - ${b}.`;
+      resolution = `Subtraímos o que saiu do total inicial: ${a} - ${b} = ${ans}.`;
+    } else if (skill === "s2_decomp") {
+      const c = rand(2, 7), d = rand(2, 9), u = rand(1, 9);
+      ans = c * 100 + d * 10 + u;
+      q = `O código do portal é formado por ${c} centenas, ${d} dezenas e ${u} unidades. Que número é esse?`;
+      hint = `Lembre-se: 1 centena = 100 e 1 dezena = 10!`;
+      resolution = `${c} centenas = ${c * 100}; ${d} dezenas = ${d * 10}; ${u} unidades = ${u}. Somando: ${c * 100} + ${d * 10} + ${u} = ${ans}.`;
+    } else if (skill === "s2_diff") {
+      const a = rand(160, 280), b = rand(75, 145);
+      ans = a - b;
+      q = `O portal exige ${a} pontos de energia. Matheus já acumulou ${b}. Quantos pontos ainda faltam?`;
+      hint = `Calcule a diferença: ${a} - ${b}.`;
+      resolution = `Para saber quanto falta de ${b} até ${a}, fazemos a subtração: ${a} - ${b} = ${ans}.`;
+    } else if (skill === "s3_mul23") {
+      const a = rand(2, 4), b = rand(4, 10);
+      ans = a * b;
+      q = `No Desfiladeiro há ${a} cristais gigantes e cada um guarda ${b} esferas. Qual o total de esferas?`;
+      hint = `Multiplique ${a} × ${b}.`;
+      resolution = `Multiplicando a quantidade de cristais pelas esferas de cada um: ${a} × ${b} = ${ans}.`;
+    } else if (skill === "s3_groups") {
+      const grupos = rand(3, 5), itens = rand(5, 9);
+      ans = grupos * itens;
+      q = `Em ${grupos} baús mágicos há ${itens} gemas em cada um. Quantas gemas existem ao todo?`;
+      hint = `Multiplique ${grupos} × ${itens}.`;
+      resolution = `São ${grupos} grupos com ${itens} gemas cada: ${grupos} × ${itens} = ${ans} gemas.`;
+    } else if (skill === "s4_mul45") {
+      const a = rand(4, 6), b = rand(5, 9);
+      ans = a * b;
+      q = `Cada escudo contra o Senhor Vulcão vale ${b} pontos. Com ${a} escudos, quantos pontos Matheus ganha?`;
+      hint = `Multiplique ${a} × ${b}.`;
+      resolution = `Calculamos ${a} vezes ${b}: ${a} × ${b} = ${ans} pontos.`;
+    } else if (skill === "s4_rect") {
+      const lin = rand(4, 7), col = rand(5, 9);
+      ans = lin * col;
+      q = `O salão vulcânico tem ${lin} fileiras com ${col} pedras luminosas em cada fileira. Quantas pedras são ao todo?`;
+      hint = `Em uma organização retangular de ${lin} por ${col}, multiplique ${lin} × ${col}!`;
+      resolution = `Multiplicando o número de fileiras pelas pedras de cada fileira: ${lin} × ${col} = ${ans} pedras.`;
+    } else if (skill === "s5_balance") {
+      const leftA = rand(25, 55), leftB = rand(18, 42);
+      const rightA = rand(15, 30);
+      const totalLeft = leftA + leftB;
+      ans = totalLeft - rightA;
+      q = `Para estabilizar o Foguete no Sistema Solar, qual peso [ ? ] equilibra a balança?`;
+      hint = `Os dois pratos precisam ter o mesmo total (${leftA} + ${leftB} = ${totalLeft})!`;
+      resolution = `O prato esquerdo soma ${leftA} + ${leftB} = ${totalLeft}. Para o direito também dar ${totalLeft}, fazemos ${totalLeft} - ${rightA} = ${ans}.`;
+      visual = { type: "balance", left: `${leftA} + ${leftB}`, right: `${rightA} + [ ? ]` };
+    } else if (skill === "s5_double_triple") {
+      const isTriple = Math.random() > 0.5;
+      const n = rand(14, 34);
+      ans = isTriple ? n * 3 : n * 2;
+      q = isTriple
+        ? `O propulsor de Saturno triplica sua energia! Qual é o TRIPLO de ${n}?`
+        : `O anel de Netuno dobra sua pontuação! Qual é o DOBRO de ${n}?`;
+      hint = isTriple ? `Triplo é multiplicar por 3 (${n} × 3).` : `Dobro é multiplicar por 2 (${n} × 2).`;
+      resolution = isTriple
+        ? `O triplo de um número é ele multiplicado por 3: ${n} × 3 = ${ans}.`
+        : `O dobro de um número é ele multiplicado por 2: ${n} × 2 = ${ans}.`;
+    } else if (skill === "s6_half_third") {
+      const isThird = Math.random() > 0.5;
+      if (isThird) {
+        const res = rand(8, 20);
+        const total = res * 3;
+        ans = res;
+        q = `Para abrir a fortaleza, precisamos da TERÇA PARTE de ${total} gemas. Quanto é?`;
+        hint = `Terça parte é dividir ${total} por 3!`;
+        resolution = `A terça parte significa dividir por 3: ${total} ÷ 3 = ${ans}.`;
+      } else {
+        const res = rand(16, 48);
+        const total = res * 2;
+        ans = res;
+        q = `A porta secreta abre com a METADE de ${total} moedas. Quanto é a metade?`;
+        hint = `Metade é dividir ${total} em 2 partes iguais!`;
+        resolution = `A metade significa dividir por 2: ${total} ÷ 2 = ${ans}.`;
+      }
+    } else if (skill === "s6_div") {
+      const div = rand(3, 6), res = rand(6, 14);
+      const total = div * res;
+      ans = res;
+      q = `Reparta ${total} cristais igualmente entre ${div} pedestais. Quantos cristais ficam em cada?`;
+      hint = `Divida ${total} ÷ ${div}.`;
+      resolution = `Dividindo ${total} igualmente por ${div}: ${total} ÷ ${div} = ${ans} cristais em cada pedestal.`;
+    } else if (skill === "s7_seq_up") {
+      const step = [4, 6, 7, 9, 12][rand(0, 4)];
+      const start = rand(15, 45);
+      ans = start + step * 3;
+      q = `Descubra o próximo número da trilha dos morcegos: ${start} — ${start + step} — ${start + step * 2} — [ ? ]`;
+      hint = `Os números aumentam de ${step} em ${step}!`;
+      resolution = `O padrão soma +${step} a cada passo. Somando ${start + step * 2} + ${step}, encontramos ${ans}.`;
+    } else if (skill === "s7_seq_down") {
+      const step = [4, 5, 6, 8][rand(0, 3)];
+      const start = rand(68, 99);
+      ans = start - step * 3;
+      q = `Complete a sequência decrescente da gruta: ${start} — ${start - step} — ${start - step * 2} — [ ? ]`;
+      hint = `Observe que os números diminuem de ${step} em ${step}!`;
+      resolution = `O padrão diminui -${step} a cada passo. Subtraindo ${start - step * 2} - ${step}, encontramos ${ans}.`;
+    } else if (skill === "s8_clock_visual") {
+      const h = rand(2, 8), dur = rand(2, 4);
+      ans = `${h + dur} horas`;
+      q = `Observe o relógio marcando ${h} horas. Se a corrida durar ${dur} horas, que horas serão na chegada?`;
+      hint = `Olhe o ponteiro pequeno no ${h} e some mais ${dur} horas!`;
+      resolution = `O relógio marca ${h} horas. Somando as ${dur} horas de viagem: ${h} + ${dur} = ${h + dur} horas.`;
+      opts = [ans, `${h + dur + 1} horas`, `${h + dur - 1} horas`];
+      visual = { type: "clock", hour: h };
+    } else if (skill === "s8_measure") {
+      if (Math.random() > 0.5) {
+        const m = rand(3, 9);
+        ans = `${m * 100} cm`;
+        q = `A pista do Super Carro Mágico mede ${m} metros de largura. Quantos centímetros ela tem? (1 m = 100 cm)`;
+        hint = `Cada metro vale 100 centímetros!`;
+        resolution = `Como 1 metro = 100 centímetros, multiplicamos ${m} × 100 = ${m * 100} cm.`;
+        opts = [ans, `${m * 10} cm`, `${m * 1000} cm`];
+      } else {
+        const kg = rand(2, 8);
+        ans = `${kg * 1000} g`;
+        q = `O motor mágico pesa ${kg} quilogramas (kg). Quantos gramas (g) ele pesa? (1 kg = 1.000 g)`;
+        hint = `Cada 1 kg equivale a 1.000 gramas!`;
+        resolution = `Como 1 kg = 1.000 g, multiplicamos ${kg} × 1.000 = ${kg * 1000} g.`;
+        opts = [ans, `${kg * 100} g`, `${kg * 10} g`];
+      }
+    } else if (skill === "s9_geo_visual") {
+      const shapes = [
+        { name: "Pentágono", exp: "O Pentágono é um polígono plano com exatamente 5 lados e 5 vértices." },
+        { name: "Hexágono", exp: "O Hexágono é um polígono plano com exatamente 6 lados e 6 vértices." },
+        { name: "Cubo", exp: "O Cubo é um sólido geométrico 3D formado por 6 faces quadradas iguais." },
+        { name: "Pirâmide", exp: "A Pirâmide possui base poligonal e faces laterais triangulares que se unem no topo." },
+        { name: "Cilindro", exp: "O Cilindro possui duas bases circulares paralelas e corpo arredondado." }
+      ];
+      const chosen = shapes[rand(0, shapes.length - 1)];
+      ans = chosen.name;
+      q = `Observe a figura geométrica destacada no visor acima. Qual é o nome dela?`;
+      hint = `Conte os lados (se for plana) ou observe as faces e bases (se for 3D)!`;
+      resolution = chosen.exp;
+      const others = shapes.filter(s => s.name !== ans).sort(() => Math.random() - 0.5);
+      opts = [ans, others[0].name, others[1].name];
+      visual = { type: "shape", shape: chosen.name };
+    } else if (skill === "s9_money") {
+      const nota = 100, gasto = rand(28, 78);
+      ans = `R$ ${nota - gasto},00`;
+      q = `Matheus comprou um amuleto de R$ ${gasto},00 e pagou com uma cédula de R$ 100,00. Qual foi o troco?`;
+      hint = `Calcule 100 menos ${gasto}.`;
+      resolution = `Subtraímos o valor da compra da cédula paga: 100 - ${gasto} = R$ ${nota - gasto},00.`;
+      opts = [ans, `R$ ${nota - gasto + 10},00`, `R$ ${nota - gasto - 5},00`];
+    } else if (skill === "s10_logic") {
+      const a = rand(12, 28), addV = rand(10, 20);
+      ans = a * 2 + addV;
+      q = `Enigma do Grande Farol: Pense no número ${a}, calcule o dobro dele e some ${addV}. Qual resultado você encontra?`;
+      hint = `Primeiro faça ${a} × 2, depois some ${addV}!`;
+      resolution = `Primeiro calculamos o dobro de ${a}: ${a} × 2 = ${a * 2}. Depois somamos ${addV}: ${a * 2} + ${addV} = ${ans}.`;
+    } else if (skill === "boss") {
+      if (bossStage === 0) {
+        const a = rand(6, 9), b = rand(6, 9);
+        ans = a * b;
+        q = `FEITIÇO 1/3 CONTRA O VILÃO: Calcule ${a} × ${b} para lançar o Raio Solar!`;
+        hint = `Use a tabuada: ${a} vezes ${b}!`;
+        resolution = `Multiplicando ${a} × ${b}, obtemos ${ans}.`;
+      } else if (bossStage === 1) {
+        const res = rand(12, 24);
+        const total = res * 4;
+        ans = res;
+        q = `FEITIÇO 2/3 CONTRA O VILÃO: Divida ${total} cristais igualmente entre 4 escudos. Quantos cada um recebe?`;
+        hint = `Divida ${total} por 4!`;
+        resolution = `Dividindo ${total} por 4 partes iguais: ${total} ÷ 4 = ${ans}.`;
+      } else {
+        const start = rand(20, 40), step = 25;
+        ans = start + step * 3;
+        q = `FEITIÇO FINAL 3/3 CONTRA O VILÃO: Complete a sequência suprema: ${start} — ${start + step} — ${start + step * 2} — [ ? ]`;
+        hint = `Os números aumentam de ${step} em ${step}!`;
+        resolution = `Cada número aumenta +${step}: ${start + step * 2} + ${step} = ${ans}.`;
+      }
+    }
+
+    if (!usedQuestions.has(q) || attempt === 39) {
+      usedQuestions.add(q);
+      break;
+    }
+  }
+
+  if (opts.length === 0) {
+    const delta1 = rand(2, 7);
+    const delta2 = rand(3, 9) + 1;
+    opts = [ans, ans + delta1, Math.max(1, ans - delta2)];
+  }
+  opts = opts.sort(() => Math.random() - 0.5);
+  return { q, ans, opts, hint, resolution, visual };
+}
+
+// ============================================================================
+// MOTOR 2D CANVAS
+// ============================================================================
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
+let W = canvas.width = window.innerWidth;
+let H = canvas.height = window.innerHeight;
+
+window.addEventListener("resize", () => {
+  W = canvas.width = window.innerWidth;
+  H = canvas.height = window.innerHeight;
+  groundY = H - 105;
+});
+
+let gameState = "MENU";
+let currentStageIdx = 0;
+let score = 0;
+let coins = 0;
+let continues = 0;
+let lives = 3;
+let crystalsCollected = 0;
+let totalTimeSeconds = 0;
+
+const STAGE_LENGTH = 11200;
+const GRAVITY = 1750;
+const JUMP_FORCE = -750;
+const MOVE_SPEED = 365;
+
+let groundY = H - 105;
+let player = {
+  x: 120, y: 0, vx: 0, vy: 0,
+  w: 42, h: 68,
+  facing: 1,
+  grounded: false,
+  coyoteTimer: 0,
+  jumpBuffer: 0,
+  invuln: 0,
+  superPowerTimer: 0,
+  walkFrame: 0,
+  vehicleMode: "WALK", // WALK, SPACESHIP (Fase 5), CAR (Fase 8)
+  spaceEntryX: 2300
+};
+
+let camX = 0;
+let checkpointReached = false;
+let bossHits = 0;
+let bossErrors = 0;
+let currentChallengeContext = null;
+let briefingType = "SPACE";
+
+// Entidades da Fase
+let groundSegments = [];
+let platforms = [];
+let volcanoMonsters = [];
+let fireballs = [];
+let wolfMonsters = [];
+let batMonsters = [];
+let alienMonsters = [];
+let mushroomMonsters = [];
+
+let spacePortals = [];
+let solarPlanets = [];
+let comets = [];
+let laserShots = [];
+let spaceStars = [];
+
+let magicCarPickup = null;
+let raceObstacles = [];
+let rivalCars = [];
+
+let activeSpellBeam = null;
+let lastShotTime = 0;
+
+let stageMelinaEvent = {
+  active: false,
+  x: 0,
+  y: 0,
+  facing: -1,
+  runningAway: false,
+  waitingButton: false,
+  text: "",
+  onComplete: null
+};
+
+let singlePowerBox = null;
+let orbs = [];
+let particles = [];
+
+let blueBook = { x: 5600, y: 0, w: 46, h: 46, solved: false };
+let goldBook = { x: 10550, y: 0, w: 48, h: 48, solved: false };
+let endPortal = { x: 10940, y: 0, open: false };
+
+const keys = { left: false, right: false, jump: false, down: false };
+
+// ============================================================================
+// GERADOR DO SISTEMA SOLAR COM ZONA SEGURA INICIAL PARA O FOGUETE
+// ============================================================================
+function populateSolarSystemSection(startX, endX) {
+  spaceStars = [];
+  solarPlanets = [];
+  comets = [];
+  laserShots = [];
+
+  for (let s = 0; s < 170; s++) {
+    spaceStars.push({
+      x: Math.random() * 14000,
+      y: Math.random() * H,
+      r: 0.9 + Math.random() * 2.5,
+      speed: 0.1 + (s % 5) * 0.09,
+      twinkle: Math.random() * 6,
+      color: s % 7 === 0 ? "#bae6fd" : (s % 11 === 0 ? "#fef08a" : "#ffffff")
+    });
+  }
+
+  const planetSpecs = [
+    { name: "Mercúrio", r: 26, c1: "#e2e8f0", c2: "#475569", type: "rocky" },
+    { name: "Vênus", r: 36, c1: "#fef08a", c2: "#b45309", type: "clouds" },
+    { name: "Terra", r: 42, c1: "#38bdf8", c2: "#1d4ed8", type: "earth" },
+    { name: "Marte", r: 32, c1: "#f87171", c2: "#7f1d1d", type: "mars" },
+    { name: "Júpiter", r: 66, c1: "#fed7aa", c2: "#9a3412", type: "jupiter" },
+    { name: "Saturno", r: 52, c1: "#fef08a", c2: "#a16207", type: "saturn" },
+    { name: "Urano", r: 42, c1: "#7dd3fc", c2: "#0369a1", type: "ice" },
+    { name: "Netuno", r: 40, c1: "#60a5fa", c2: "#1e3a8a", type: "ice" }
+  ];
+
+  const span = endX - startX - 650;
+  const stepX = span / planetSpecs.length;
+
+  planetSpecs.forEach((pl, i) => {
+    const px = startX + 420 + i * stepX;
+    const py = 140 + (i % 3) * 155;
+    solarPlanets.push({ ...pl, x: px, y: py });
+
+    for (let k = -1; k <= 1; k++) {
+      orbs.push({ x: px + k * 55, y: py - pl.r - 36, collected: false, bob: i + k });
+    }
+  });
+
+  // Zona segura inicial de 1.150px antes do primeiro cometa
+  for (let cx = startX + 1150; cx < endX - 280; cx += 280) {
+    if (Math.abs(cx - 5600) < 280) continue;
+    comets.push({
+      x: cx,
+      y: 105 + ((cx * 47) % (H - 220)),
+      r: 22 + (cx % 10),
+      vy: ((cx % 2 === 0) ? 1 : -1) * 80,
+      alive: true
+    });
+  }
+}
+
+// ============================================================================
+// CONSTRUTOR DE FASES (1 A 10)
+// ============================================================================
+function buildStage2D(stageIdx) {
+  groundY = H - 105;
+  groundSegments = [];
+  platforms = [];
+  volcanoMonsters = [];
+  fireballs = [];
+  wolfMonsters = [];
+  batMonsters = [];
+  alienMonsters = [];
+  mushroomMonsters = [];
+  spacePortals = [];
+  solarPlanets = [];
+  comets = [];
+  laserShots = [];
+  spaceStars = [];
+  magicCarPickup = null;
+  raceObstacles = [];
+  rivalCars = [];
+  activeSpellBeam = null;
+  stageMelinaEvent.active = false;
+  document.getElementById("melinaActionBox").style.display = "none";
+  document.getElementById("spaceBriefingModal").style.display = "none";
+  orbs = [];
+  particles = [];
+
+  player.vehicleMode = "WALK";
+  document.getElementById("modeBanner").style.display = "none";
+  document.getElementById("btnFire").style.display = "none";
+
+  let pitDefs = [];
+
+  if (stageIdx === 0) {
+    [950, 2150, 3450, 4700, 6450, 7750, 9050].forEach(px => {
+      pitDefs.push({ start: px, width: 360, barType: "FIXED_CENTER" });
+    });
+  } else if (stageIdx === 1) {
+    [950, 2350, 3850, 6500, 8100, 9550].forEach(px => {
+      pitDefs.push({ start: px, width: 380, barType: "ELEVATOR" });
+    });
+  } else if (stageIdx === 2) {
+    [900, 2300, 3800, 6450, 8000, 9500].forEach(px => {
+      pitDefs.push({ start: px, width: 440, barType: "HORIZONTAL" });
+    });
+  } else if (stageIdx === 3) {
+    [1050, 2500, 4050, 6600, 8150, 9600].forEach(px => {
+      pitDefs.push({ start: px, width: 380, barType: "FIXED_CENTER" });
+    });
+  } else if (stageIdx === 4) {
+    pitDefs.push({ start: 950, width: 360, barType: "FIXED_CENTER" });
+    pitDefs.push({ start: 2350, width: 7100, barType: "SPACE_VOID" });
+
+    spacePortals = [
+      { x: 2220, y: groundY, type: "TO_SPACE", used: false },
+      { x: 9580, y: H * 0.5, type: "TO_ISLAND", used: false }
+    ];
+    populateSolarSystemSection(2220, 9580);
+  } else if (stageIdx === 5) {
+    pitDefs.push({ start: 950, width: 360, barType: "FIXED_CENTER" });
+    pitDefs.push({ start: 2200, width: 390, barType: "ELEVATOR" });
+    pitDefs.push({ start: 3600, width: 440, barType: "HORIZONTAL" });
+    pitDefs.push({ start: 6400, width: 390, barType: "ELEVATOR" });
+    pitDefs.push({ start: 7900, width: 440, barType: "HORIZONTAL" });
+  } else if (stageIdx === 6) {
+    [1000, 2450, 3950, 6500, 8050, 9550].forEach(px => {
+      pitDefs.push({ start: px, width: 370, barType: "FIXED_CENTER" });
+    });
+  } else if (stageIdx === 7) {
+    // FASE 8: Super Corrida de Carros Mágicos após o 1º Livro!
+    pitDefs.push({ start: 950, width: 360, barType: "FIXED_CENTER" });
+    pitDefs.push({ start: 2450, width: 380, barType: "ELEVATOR" });
+    pitDefs.push({ start: 4200, width: 380, barType: "FIXED_CENTER" });
+
+    for (let rx = 6450; rx < 10200; rx += 520) {
+      raceObstacles.push({ x: rx, y: groundY - 38, w: 42, h: 38 });
+      for (let k = 0; k < 3; k++) {
+        orbs.push({ x: rx - 20 + k * 42, y: groundY - 120, collected: false, bob: k });
+      }
+    }
+    for (let cx = 6700; cx < 9900; cx += 950) {
+      rivalCars.push({ x: cx, y: groundY - 48, vx: 210 });
+    }
+  } else if (stageIdx === 8) {
+    // FASE 9: Penhasco grande onde é necessário pular 6 BARRAS QUE SE MEXEM ALEATORIAMENTE!
+    pitDefs.push({ start: 950, width: 380, barType: "FIXED_CENTER" });
+    pitDefs.push({ start: 2300, width: 1560, barType: "SIX_RANDOM_BARS" }); // 6 barras aleatórias!
+    pitDefs.push({ start: 6550, width: 420, barType: "HORIZONTAL" });
+    pitDefs.push({ start: 8250, width: 400, barType: "ELEVATOR" });
+  } else if (stageIdx === 9) {
+    pitDefs.push({ start: 950, width: 390, barType: "ELEVATOR" });
+    pitDefs.push({ start: 2400, width: 440, barType: "HORIZONTAL" });
+    pitDefs.push({ start: 3950, width: 390, barType: "ELEVATOR" });
+    pitDefs.push({ start: 6500, width: 440, barType: "HORIZONTAL" });
+    pitDefs.push({ start: 8150, width: 390, barType: "ELEVATOR" });
+  }
+
+  let curX = -100;
+  pitDefs.forEach((pit, idx) => {
+    if (pit.start > curX) {
+      groundSegments.push({ x1: curX, x2: pit.start });
+    }
+    curX = pit.start + pit.width;
+
+    if (pit.barType === "FIXED_CENTER") {
+      const bx = pit.start + pit.width / 2 - 65;
+      platforms.push({ x: bx, baseX: bx, y: groundY - 36, baseY: groundY - 36, w: 130, h: 22, moveType: "NONE", phase: 0 });
+      orbs.push({ x: bx + 65, y: groundY - 82, collected: false, bob: idx });
+    } else if (pit.barType === "ELEVATOR") {
+      const bx = pit.start + pit.width / 2 - 65;
+      platforms.push({ x: bx, baseX: bx, y: groundY - 40, baseY: groundY - 65, w: 130, h: 22, moveType: "V_PIT", phase: idx * 1.1 });
+      orbs.push({ x: bx + 65, y: groundY - 135, collected: false, bob: idx });
+    } else if (pit.barType === "HORIZONTAL") {
+      const bx = pit.start + pit.width / 2 - 60;
+      platforms.push({ x: bx, baseX: bx, y: groundY - 34, baseY: groundY - 34, w: 120, h: 22, moveType: "H_PIT", range: 85, phase: idx * 0.9 });
+      orbs.push({ x: bx + 60, y: groundY - 85, collected: false, bob: idx });
+    } else if (pit.barType === "SIX_RANDOM_BARS") {
+      // 6 barras que se mexem aleatoriamente frente e trás, pra cima e pra baixo!
+      for (let b = 0; b < 6; b++) {
+        const bx = pit.start + 135 + b * 235;
+        const by = groundY - 55 - (b % 2) * 35;
+        platforms.push({
+          x: bx, baseX: bx,
+          y: by, baseY: by,
+          w: 118, h: 22,
+          moveType: "RANDOM_2D",
+          ampX: 38 + (b % 3) * 14,
+          ampY: 42 + ((b + 1) % 3) * 16,
+          freqX: 1.7 + (b % 3) * 0.45,
+          freqY: 2.1 + ((b + 1) % 3) * 0.4,
+          phaseX: b * 1.37,
+          phaseY: b * 2.13
+        });
+        orbs.push({ x: bx + 59, y: by - 48, collected: false, bob: b });
+      }
+    }
+  });
+  groundSegments.push({ x1: curX, x2: STAGE_LENGTH + 400 });
+
+  // Distribui os 5 MONSTROS EXCLUSIVOS nos trechos de chão firme
+  groundSegments.forEach((seg, idx) => {
+    const segLen = seg.x2 - seg.x1;
+    if (segLen < 380) return;
+    const midX = seg.x1 + segLen * 0.55;
+    if (midX < 380 || Math.abs(midX - 5600) < 260 || midX > 10200) return;
+    if (stageIdx === 7 && midX > 5600) return; // Segunda metade da Fase 8 é a Super Corrida!
+
+    if ((stageIdx === 3 || stageIdx === 5 || stageIdx === 8 || stageIdx === 9) && idx % 3 === 0) {
+      volcanoMonsters.push({ x: midX - 15, y: groundY - 80, w: 84, h: 80, timer: (idx % 3) * 0.7, alive: true });
+    } else if ((stageIdx === 0 || stageIdx === 1 || stageIdx === 2 || stageIdx === 5 || stageIdx === 7 || stageIdx === 8) && idx % 2 === 1) {
+      wolfMonsters.push({ x: midX, y: groundY - 46, w: 54, h: 46, minX: seg.x1 + 40, maxX: seg.x2 - 90, vx: -(115 + stageIdx * 10), alive: true });
+    } else if ((stageIdx === 1 || stageIdx === 5 || stageIdx === 6 || stageIdx === 8 || stageIdx === 9) && idx % 2 === 0) {
+      mushroomMonsters.push({ x: midX, y: groundY - 44, vy: 0, w: 46, h: 44, jumpTimer: (idx % 3) * 0.6, alive: true });
+    } else if (stageIdx >= 2 && stageIdx !== 4) {
+      alienMonsters.push({ x: midX, y: groundY - 54, w: 46, h: 54, minX: seg.x1 + 45, maxX: seg.x2 - 90, vx: 110 + stageIdx * 9, alive: true });
+    }
+
+    if ((stageIdx === 2 || stageIdx === 5 || stageIdx === 6 || stageIdx === 8 || stageIdx === 9) && segLen > 480) {
+      batMonsters.push({
+        x: midX, y: groundY - 115, baseY: groundY - 115,
+        minX: seg.x1 + 60, maxX: seg.x2 - 60, vx: 135, phase: idx * 1.1, alive: true
+      });
+    }
+  });
+
+  for (let ox = 250; ox < STAGE_LENGTH - 550; ox += 145) {
+    if (Math.abs(ox - 5600) < 160) continue;
+    orbs.push({ x: ox, y: groundY - 38, collected: false, bob: ox * 0.02 });
+  }
+
+  // Caixinha ? mais alta para o jogador pular para pegar (NÃO aparece na fase 5 do foguete!)
+  if (stageIdx === 4) {
+    singlePowerBox = null;
+  } else {
+    singlePowerBox = {
+      x: 6150,
+      y: groundY - 148,
+      w: 44, h: 44,
+      hit: false,
+      bounceOffset: 0
+    };
+  }
+
+  blueBook = { x: 5600, y: stageIdx === 4 ? H * 0.45 : groundY - 76, w: 46, h: 46, solved: false };
+  goldBook = { x: stageIdx === 9 ? 10420 : 10550, y: groundY - 78, w: 48, h: 48, solved: false };
+  endPortal = { x: 10940, y: groundY, open: false };
+
+  bossHits = 0;
+  bossErrors = 0;
+  player.x = 120;
+  player.y = groundY - player.h;
+  player.vx = 0;
+  player.vy = 0;
+  player.facing = 1;
+  player.grounded = true;
+  player.invuln = 0;
+  player.superPowerTimer = 0;
+  checkpointReached = false;
+  camX = 0;
+
+  document.getElementById("superPowerBanner").style.display = "none";
+  document.getElementById("portalHintBanner").style.display = "none";
+
+  const st = STAGES[stageIdx];
+  document.getElementById("progressTitle").textContent = `${st.name} • FASE ${st.id}/10`;
+  const banner = document.getElementById("zoneBanner");
+  document.getElementById("bannerTitle").textContent = st.name;
+  document.getElementById("bannerSub").textContent = st.sub;
+  banner.style.display = "block";
+  setTimeout(() => { banner.style.display = "none"; }, 2600);
+}
+
+// ============================================================================
+// DISPARO LASER DO FOGUETE ESTELAR
+// ============================================================================
+function fireJetLaser() {
+  if (gameState !== "PLAYING" || player.vehicleMode !== "SPACESHIP") return;
+  const now = performance.now();
+  if (now - lastShotTime < 210) return;
+  lastShotTime = now;
+
+  playSound("laser");
+  laserShots.push({
+    x: player.x + 76,
+    y: player.y + 24,
+    vx: 900,
+    w: 34,
+    h: 6
+  });
+}
+
+// ============================================================================
+// DESENHO DOS MONSTROS, PLANETAS, FOGUETE, SUPER CARRO MÁGICO E PERSONAGENS
+// ============================================================================
+function drawVolcanoMonster(vm, time) {
+  if (!vm.alive || vm.x < camX - 110 || vm.x > camX + W + 110) return;
+  ctx.save();
+  ctx.translate(vm.x + vm.w / 2, vm.y + vm.h);
+
+  const glow = ctx.createRadialGradient(0, -76, 8, 0, -76, 65);
+  glow.addColorStop(0, "rgba(249, 115, 22, 0.7)");
+  glow.addColorStop(1, "rgba(249, 115, 22, 0)");
+  ctx.fillStyle = glow;
+  ctx.beginPath(); ctx.arc(0, -76, 65, 0, Math.PI * 2); ctx.fill();
+
+  ctx.fillStyle = "#44403c";
+  ctx.strokeStyle = "#fde047";
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(-42, 0); ctx.lineTo(-22, -76); ctx.lineTo(22, -76); ctx.lineTo(42, 0);
+  ctx.closePath(); ctx.fill(); ctx.stroke();
+
+  ctx.fillStyle = "#f97316";
+  ctx.beginPath();
+  ctx.moveTo(-14, -76); ctx.lineTo(-22, -30); ctx.lineTo(-10, -45); ctx.lineTo(-2, -18);
+  ctx.lineTo(8, -48); ctx.lineTo(20, -28); ctx.lineTo(14, -76);
+  ctx.closePath(); ctx.fill();
+
+  ctx.fillStyle = "#fde047";
+  ctx.beginPath();
+  ctx.ellipse(0, -76, 21, 7 + Math.sin(time * 10) * 2.5, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = "#ffffff";
+  ctx.beginPath(); ctx.arc(-11, -36, 6.5, 0, Math.PI * 2); ctx.arc(11, -36, 6.5, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = "#dc2626";
+  ctx.beginPath(); ctx.arc(-11, -36, 3.5, 0, Math.PI * 2); ctx.arc(11, -36, 3.5, 0, Math.PI * 2); ctx.fill();
+
+  ctx.restore();
+}
+
+function drawWolfMonster(wm, time) {
+  if (!wm.alive || wm.x < camX - 80 || wm.x > camX + W + 80) return;
+  const dir = wm.vx >= 0 ? 1 : -1;
+  ctx.save();
+  ctx.translate(wm.x + wm.w / 2, wm.y + wm.h);
+  ctx.scale(dir, 1);
+
+  const step = Math.sin(time * 14) * 5;
+  ctx.strokeStyle = "#0f172a"; ctx.lineWidth = 2.5;
+  ctx.fillStyle = "#475569";
+  ctx.beginPath(); ctx.moveTo(-22, -22); ctx.lineTo(-38, -32 + step); ctx.lineTo(-26, -14); ctx.closePath(); ctx.fill(); ctx.stroke();
+
+  ctx.fillStyle = "#334155";
+  ctx.fillRect(-16 + step, -14, 8, 14);
+  ctx.fillRect(10 - step, -14, 8, 14);
+
+  ctx.fillStyle = "#475569";
+  ctx.beginPath(); ctx.roundRect(-24, -32, 46, 20, 8); ctx.fill(); ctx.stroke();
+  ctx.beginPath(); ctx.arc(18, -34, 14, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(10, -44); ctx.lineTo(14, -58); ctx.lineTo(20, -45); ctx.fill(); ctx.stroke();
+
+  ctx.fillStyle = "#94a3b8";
+  ctx.beginPath(); ctx.roundRect(24, -34, 16, 10, 4); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = "#ffffff";
+  ctx.beginPath(); ctx.moveTo(28, -24); ctx.lineTo(31, -19); ctx.lineTo(34, -24); ctx.fill();
+  ctx.fillStyle = "#fde047";
+  ctx.beginPath(); ctx.arc(22, -37, 3.5, 0, Math.PI * 2); ctx.fill();
+  ctx.restore();
+}
+
+function drawBatMonster(bat, time) {
+  if (!bat.alive || bat.x < camX - 90 || bat.x > camX + W + 90) return;
+  const wingFlap = Math.sin(time * 16 + bat.phase) * 16;
+
+  ctx.save();
+  ctx.translate(bat.x, bat.y);
+
+  const glow = ctx.createRadialGradient(0, 0, 6, 0, 0, 42);
+  glow.addColorStop(0, "rgba(244, 63, 94, 0.38)");
+  glow.addColorStop(1, "rgba(244, 63, 94, 0)");
+  ctx.fillStyle = glow;
+  ctx.beginPath(); ctx.arc(0, 0, 42, 0, Math.PI * 2); ctx.fill();
+
+  ctx.fillStyle = "#312e81"; ctx.strokeStyle = "#fde047"; ctx.lineWidth = 2.5;
+  ctx.beginPath(); ctx.moveTo(-12, 0); ctx.quadraticCurveTo(-28, -22 + wingFlap, -44, -6 + wingFlap); ctx.lineTo(-32, 10); ctx.lineTo(-20, 6); ctx.closePath(); ctx.fill(); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(12, 0); ctx.quadraticCurveTo(28, -22 + wingFlap, 44, -6 + wingFlap); ctx.lineTo(32, 10); ctx.lineTo(20, 6); ctx.closePath(); ctx.fill(); ctx.stroke();
+
+  ctx.fillStyle = "#1e1b4b";
+  ctx.beginPath(); ctx.arc(0, 0, 17, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(-10, -13); ctx.lineTo(-14, -25); ctx.lineTo(-4, -16); ctx.fill(); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(10, -13); ctx.lineTo(14, -25); ctx.lineTo(4, -16); ctx.fill(); ctx.stroke();
+
+  ctx.fillStyle = "#f43f5e";
+  ctx.beginPath(); ctx.arc(-6, -3, 3.8, 0, Math.PI * 2); ctx.arc(6, -3, 3.8, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = "#ffffff";
+  ctx.beginPath(); ctx.moveTo(-5, 6); ctx.lineTo(-3, 11); ctx.lineTo(-1, 6); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(5, 6); ctx.lineTo(3, 11); ctx.lineTo(1, 6); ctx.fill();
+  ctx.restore();
+}
+
+function drawAlienMonster(al) {
+  if (!al.alive || al.x < camX - 80 || al.x > camX + W + 80) return;
+  ctx.save();
+  ctx.translate(al.x + al.w / 2, al.y + al.h);
+
+  ctx.strokeStyle = "#0f172a"; ctx.lineWidth = 2.5;
+  ctx.fillStyle = "#22c55e";
+  ctx.beginPath(); ctx.roundRect(-14, -30, 28, 22, 8); ctx.fill(); ctx.stroke();
+  ctx.fillRect(-10, -8, 7, 8); ctx.fillRect(3, -8, 7, 8);
+
+  ctx.fillStyle = "#4ade80";
+  ctx.beginPath(); ctx.ellipse(0, -42, 18, 14, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+
+  ctx.beginPath(); ctx.moveTo(-8, -54); ctx.lineTo(-14, -64); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(8, -54); ctx.lineTo(14, -64); ctx.stroke();
+  ctx.fillStyle = "#fde047";
+  ctx.beginPath(); ctx.arc(-14, -64, 3.5, 0, Math.PI * 2); ctx.arc(14, -64, 3.5, 0, Math.PI * 2); ctx.fill();
+
+  ctx.fillStyle = "#0f172a";
+  ctx.beginPath(); ctx.ellipse(-7, -42, 4.5, 6.5, -0.25, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(7, -42, 4.5, 6.5, 0.25, 0, Math.PI * 2); ctx.fill();
+
+  ctx.fillStyle = "rgba(56, 189, 248, 0.25)";
+  ctx.beginPath(); ctx.arc(0, -42, 22, 0, Math.PI * 2); ctx.fill();
+  ctx.restore();
+}
+
+function drawMushroomMonster(mm) {
+  if (!mm.alive || mm.x < camX - 80 || mm.x > camX + W + 80) return;
+  ctx.save();
+  ctx.translate(mm.x + mm.w / 2, mm.y + mm.h);
+
+  ctx.strokeStyle = "#0f172a"; ctx.lineWidth = 2.5;
+  ctx.fillStyle = "#fef3c7";
+  ctx.beginPath(); ctx.roundRect(-13, -22, 26, 22, 6); ctx.fill(); ctx.stroke();
+
+  ctx.fillStyle = "#ef4444";
+  ctx.beginPath(); ctx.arc(0, -22, 23, Math.PI, 0); ctx.closePath(); ctx.fill(); ctx.stroke();
+
+  ctx.fillStyle = "#ffffff";
+  ctx.beginPath(); ctx.arc(-10, -32, 4.5, 0, Math.PI * 2); ctx.arc(10, -32, 4.5, 0, Math.PI * 2); ctx.arc(0, -38, 4, 0, Math.PI * 2); ctx.fill();
+
+  ctx.fillStyle = "#0f172a";
+  ctx.beginPath(); ctx.arc(-5, -13, 2.5, 0, Math.PI * 2); ctx.arc(5, -13, 2.5, 0, Math.PI * 2); ctx.fill();
+  ctx.restore();
+}
+
+function drawHighQualityPlanet(pl) {
+  if (pl.x < camX - 180 || pl.x > camX + W + 180) return;
+  ctx.save();
+  ctx.translate(pl.x, pl.y);
+
+  const atmo = ctx.createRadialGradient(0, 0, pl.r * 0.85, 0, 0, pl.r * 1.38);
+  atmo.addColorStop(0, "rgba(255,255,255,0.22)");
+  atmo.addColorStop(1, "rgba(255,255,255,0)");
+  ctx.fillStyle = atmo;
+  ctx.beginPath(); ctx.arc(0, 0, pl.r * 1.38, 0, Math.PI * 2); ctx.fill();
+
+  if (pl.type === "saturn") {
+    ctx.strokeStyle = "rgba(253, 224, 71, 0.7)";
+    ctx.lineWidth = 9;
+    ctx.beginPath(); ctx.ellipse(0, 0, pl.r * 1.85, pl.r * 0.45, -0.25, Math.PI, Math.PI * 2); ctx.stroke();
+  }
+
+  const pGrad = ctx.createRadialGradient(-pl.r * 0.35, -pl.r * 0.35, pl.r * 0.1, 0, 0, pl.r);
+  pGrad.addColorStop(0, pl.c1);
+  pGrad.addColorStop(1, pl.c2);
+  ctx.fillStyle = pGrad;
+  ctx.beginPath(); ctx.arc(0, 0, pl.r, 0, Math.PI * 2); ctx.fill();
+
+  ctx.save();
+  ctx.beginPath(); ctx.arc(0, 0, pl.r, 0, Math.PI * 2); ctx.clip();
+
+  if (pl.type === "earth") {
+    ctx.fillStyle = "#10b981";
+    ctx.beginPath(); ctx.arc(-10, -8, 15, 0, Math.PI * 2); ctx.arc(14, 10, 12, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = "rgba(255,255,255,0.6)";
+    ctx.fillRect(-35, -18, 45, 5); ctx.fillRect(-10, 14, 48, 5);
+  } else if (pl.type === "jupiter") {
+    ctx.fillStyle = "rgba(180, 83, 9, 0.45)";
+    ctx.fillRect(-pl.r, -28, pl.r * 2, 10);
+    ctx.fillRect(-pl.r, -6, pl.r * 2, 12);
+    ctx.fillRect(-pl.r, 18, pl.r * 2, 10);
+    ctx.fillStyle = "#dc2626";
+    ctx.beginPath(); ctx.ellipse(18, 12, 14, 8, 0, 0, Math.PI * 2); ctx.fill();
+  } else if (pl.type === "mars") {
+    ctx.fillStyle = "#ffffff";
+    ctx.beginPath(); ctx.arc(0, -pl.r + 4, 10, 0, Math.PI * 2); ctx.fill();
+  } else if (pl.type === "rocky") {
+    ctx.fillStyle = "rgba(15,23,42,0.25)";
+    ctx.beginPath(); ctx.arc(-8, -6, 5, 0, Math.PI * 2); ctx.arc(9, 7, 4, 0, Math.PI * 2); ctx.fill();
+  }
+  ctx.restore();
+
+  if (pl.type === "saturn") {
+    ctx.strokeStyle = "rgba(254, 240, 138, 0.92)";
+    ctx.lineWidth = 9;
+    ctx.beginPath(); ctx.ellipse(0, 0, pl.r * 1.85, pl.r * 0.45, -0.25, 0, Math.PI); ctx.stroke();
+    ctx.strokeStyle = "rgba(217, 119, 6, 0.7)";
+    ctx.lineWidth = 4;
+    ctx.beginPath(); ctx.ellipse(0, 0, pl.r * 1.5, pl.r * 0.35, -0.25, 0, Math.PI); ctx.stroke();
+  }
+
+  ctx.fillStyle = "#fde047";
+  ctx.font = "900 14px Segoe UI";
+  ctx.textAlign = "center";
+  ctx.fillText(pl.name, 0, pl.r + 22);
+
+  ctx.restore();
+}
+
+function drawComet(c, time) {
+  if (!c.alive || c.x < camX - 140 || c.x > camX + W + 140) return;
+  ctx.save();
+  ctx.translate(c.x, c.y);
+
+  const tailGrad = ctx.createLinearGradient(0, 0, 85, 0);
+  tailGrad.addColorStop(0, "rgba(249, 115, 22, 0.85)");
+  tailGrad.addColorStop(0.5, "rgba(253, 224, 71, 0.45)");
+  tailGrad.addColorStop(1, "rgba(253, 224, 71, 0)");
+  ctx.fillStyle = tailGrad;
+  ctx.beginPath();
+  ctx.moveTo(0, -c.r * 0.85);
+  ctx.lineTo(85 + Math.sin(time * 20) * 10, 0);
+  ctx.lineTo(0, c.r * 0.85);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.fillStyle = "#7c2d12";
+  ctx.strokeStyle = "#fde047";
+  ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.arc(0, 0, c.r, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+
+  ctx.fillStyle = "#f97316";
+  ctx.beginPath(); ctx.arc(-c.r * 0.25, -c.r * 0.2, c.r * 0.35, 0, Math.PI * 2); ctx.fill();
+
+  ctx.restore();
+}
+
+function drawRocketMatheus(px, py, superPower, time) {
+  ctx.save();
+  ctx.translate(px + 34, py + 24);
+
+  if (superPower > 0) {
+    const aura = ctx.createRadialGradient(0, 0, 10, 0, 0, 62);
+    aura.addColorStop(0, "rgba(253, 224, 71, 0.7)");
+    aura.addColorStop(1, "rgba(253, 224, 71, 0)");
+    ctx.fillStyle = aura;
+    ctx.beginPath(); ctx.arc(0, 0, 62, 0, Math.PI * 2); ctx.fill();
+  }
+
+  const flameLen = 36 + Math.sin(time * 35) * 10;
+  ctx.fillStyle = "#38bdf8";
+  ctx.beginPath(); ctx.moveTo(-36, -12); ctx.lineTo(-36 - flameLen, 0); ctx.lineTo(-36, 12); ctx.closePath(); ctx.fill();
+
+  ctx.fillStyle = "#fde047";
+  ctx.beginPath(); ctx.moveTo(-36, -7); ctx.lineTo(-36 - flameLen * 0.65, 0); ctx.lineTo(-36, 7); ctx.closePath(); ctx.fill();
+
+  ctx.fillStyle = "#334155"; ctx.strokeStyle = "#fde047"; ctx.lineWidth = 2;
+  ctx.fillRect(-40, -11, 8, 22); ctx.strokeRect(-40, -11, 8, 22);
+
+  ctx.fillStyle = "#ef4444"; ctx.strokeStyle = "#0f172a"; ctx.lineWidth = 2.5;
+  ctx.beginPath(); ctx.moveTo(-18, -15); ctx.lineTo(-38, -32); ctx.lineTo(-32, -14); ctx.closePath(); ctx.fill(); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(-18, 15); ctx.lineTo(-38, 32); ctx.lineTo(-32, 14); ctx.closePath(); ctx.fill(); ctx.stroke();
+
+  const bodyGrad = ctx.createLinearGradient(0, -18, 0, 18);
+  bodyGrad.addColorStop(0, "#ffffff");
+  bodyGrad.addColorStop(0.5, "#e2e8f0");
+  bodyGrad.addColorStop(1, "#94a3b8");
+  ctx.fillStyle = bodyGrad;
+  ctx.beginPath();
+  ctx.moveTo(-32, -16);
+  ctx.quadraticCurveTo(10, -18, 34, -8);
+  ctx.lineTo(34, 8);
+  ctx.quadraticCurveTo(10, 18, -32, 16);
+  ctx.closePath(); ctx.fill(); ctx.stroke();
+
+  ctx.fillStyle = "#0d9488";
+  ctx.fillRect(-26, -5, 52, 10);
+  ctx.fillStyle = "#fde047";
+  ctx.fillRect(-26, -2, 52, 4);
+
+  ctx.fillStyle = "#ef4444";
+  ctx.beginPath(); ctx.moveTo(32, -10); ctx.quadraticCurveTo(52, 0, 32, 10); ctx.closePath(); ctx.fill(); ctx.stroke();
+
+  ctx.fillStyle = "#fde047";
+  ctx.fillRect(42, -3, 10, 6);
+
+  ctx.fillStyle = "#0284c7"; ctx.strokeStyle = "#fde047"; ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.arc(6, 0, 13, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+
+  ctx.fillStyle = "#ffcdb2";
+  ctx.beginPath(); ctx.arc(6, 1, 8, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = "#1e293b";
+  ctx.beginPath(); ctx.arc(6, -2, 8, Math.PI, 0); ctx.fill();
+  ctx.fillStyle = "#38bdf8";
+  ctx.fillRect(4, -2, 8, 3.5);
+
+  ctx.restore();
+}
+
+function drawSuperMagicCar(px, py, isRival, superPower, time) {
+  ctx.save();
+  ctx.translate(px + 42, py + 48);
+
+  if (superPower > 0 && !isRival) {
+    const aura = ctx.createRadialGradient(0, -18, 8, 0, -18, 60);
+    aura.addColorStop(0, "rgba(253, 224, 71, 0.65)");
+    aura.addColorStop(1, "rgba(253, 224, 71, 0)");
+    ctx.fillStyle = aura;
+    ctx.beginPath(); ctx.arc(0, -18, 60, 0, Math.PI * 2); ctx.fill();
+  }
+
+  // Chama Turbo Traseira
+  const flame = 22 + Math.sin(time * 30) * 8;
+  ctx.fillStyle = isRival ? "#f43f5e" : "#38bdf8";
+  ctx.beginPath(); ctx.moveTo(-42, -10); ctx.lineTo(-42 - flame, -16); ctx.lineTo(-42, -22); ctx.closePath(); ctx.fill();
+
+  // Aerofólio Traseiro
+  ctx.fillStyle = "#fde047"; ctx.strokeStyle = "#0f172a"; ctx.lineWidth = 2.5;
+  ctx.beginPath(); ctx.moveTo(-36, -24); ctx.lineTo(-44, -38); ctx.lineTo(-30, -38); ctx.lineTo(-28, -24); ctx.closePath(); ctx.fill(); ctx.stroke();
+
+  // Piloto dentro da cabine
+  ctx.fillStyle = isRival ? "#cbd5e1" : "#ffcdb2";
+  ctx.beginPath(); ctx.arc(0, -32, 10, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = isRival ? "#be123c" : "#1e293b";
+  ctx.beginPath(); ctx.arc(0, -35, 10, Math.PI, 0); ctx.fill();
+
+  // Para-brisa brilhante
+  ctx.fillStyle = "rgba(186, 230, 253, 0.7)";
+  ctx.beginPath(); ctx.moveTo(-14, -26); ctx.quadraticCurveTo(4, -42, 20, -24); ctx.closePath(); ctx.fill(); ctx.stroke();
+
+  // Carroceria Futurista Estelar
+  const carGrad = ctx.createLinearGradient(0, -30, 0, -4);
+  if (isRival) {
+    carGrad.addColorStop(0, "#fb7185");
+    carGrad.addColorStop(1, "#9f1239");
+  } else {
+    carGrad.addColorStop(0, "#2dd4bf");
+    carGrad.addColorStop(0.5, "#0284c7");
+    carGrad.addColorStop(1, "#1e1b4b");
+  }
+  ctx.fillStyle = carGrad;
+  ctx.beginPath();
+  ctx.moveTo(-42, -8); ctx.lineTo(-38, -26);
+  ctx.quadraticCurveTo(10, -28, 46, -14);
+  ctx.quadraticCurveTo(50, -6, 42, -4);
+  ctx.lineTo(-42, -4);
+  ctx.closePath(); ctx.fill(); ctx.stroke();
+
+  ctx.fillStyle = "#fde047";
+  ctx.fillRect(-34, -14, 68, 4);
+  ctx.beginPath(); ctx.arc(43, -12, 5, 0, Math.PI * 2); ctx.fill();
+
+  [-26, 26].forEach(wx => {
+    ctx.fillStyle = "#0f172a";
+    ctx.beginPath(); ctx.arc(wx, -3, 13, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = "#38bdf8"; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.arc(wx, -3, 12, 0, Math.PI * 2); ctx.stroke();
+    ctx.strokeStyle = "#fde047"; ctx.lineWidth = 2.5;
+    ctx.beginPath(); ctx.arc(wx, -3, 6, time * 16, time * 16 + Math.PI * 1.3); ctx.stroke();
+  });
+
+  ctx.restore();
+}
+
+function drawMatheus(px, py, facing, walkFrame, grounded, invuln, superPower, time) {
+  if (player.vehicleMode === "SPACESHIP") {
+    drawRocketMatheus(px, py, superPower, time);
+    return;
+  }
+  if (player.vehicleMode === "CAR") {
+    drawSuperMagicCar(px, py, false, superPower, time);
+    return;
+  }
+
+  if (superPower <= 0 && invuln > 0 && Math.floor(time * 18) % 2 === 0) return;
+
+  ctx.save();
+  ctx.translate(px + player.w / 2, py + player.h);
+  ctx.scale(facing, 1);
+
+  if (superPower > 0) {
+    const pulseR = 46 + Math.sin(time * 18) * 7;
+    const aura = ctx.createRadialGradient(0, -34, 8, 0, -34, pulseR);
+    aura.addColorStop(0, "rgba(253, 224, 71, 0.75)");
+    aura.addColorStop(0.6, "rgba(245, 158, 11, 0.45)");
+    aura.addColorStop(1, "rgba(253, 224, 71, 0)");
+    ctx.fillStyle = aura;
+    ctx.beginPath(); ctx.arc(0, -34, pulseR, 0, Math.PI * 2); ctx.fill();
+  }
+
+  ctx.fillStyle = "rgba(0,0,0,0.25)";
+  ctx.beginPath(); ctx.ellipse(0, 0, 20, 6, 0, 0, Math.PI * 2); ctx.fill();
+
+  const swing = grounded ? Math.sin(walkFrame * 14) * 10 : 12;
+
+  ctx.fillStyle = superPower > 0 ? "#fef08a" : "#fbbf24";
+  ctx.strokeStyle = "#92400e";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(-6, -44);
+  ctx.quadraticCurveTo(-26, -46 + Math.sin(time * 12) * 5, -36, -34 + Math.cos(time * 10) * 6);
+  ctx.lineTo(-32, -26 + Math.cos(time * 10) * 6);
+  ctx.quadraticCurveTo(-20, -36, -4, -38);
+  ctx.closePath(); ctx.fill(); ctx.stroke();
+
+  ctx.fillStyle = "#1e293b";
+  ctx.fillRect(-8 - swing * 0.6, -22, 10, 14);
+  ctx.fillStyle = "#f8fafc";
+  ctx.beginPath(); ctx.roundRect(-10 - swing * 0.6, -10, 16, 10, 4); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = superPower > 0 ? "#fde047" : "#38bdf8";
+  ctx.fillRect(-10 - swing * 0.6, -3, 16, 3);
+
+  ctx.fillStyle = superPower > 0 ? "#f59e0b" : "#0d9488";
+  ctx.beginPath(); ctx.roundRect(-13, -44, 26, 25, 6); ctx.fill(); ctx.stroke();
+
+  ctx.fillStyle = "#f8fafc";
+  ctx.beginPath(); ctx.roundRect(-10, -43, 20, 18, 4); ctx.fill();
+
+  ctx.fillStyle = superPower > 0 ? "#ef4444" : "#38bdf8";
+  ctx.beginPath();
+  ctx.moveTo(4, -36); ctx.lineTo(8, -32); ctx.lineTo(4, -28); ctx.lineTo(0, -32);
+  ctx.closePath(); ctx.fill();
+
+  ctx.fillStyle = "#1e293b";
+  ctx.fillRect(-2 + swing * 0.6, -22, 10, 14);
+  ctx.fillStyle = "#f8fafc";
+  ctx.beginPath(); ctx.roundRect(-2 + swing * 0.6, -10, 16, 10, 4); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = superPower > 0 ? "#fde047" : "#38bdf8";
+  ctx.fillRect(-2 + swing * 0.6, -3, 16, 3);
+
+  ctx.fillStyle = "#fbbf24";
+  ctx.beginPath(); ctx.roundRect(-13, -47, 26, 8, 4); ctx.fill(); ctx.stroke();
+
+  ctx.fillStyle = "#ffcdb2";
+  ctx.beginPath(); ctx.arc(0, -58, 15, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+
+  ctx.fillStyle = "#ffffff";
+  ctx.beginPath(); ctx.ellipse(6, -58, 4.5, 6, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = superPower > 0 ? "#d97706" : "#0d9488";
+  ctx.beginPath(); ctx.ellipse(7.5, -58, 2.5, 4, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = "#ffffff";
+  ctx.beginPath(); ctx.arc(8.5, -60, 1.3, 0, Math.PI * 2); ctx.fill();
+
+  ctx.fillStyle = superPower > 0 ? "#fde047" : "#1e293b";
+  ctx.beginPath();
+  ctx.moveTo(-15, -58); ctx.lineTo(-18, -70); ctx.lineTo(-8, -68);
+  ctx.lineTo(-3, -77); ctx.lineTo(5, -70); ctx.lineTo(14, -73);
+  ctx.lineTo(13, -62); ctx.quadraticCurveTo(0, -65, -15, -58);
+  ctx.fill(); ctx.stroke();
+
+  ctx.fillStyle = "#fbbf24";
+  ctx.fillRect(-13, -65, 26, 4);
+  ctx.fillStyle = superPower > 0 ? "#fef08a" : "#38bdf8";
+  ctx.beginPath(); ctx.roundRect(4, -67, 11, 7, 2); ctx.fill(); ctx.stroke();
+
+  ctx.save();
+  ctx.translate(0, -40);
+  ctx.rotate(grounded ? -swing * 0.05 : -2.3);
+  ctx.fillStyle = "#ffcdb2";
+  ctx.beginPath(); ctx.roundRect(-4, 0, 8, 16, 4); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = "#fbbf24";
+  ctx.fillRect(-5, 11, 10, 4);
+  ctx.restore();
+
+  ctx.restore();
+}
+
+// PRINCESA MELINA COM CABELOS CASTANHOS
+function drawMelina(px, py, facing, time) {
+  ctx.save();
+  const hoverY = Math.sin(time * 3.5) * 6;
+  ctx.translate(px, py + hoverY);
+  ctx.scale(facing, 1);
+
+  const aura = ctx.createRadialGradient(0, -42, 5, 0, -42, 52);
+  aura.addColorStop(0, "rgba(192, 132, 252, 0.45)");
+  aura.addColorStop(1, "rgba(192, 132, 252, 0)");
+  ctx.fillStyle = aura;
+  ctx.beginPath(); ctx.arc(0, -42, 52, 0, Math.PI * 2); ctx.fill();
+
+  ctx.fillStyle = "rgba(168, 85, 247, 0.55)";
+  ctx.beginPath();
+  ctx.moveTo(-6, -46);
+  ctx.quadraticCurveTo(-28, -30, -34, -6 + Math.sin(time * 5) * 4);
+  ctx.lineTo(-12, -4);
+  ctx.closePath(); ctx.fill();
+
+  ctx.strokeStyle = "#3b0764"; ctx.lineWidth = 2;
+  ctx.fillStyle = "#9333ea";
+  ctx.beginPath(); ctx.moveTo(-10, -44); ctx.lineTo(10, -44); ctx.lineTo(22, -4); ctx.lineTo(-22, -4); ctx.closePath(); ctx.fill(); ctx.stroke();
+
+  ctx.fillStyle = "#38bdf8";
+  ctx.beginPath(); ctx.moveTo(-11, -44); ctx.lineTo(11, -44); ctx.lineTo(14, -26); ctx.lineTo(-14, -26); ctx.closePath(); ctx.fill(); ctx.stroke();
+
+  // Cabelos Castanhos Longos (Parte traseira)
+  ctx.fillStyle = "#5c3317";
+  ctx.beginPath(); ctx.roundRect(-16, -66, 18, 48, 9); ctx.fill(); ctx.stroke();
+
+  ctx.fillStyle = "#ffd6ba";
+  ctx.beginPath(); ctx.arc(0, -58, 14, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+
+  ctx.fillStyle = "#ffffff";
+  ctx.beginPath(); ctx.ellipse(5, -58, 4, 5.5, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = "#7e22ce";
+  ctx.beginPath(); ctx.ellipse(6.5, -58, 2.3, 3.8, 0, 0, Math.PI * 2); ctx.fill();
+
+  // Cabelos Castanhos (Topo e Franja)
+  ctx.fillStyle = "#5c3317";
+  ctx.beginPath(); ctx.arc(0, -61, 14.5, Math.PI, Math.PI * 2); ctx.fill(); ctx.stroke();
+
+  [-10, 0, 10].forEach((gx, idx) => {
+    const gy = -78 - (idx === 1 ? 5 : 0) + Math.sin(time * 5 + idx) * 2;
+    ctx.fillStyle = "#fde047";
+    ctx.beginPath(); ctx.moveTo(gx, gy - 5); ctx.lineTo(gx + 4, gy); ctx.lineTo(gx, gy + 5); ctx.lineTo(gx - 4, gy); ctx.closePath(); ctx.fill(); ctx.stroke();
+  });
+
+  const astroX = 26;
+  const astroY = -44 + Math.cos(time * 4) * 4;
+  ctx.strokeStyle = "#fde047"; ctx.lineWidth = 2.5;
+  ctx.beginPath(); ctx.arc(astroX, astroY, 10, 0, Math.PI * 2); ctx.stroke();
+  ctx.fillStyle = "#38bdf8";
+  ctx.beginPath(); ctx.arc(astroX, astroY, 4.5, 0, Math.PI * 2); ctx.fill();
+
+  ctx.restore();
+}
+
+function drawGolem(gx, gy, liberated, time) {
+  ctx.save();
+  const bob = Math.sin(time * 3) * 5;
+  ctx.translate(gx, gy + bob);
+
+  ctx.strokeStyle = "#0f172a"; ctx.lineWidth = 3;
+  ctx.fillStyle = liberated ? "#fbbf24" : "#334155";
+
+  ctx.beginPath(); ctx.moveTo(-36, -20); ctx.lineTo(-46, -85); ctx.lineTo(0, -110); ctx.lineTo(46, -85); ctx.lineTo(36, -20); ctx.closePath(); ctx.fill(); ctx.stroke();
+
+  ctx.fillStyle = liberated ? "#10b981" : "#a855f7";
+  ctx.beginPath(); ctx.moveTo(0, -82); ctx.lineTo(16, -64); ctx.lineTo(0, -46); ctx.lineTo(-16, -64); ctx.closePath(); ctx.fill(); ctx.stroke();
+
+  ctx.fillStyle = liberated ? "#fde047" : "#475569";
+  ctx.beginPath(); ctx.roundRect(-24, -138, 48, 30, 8); ctx.fill(); ctx.stroke();
+
+  ctx.fillStyle = liberated ? "#10b981" : "#f43f5e";
+  ctx.fillRect(-16, -128, 32, 8);
+
+  [-56, 56].forEach((fx, idx) => {
+    const fy = -55 + Math.sin(time * 4 + idx * 2) * 8;
+    ctx.fillStyle = liberated ? "#fbbf24" : "#334155";
+    ctx.beginPath(); ctx.roundRect(fx - 14, fy - 14, 28, 28, 8); ctx.fill(); ctx.stroke();
+  });
+
+  ctx.restore();
+}
+
+function drawFloatingBook(book, isGold, time) {
+  if (book.x < camX - 100 || book.x > camX + W + 100) return;
+
+  const hoverY = book.y + Math.sin(time * 4) * 8;
+  ctx.save();
+  ctx.translate(book.x + book.w / 2, hoverY + book.h / 2);
+
+  const auraColor = book.solved
+    ? "rgba(16, 185, 129, 0.55)"
+    : (isGold ? "rgba(253, 224, 71, 0.7)" : "rgba(56, 189, 248, 0.65)");
+  const grad = ctx.createRadialGradient(0, 0, 6, 0, 0, 44);
+  grad.addColorStop(0, auraColor);
+  grad.addColorStop(1, "rgba(0,0,0,0)");
+  ctx.fillStyle = grad;
+  ctx.beginPath(); ctx.arc(0, 0, 44, 0, Math.PI * 2); ctx.fill();
+
+  ctx.strokeStyle = "#0f172a"; ctx.lineWidth = 2.5;
+  ctx.fillStyle = book.solved ? "#10b981" : (isGold ? "#f59e0b" : "#0284c7");
+
+  ctx.beginPath(); ctx.moveTo(0, -14); ctx.quadraticCurveTo(-14, -20, -24, -14); ctx.lineTo(-24, 16); ctx.quadraticCurveTo(-14, 10, 0, 16); ctx.closePath(); ctx.fill(); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(0, -14); ctx.quadraticCurveTo(14, -20, 24, -14); ctx.lineTo(24, 16); ctx.quadraticCurveTo(14, 10, 0, 16); ctx.closePath(); ctx.fill(); ctx.stroke();
+
+  ctx.fillStyle = "#ffffff";
+  ctx.beginPath(); ctx.moveTo(0, -12); ctx.quadraticCurveTo(-11, -17, -20, -11); ctx.lineTo(-20, 12); ctx.quadraticCurveTo(-11, 7, 0, 12); ctx.quadraticCurveTo(11, 7, 20, 12); ctx.lineTo(20, -11); ctx.quadraticCurveTo(11, -17, 0, -12); ctx.closePath(); ctx.fill();
+
+  const labelText = book.solved ? "✔ PONTO SALVO" : (isGold ? "LIVRO DOURADO" : "LIVRO DO SABER");
+  ctx.font = "900 13px Segoe UI";
+  const textW = ctx.measureText(labelText).width;
+  ctx.fillStyle = "rgba(11, 19, 43, 0.92)";
+  ctx.strokeStyle = book.solved ? "#10b981" : (isGold ? "#fde047" : "#38bdf8");
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.roundRect(-textW / 2 - 10, -45, textW + 20, 22, 8);
+  ctx.fill(); ctx.stroke();
+
+  ctx.fillStyle = book.solved ? "#34d399" : (isGold ? "#fde047" : "#7dd3fc");
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText(labelText, 0, -34);
+
+  ctx.restore();
+}
+
+function drawDimensionalPortal(portal, time) {
+  if (portal.x < camX - 120 || portal.x > camX + W + 120) return;
+
+  ctx.save();
+  ctx.translate(portal.x, portal.y);
+
+  ctx.strokeStyle = portal.open ? "#fde047" : "#475569";
+  ctx.lineWidth = 10;
+  ctx.beginPath(); ctx.arc(0, -56, 54, Math.PI * 0.85, Math.PI * 0.15, false); ctx.stroke();
+
+  ctx.fillStyle = "#1e293b";
+  ctx.fillRect(-56, -56, 14, 56);
+  ctx.fillRect(42, -56, 14, 56);
+
+  if (portal.open) {
+    const vortexGrad = ctx.createRadialGradient(0, -56, 6, 0, -56, 48);
+    vortexGrad.addColorStop(0, "#ffffff");
+    vortexGrad.addColorStop(0.4, "#38bdf8");
+    vortexGrad.addColorStop(0.8, "#9333ea");
+    vortexGrad.addColorStop(1, "rgba(147, 51, 234, 0)");
+    ctx.fillStyle = vortexGrad;
+    ctx.beginPath(); ctx.arc(0, -56, 48, 0, Math.PI * 2); ctx.fill();
+
+    ctx.strokeStyle = "#fde047"; ctx.lineWidth = 3;
+    for (let r = 14; r <= 38; r += 12) {
+      ctx.beginPath(); ctx.arc(0, -56, r, time * 4 + r, time * 4 + r + Math.PI * 1.3); ctx.stroke();
+    }
+
+    ctx.fillStyle = "rgba(11, 19, 43, 0.9)";
+    ctx.beginPath(); ctx.roundRect(-78, -138, 156, 22, 8); ctx.fill();
+    ctx.fillStyle = "#fde047"; ctx.font = "900 13px Segoe UI"; ctx.textAlign = "center";
+    ctx.fillText("ENTRE NO PORTAL ➔", 0, -123);
+  } else {
+    ctx.fillStyle = "rgba(15, 23, 42, 0.75)";
+    ctx.beginPath(); ctx.arc(0, -56, 44, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = "rgba(11, 19, 43, 0.9)";
+    ctx.beginPath(); ctx.roundRect(-95, -138, 190, 22, 8); ctx.fill();
+    ctx.fillStyle = "#e2e8f0"; ctx.font = "900 12px Segoe UI"; ctx.textAlign = "center";
+    ctx.fillText("🔒 ABRA O LIVRO DOURADO", 0, -123);
+  }
+
+  ctx.restore();
+}
+
+// ============================================================================
+// RENDERIZAÇÃO DOS CENÁRIOS
+// ============================================================================
+function drawElaborateBackground(st, time, overrideSky1 = null, overrideSky2 = null) {
+  if (player.vehicleMode === "SPACESHIP") {
+    const spaceGrad = ctx.createLinearGradient(0, 0, 0, H);
+    spaceGrad.addColorStop(0, "#020617");
+    spaceGrad.addColorStop(0.5, "#0f172a");
+    spaceGrad.addColorStop(1, "#1e1b4b");
+    ctx.fillStyle = spaceGrad;
+    ctx.fillRect(0, 0, W, H);
+
+    const neb1 = ctx.createRadialGradient(W * 0.3, H * 0.35, 20, W * 0.3, H * 0.35, 280);
+    neb1.addColorStop(0, "rgba(139, 92, 246, 0.28)");
+    neb1.addColorStop(1, "rgba(139, 92, 246, 0)");
+    ctx.fillStyle = neb1; ctx.fillRect(0, 0, W, H);
+
+    const neb2 = ctx.createRadialGradient(W * 0.75, H * 0.65, 20, W * 0.75, H * 0.65, 300);
+    neb2.addColorStop(0, "rgba(14, 165, 233, 0.24)");
+    neb2.addColorStop(1, "rgba(14, 165, 233, 0)");
+    ctx.fillStyle = neb2; ctx.fillRect(0, 0, W, H);
+
+    spaceStars.forEach(s => {
+      const sx = ((s.x - camX * s.speed) % W + W) % W;
+      ctx.fillStyle = s.color;
+      ctx.globalAlpha = 0.45 + Math.sin(time * 4 + s.twinkle) * 0.45;
+      ctx.beginPath(); ctx.arc(sx, s.y, s.r, 0, Math.PI * 2); ctx.fill();
+    });
+    ctx.globalAlpha = 1;
+    return;
+  }
+
+  const skyGrad = ctx.createLinearGradient(0, 0, 0, H);
+  skyGrad.addColorStop(0, overrideSky1 || st.sky1);
+  skyGrad.addColorStop(1, overrideSky2 || st.sky2);
+  ctx.fillStyle = skyGrad;
+  ctx.fillRect(0, 0, W, H);
+
+  ctx.fillStyle = "rgba(254, 240, 138, 0.35)";
+  ctx.beginPath(); ctx.arc(W * 0.84, H * 0.32, 62, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = "#fef9c3";
+  ctx.beginPath(); ctx.arc(W * 0.84, H * 0.32, 40, 0, Math.PI * 2); ctx.fill();
+
+  ctx.fillStyle = "rgba(255, 255, 255, 0.72)";
+  for (let i = 0; i < 7; i++) {
+    const cx = ((i * 280 - camX * 0.12 + time * 12) % (W + 300) + (W + 300)) % (W + 300) - 150;
+    const cy = 145 + (i % 3) * 42;
+    ctx.beginPath(); ctx.arc(cx, cy, 24, 0, Math.PI * 2); ctx.arc(cx + 22, cy - 6, 30, 0, Math.PI * 2); ctx.arc(cx + 48, cy, 22, 0, Math.PI * 2); ctx.fill();
+  }
+
+  ctx.fillStyle = st.hill1;
+  ctx.beginPath(); ctx.moveTo(0, groundY);
+  for (let sx = -100; sx <= W + 200; sx += 180) {
+    const worldM = sx + camX * 0.25;
+    const peakH = 130 + Math.abs(Math.sin(worldM * 0.004)) * 110;
+    ctx.lineTo(sx + 90, groundY - peakH);
+    ctx.lineTo(sx + 180, groundY);
+  }
+  ctx.closePath(); ctx.fill();
+
+  ctx.fillStyle = st.hill2;
+  ctx.beginPath(); ctx.moveTo(0, groundY);
+  for (let sx = -120; sx <= W + 240; sx += 220) {
+    const worldH = sx + camX * 0.45;
+    const hVal = 80 + Math.abs(Math.cos(worldH * 0.005)) * 70;
+    ctx.quadraticCurveTo(sx + 110, groundY - hVal * 1.4, sx + 220, groundY);
+  }
+  ctx.closePath(); ctx.fill();
+
+  if (player.vehicleMode === "CAR") {
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.32)";
+    ctx.lineWidth = 2.5;
+    for (let l = 0; l < 8; l++) {
+      const lx = ((l * 240 - time * 950) % W + W) % W;
+      const ly = 110 + l * 45;
+      ctx.beginPath(); ctx.moveTo(lx, ly); ctx.lineTo(lx + 95, ly); ctx.stroke();
+    }
+  }
+}
+
+function drawStageElements(st, time) {
+  ctx.save();
+  ctx.translate(-camX, 0);
+
+  if (player.vehicleMode === "SPACESHIP") {
+    solarPlanets.forEach(pl => drawHighQualityPlanet(pl));
+    comets.forEach(c => drawComet(c, time));
+
+    laserShots.forEach(ls => {
+      ctx.fillStyle = "#38bdf8";
+      ctx.shadowColor = "#38bdf8";
+      ctx.shadowBlur = 10;
+      ctx.beginPath(); ctx.roundRect(ls.x, ls.y - 3, ls.w, ls.h, 3); ctx.fill();
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(ls.x + 4, ls.y - 1.5, ls.w - 8, 3);
+      ctx.shadowBlur = 0;
+    });
+  } else {
+    ctx.fillStyle = st.theme === "volcano" ? "rgba(239, 68, 68, 0.78)" : "rgba(14, 165, 233, 0.65)";
+    ctx.fillRect(camX, groundY + 45, W, H - groundY);
+
+    groundSegments.forEach(seg => {
+      if (seg.x2 < camX - 50 || seg.x1 > camX + W + 50) return;
+      const w = seg.x2 - seg.x1;
+      ctx.fillStyle = st.groundBody;
+      ctx.fillRect(seg.x1, groundY, w, H - groundY + 20);
+      ctx.fillStyle = st.groundTop;
+      ctx.beginPath(); ctx.roundRect(seg.x1 - 2, groundY - 4, w + 4, 22, 8); ctx.fill();
+
+      if (st.theme === "race") {
+        ctx.fillStyle = "#ffffff";
+        for (let sx = seg.x1 + 20; sx < seg.x2 - 40; sx += 80) {
+          ctx.fillRect(sx, groundY + 3, 42, 6);
+        }
+      }
+    });
+
+    platforms.forEach(p => {
+      if (p.x + p.w < camX - 40 || p.x > camX + W + 40) return;
+
+      ctx.fillStyle = p.moveType !== "NONE" ? "#fef08a" : "#f8fafc";
+      ctx.strokeStyle = "#0f172a";
+      ctx.lineWidth = 2.5;
+      ctx.beginPath(); ctx.roundRect(p.x, p.y, p.w, p.h, 10); ctx.fill(); ctx.stroke();
+
+      ctx.fillStyle = p.moveType !== "NONE" ? "#f59e0b" : st.groundTop;
+      ctx.beginPath(); ctx.roundRect(p.x + 2, p.y + 2, p.w - 4, 8, 6); ctx.fill();
+    });
+  }
+
+  spacePortals.forEach(sp => {
+    if (sp.x < camX - 100 || sp.x > camX + W + 100) return;
+    ctx.save();
+    ctx.translate(sp.x, sp.y - 55);
+    ctx.strokeStyle = "#38bdf8"; ctx.lineWidth = 6;
+    ctx.beginPath(); ctx.ellipse(0, 0, 32, 55, 0, 0, Math.PI * 2); ctx.stroke();
+    ctx.fillStyle = "rgba(139, 92, 246, 0.55)";
+    ctx.beginPath(); ctx.ellipse(0, 0, 26, 48, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = "#fde047"; ctx.font = "900 12px Segoe UI"; ctx.textAlign = "center";
+    ctx.fillText(sp.type === "TO_SPACE" ? "🚀 IR PARA O ESPAÇO" : "🏝️ VOLTAR À ILHA", 0, -68);
+    ctx.restore();
+  });
+
+  if (magicCarPickup && !magicCarPickup.taken) {
+    drawSuperMagicCar(magicCarPickup.x, groundY - 48, false, 1, time);
+    ctx.fillStyle = "rgba(11, 19, 43, 0.9)";
+    ctx.beginPath(); ctx.roundRect(magicCarPickup.x - 25, groundY - 92, 134, 22, 8); ctx.fill();
+    ctx.fillStyle = "#fde047"; ctx.font = "900 12px Segoe UI"; ctx.textAlign = "center";
+    ctx.fillText("🏎️ ENTRE NO CARRO!", magicCarPickup.x + 42, groundY - 77);
+  }
+
+  raceObstacles.forEach(ro => {
+    if (ro.x < camX - 60 || ro.x > camX + W + 60) return;
+    ctx.fillStyle = "#ef4444"; ctx.strokeStyle = "#fde047"; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.roundRect(ro.x, ro.y, ro.w, ro.h, 6); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = "#fde047"; ctx.font = "900 18px Segoe UI"; ctx.textAlign = "center";
+    ctx.fillText("⚡", ro.x + ro.w / 2, ro.y + 25);
+  });
+
+  rivalCars.forEach(rc => {
+    if (rc.x < camX - 120 || rc.x > camX + W + 120) return;
+    drawSuperMagicCar(rc.x, rc.y, true, 0, time);
+  });
+
+  volcanoMonsters.forEach(vm => drawVolcanoMonster(vm, time));
+  fireballs.forEach(fb => {
+    ctx.fillStyle = "#f97316"; ctx.beginPath(); ctx.arc(fb.x, fb.y, fb.r, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = "#fde047"; ctx.beginPath(); ctx.arc(fb.x, fb.y, fb.r * 0.55, 0, Math.PI * 2); ctx.fill();
+  });
+  wolfMonsters.forEach(wm => drawWolfMonster(wm, time));
+  batMonsters.forEach(bat => drawBatMonster(bat, time));
+  alienMonsters.forEach(al => drawAlienMonster(al));
+  mushroomMonsters.forEach(mm => drawMushroomMonster(mm));
+
+  if (singlePowerBox && singlePowerBox.x + singlePowerBox.w >= camX - 40 && singlePowerBox.x <= camX + W + 40) {
+    const pb = singlePowerBox;
+    const drawY = pb.y - pb.bounceOffset;
+    ctx.save();
+    ctx.translate(pb.x + pb.w / 2, drawY + pb.h / 2);
+    ctx.fillStyle = pb.hit ? "#64748b" : "#fbbf24";
+    ctx.strokeStyle = "#0f172a"; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.roundRect(-22, -22, 44, 44, 9); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = pb.hit ? "#cbd5e1" : "#ffffff";
+    ctx.font = "900 24px Segoe UI"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    ctx.fillText(pb.hit ? "⚡" : "?", 0, 1);
+    ctx.restore();
+  }
+
+  orbs.forEach(o => {
+    if (o.collected || o.x < camX - 30 || o.x > camX + W + 30) return;
+    const oy = o.y + Math.sin(time * 4 + o.bob) * 5;
+    ctx.fillStyle = "#fde047"; ctx.strokeStyle = "#b45309"; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(o.x, oy, 11, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+  });
+
+  drawFloatingBook(blueBook, false, time);
+  drawFloatingBook(goldBook, true, time);
+  drawDimensionalPortal(endPortal, time);
+
+  if (currentStageIdx === 9 && !goldBook.solved) {
+    drawGolem(goldBook.x + 115, groundY, false, time);
+  }
+
+  if (activeSpellBeam) {
+    ctx.strokeStyle = activeSpellBeam.color;
+    ctx.lineWidth = 12;
+    ctx.beginPath(); ctx.moveTo(activeSpellBeam.x1, activeSpellBeam.y1); ctx.lineTo(activeSpellBeam.x2, activeSpellBeam.y2); ctx.stroke();
+  }
+
+  if (stageMelinaEvent.active) {
+    drawMelina(stageMelinaEvent.x, stageMelinaEvent.y, stageMelinaEvent.facing, time);
+  }
+
+  particles.forEach(pt => {
+    ctx.fillStyle = pt.color; ctx.globalAlpha = pt.life;
+    ctx.beginPath(); ctx.arc(pt.x, pt.y, pt.size, 0, Math.PI * 2); ctx.fill();
+    ctx.globalAlpha = 1;
+  });
+
+  drawMatheus(player.x, player.y, player.facing, player.walkFrame, player.grounded, player.invuln, player.superPowerTimer, time);
+  ctx.restore();
+}
+
+// ============================================================================
+// CUTSCENES DA HISTÓRIA (GOLEM DOURADO NA CENA 1 + MATHEUS À FRENTE DA BANDEIRA)
+// ============================================================================
+let cutsceneScript = [];
+let cutsceneStep = 0;
+let cutsceneMode = "INTRO";
+
+function startIntroCutscene() {
+  ensureAudio();
+  document.getElementById("startScreen").style.display = "none";
+  document.getElementById("cutsceneOverlay").style.display = "flex";
+  cutsceneMode = "INTRO";
+  cutsceneStep = 0;
+
+  cutsceneScript = [
+    {
+      speaker: "NARRADOR", cls: "speaker-narrador",
+      text: "CENA 1 — No coração do Oceano das Ideias, a Ilha de Arithmos vivia em paz com o Golem Dourado guardando o Grande Farol e os 10 Cristais Matemáticos ao lado da Princesa Melina."
+    },
+    {
+      speaker: "NARRADOR", cls: "speaker-narrador",
+      text: "CENA 2 — Certo dia, uma tempestade sombria enfeitiçou o Golem Dourado, deixando-o sombrio, e espalhou os 10 Cristais pelas diferentes regiões da ilha!"
+    },
+    {
+      speaker: "PRINCESA MELINA", cls: "speaker-melina",
+      text: "CENA 3 — Matheus! Que alegria ver seu barco chegar pelo rio da Costa Azul! Precisamos encontrar os Livros Mágicos em cada região para abrir os Portais e recuperar os 10 Cristais!"
+    },
+    {
+      speaker: "MATHEUS", cls: "speaker-matheus",
+      text: "CENA 4 — Pode contar comigo, Princesa Melina! Vou explorar cada cenário, superar os monstros e resolver todos os desafios matemáticos até o Grande Farol!"
+    }
+  ];
+
+  gameState = "CUTSCENE_INTRO";
+  renderCutsceneStep();
+}
+
+function startOutroCutscene() {
+  document.getElementById("hud").style.display = "none";
+  document.getElementById("progressContainer").style.display = "none";
+  document.getElementById("touchControls").style.display = "none";
+  document.getElementById("cutsceneOverlay").style.display = "flex";
+
+  cutsceneMode = "OUTRO";
+  cutsceneStep = 0;
+
+  cutsceneScript = [
+    {
+      speaker: "GOLEM DA NÉVOA", cls: "speaker-golem",
+      text: "CENA 1 — A névoa escura se dissipou por completo! Minha armadura voltou a brilhar em ouro! Obrigado, Matheus, por me libertar com os feitiços da Matemática!"
+    },
+    {
+      speaker: "PRINCESA MELINA", cls: "speaker-melina",
+      text: "CENA 2 — Veja, Matheus! Todos os 10 Cristais Matemáticos estão subindo em espiral para reacender a cúpula do Grande Farol de Arithmos!"
+    },
+    {
+      speaker: "MATHEUS", cls: "speaker-matheus",
+      text: "CENA 3 — Um arco-íris gigante cobriu todo o céu da ilha! As flores, o rio e os jardins voltaram a brilhar mais fortes do que nunca!"
+    },
+    {
+      speaker: "PRINCESA MELINA", cls: "speaker-melina",
+      text: "CENA 4 — Olhando nos seus olhos, herói: eu entrego a você o título de Grande Guardião de Arithmos! E veja no horizonte... novas ilhas surgem para o Volume 2!"
+    }
+  ];
+
+  gameState = "CUTSCENE_OUTRO";
+  renderCutsceneStep();
+}
+
+function renderCutsceneStep() {
+  const step = cutsceneScript[cutsceneStep];
+  const tag = document.getElementById("speakerTag");
+  tag.textContent = step.speaker;
+  tag.className = "speaker-tag " + step.cls;
+  document.getElementById("sceneCounter").textContent = `CENA ${cutsceneStep + 1} / ${cutsceneScript.length}`;
+  document.getElementById("dialogueText").textContent = step.text;
+}
+
+function nextCutsceneStep() {
+  playSound("coin");
+  cutsceneStep++;
+  if (cutsceneStep >= cutsceneScript.length) skipCutscene();
+  else renderCutsceneStep();
+}
+
+function skipCutscene() {
+  document.getElementById("cutsceneOverlay").style.display = "none";
+  if (cutsceneMode === "INTRO") beginGameplay(0);
+  else showFinalVictoryScreen();
+}
+
+function drawCutsceneStage(time) {
+  const cx = W * 0.5;
+  const stageFloorY = H - 85;
+  camX = 0;
+  const crystalPalette = ["#f43f5e", "#fb7185", "#10b981", "#34d399", "#3b82f6", "#60a5fa", "#eab308", "#facc15", "#c084fc", "#ffffff"];
+
+  if (cutsceneMode === "INTRO") {
+    if (cutsceneStep === 0) {
+      drawElaborateBackground(STAGES[0], time);
+      ctx.fillStyle = STAGES[0].groundBody; ctx.fillRect(0, stageFloorY, W, H - stageFloorY);
+      ctx.fillStyle = STAGES[0].groundTop; ctx.fillRect(0, stageFloorY - 4, W, 22);
+      drawLighthouseMonument(cx, stageFloorY, true);
+      for (let i = 0; i < 10; i++) {
+        const ang = time * 1.5 + (i * Math.PI * 2) / 10;
+        const ox = cx + Math.cos(ang) * 145;
+        const oy = stageFloorY - 235 + Math.sin(ang) * 34;
+        ctx.fillStyle = crystalPalette[i];
+        ctx.beginPath(); ctx.moveTo(ox, oy - 13); ctx.lineTo(ox + 9, oy); ctx.lineTo(ox, oy + 13); ctx.lineTo(ox - 9, oy); ctx.closePath(); ctx.fill();
+      }
+      drawMelina(cx - 135, stageFloorY - 8, 1, time);
+      drawGolem(cx + 135, stageFloorY, true, time);
+    } else if (cutsceneStep === 1) {
+      drawElaborateBackground(STAGES[9], time, "#0f172a", "#4c1d95");
+      ctx.fillStyle = "#1e1b4b"; ctx.fillRect(0, stageFloorY, W, H - stageFloorY);
+      ctx.fillStyle = "#6b21a8"; ctx.fillRect(0, stageFloorY - 4, W, 22);
+      drawLighthouseMonument(cx - 160, stageFloorY, false);
+      drawGolem(cx + 120, stageFloorY, false, time);
+      for (let i = 0; i < 10; i++) {
+        const spread = ((time * 95 + i * 38) % 340);
+        const angleDir = -Math.PI * 0.85 + (i / 9) * Math.PI * 0.7;
+        const ox = (cx - 160) + Math.cos(angleDir) * spread;
+        const oy = (stageFloorY - 230) + Math.sin(angleDir) * spread * 0.75;
+        ctx.fillStyle = crystalPalette[i];
+        ctx.beginPath(); ctx.moveTo(ox, oy - 11); ctx.lineTo(ox + 8, oy); ctx.lineTo(ox, oy + 11); ctx.lineTo(ox - 8, oy); ctx.closePath(); ctx.fill();
+      }
+    } else if (cutsceneStep === 2) {
+      drawElaborateBackground(STAGES[0], time);
+      const shoreX = cx - 40;
+      ctx.fillStyle = "#0284c7"; ctx.fillRect(0, stageFloorY + 6, shoreX + 10, H - stageFloorY);
+      ctx.fillStyle = "#38bdf8";
+      for (let wx = 20; wx < shoreX; wx += 55) {
+        const waveY = stageFloorY + 8 + Math.sin(time * 4 + wx * 0.05) * 3;
+        ctx.beginPath(); ctx.arc(wx, waveY, 16, Math.PI, 0); ctx.fill();
+      }
+      ctx.fillStyle = STAGES[0].groundBody; ctx.fillRect(shoreX, stageFloorY, W - shoreX, H - stageFloorY);
+      ctx.fillStyle = STAGES[0].groundTop; ctx.beginPath(); ctx.roundRect(shoreX - 4, stageFloorY - 4, W - shoreX + 8, 22, 8); ctx.fill();
+
+      const boatX = shoreX - 135;
+      const boatY = stageFloorY + 8 + Math.sin(time * 3.5) * 4;
+      ctx.save();
+      ctx.translate(boatX, boatY);
+      ctx.rotate(Math.sin(time * 3) * 0.04);
+
+      ctx.fillStyle = "#fde047"; ctx.fillRect(-16, -98, 6, 72);
+      ctx.fillStyle = "#f8fafc"; ctx.beginPath(); ctx.moveTo(-10, -95); ctx.lineTo(36, -58); ctx.lineTo(-10, -34); ctx.closePath(); ctx.fill();
+
+      drawMatheus(-8, -24 - player.h, 1, 0, true, 0, 0, time);
+
+      ctx.fillStyle = "#0369a1"; ctx.strokeStyle = "#fde047"; ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.moveTo(-72, -26); ctx.lineTo(72, -26); ctx.lineTo(50, 10); ctx.lineTo(-50, 10); ctx.closePath(); ctx.fill(); ctx.stroke();
+      ctx.restore();
+
+      drawMelina(shoreX + 115, stageFloorY - 8, -1, time);
+    } else {
+      drawElaborateBackground(STAGES[2], time);
+      ctx.fillStyle = STAGES[2].groundBody; ctx.fillRect(0, stageFloorY, W, H - stageFloorY);
+      ctx.fillStyle = STAGES[2].groundTop; ctx.fillRect(0, stageFloorY - 4, W, 22);
+      ctx.strokeStyle = "#fde047"; ctx.lineWidth = 8;
+      ctx.beginPath(); ctx.arc(cx + 190, stageFloorY, 68, Math.PI, 0); ctx.stroke();
+      const hop = Math.abs(Math.sin(time * 5)) * 14;
+      drawMatheus(cx - 90, stageFloorY - player.h - hop, 1, time, hop < 2, 0, 0, time);
+      drawMelina(cx + 40, stageFloorY - 12, -1, time);
+    }
+  } else {
+    if (cutsceneStep === 0) {
+      drawElaborateBackground(STAGES[9], time);
+      ctx.fillStyle = STAGES[9].groundBody; ctx.fillRect(0, stageFloorY, W, H - stageFloorY);
+      ctx.fillStyle = STAGES[9].groundTop; ctx.fillRect(0, stageFloorY - 4, W, 22);
+      drawMatheus(cx - 150, stageFloorY - player.h, 1, 0, true, 0, 0, time);
+      drawMelina(cx - 40, stageFloorY - 10, 1, time);
+      drawGolem(cx + 140, stageFloorY, true, time);
+    } else if (cutsceneStep === 1) {
+      drawElaborateBackground(STAGES[0], time);
+      ctx.fillStyle = STAGES[0].groundBody; ctx.fillRect(0, stageFloorY, W, H - stageFloorY);
+      ctx.fillStyle = STAGES[0].groundTop; ctx.fillRect(0, stageFloorY - 4, W, 22);
+      drawLighthouseMonument(cx, stageFloorY, true);
+      for (let i = 0; i < 10; i++) {
+        const ang = time * 3 + i * 0.65;
+        const ox = cx + Math.cos(ang) * 95;
+        const oy = stageFloorY - 60 - ((i * 22 + time * 40) % 210);
+        ctx.fillStyle = crystalPalette[i];
+        ctx.beginPath(); ctx.moveTo(ox, oy - 12); ctx.lineTo(ox + 9, oy); ctx.lineTo(ox, oy + 12); ctx.lineTo(ox - 9, oy); ctx.closePath(); ctx.fill();
+      }
+      drawMatheus(cx - 160, stageFloorY - player.h, 1, 0, true, 0, 0, time);
+      drawMelina(cx + 150, stageFloorY - 10, -1, time);
+    } else if (cutsceneStep === 2) {
+      drawElaborateBackground(STAGES[3], time);
+      const colors = ["#ef4444", "#f97316", "#eab308", "#22c55e", "#3b82f6", "#a855f7"];
+      colors.forEach((col, i) => {
+        ctx.strokeStyle = col; ctx.lineWidth = 8;
+        ctx.beginPath(); ctx.arc(cx, stageFloorY, 270 - i * 9, Math.PI, 0); ctx.stroke();
+      });
+      ctx.fillStyle = STAGES[3].groundBody; ctx.fillRect(0, stageFloorY, W, H - stageFloorY);
+      ctx.fillStyle = STAGES[3].groundTop; ctx.fillRect(0, stageFloorY - 4, W, 22);
+      const jumpCel = Math.abs(Math.sin(time * 5)) * 22;
+      drawMatheus(cx - 110, stageFloorY - player.h - jumpCel, 1, time, jumpCel < 2, 0, 1, time);
+      drawMelina(cx + 60, stageFloorY - 14, -1, time);
+      drawGolem(cx + 210, stageFloorY, true, time);
+    } else {
+      drawElaborateBackground(STAGES[8], time);
+      ctx.fillStyle = STAGES[8].groundBody; ctx.fillRect(0, stageFloorY, W, H - stageFloorY);
+      ctx.fillStyle = STAGES[8].groundTop; ctx.fillRect(0, stageFloorY - 4, W, 22);
+
+      ctx.fillStyle = "rgba(192, 132, 252, 0.7)";
+      ctx.beginPath(); ctx.ellipse(cx + 230, stageFloorY - 190 + Math.sin(time * 2) * 8, 65, 22, 0, 0, Math.PI * 2); ctx.fill();
+
+      drawMatheus(cx - 95, stageFloorY - player.h, 1, 0, true, 0, 1, time);
+      drawMelina(cx + 45, stageFloorY - 12, -1, time);
+
+      const medX = cx - 22;
+      const medY = stageFloorY - 56 + Math.sin(time * 4) * 4;
+      ctx.fillStyle = "#fde047";
+      ctx.strokeStyle = "#b45309";
+      ctx.lineWidth = 2.5;
+      ctx.beginPath(); ctx.arc(medX, medY, 12, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = "#38bdf8";
+      ctx.beginPath(); ctx.arc(medX, medY, 5, 0, Math.PI * 2); ctx.fill();
+    }
+  }
+}
+
+function drawLighthouseMonument(x, floorY, lit) {
+  ctx.save();
+  ctx.translate(x, floorY);
+  ctx.fillStyle = "#f8fafc"; ctx.strokeStyle = "#1e293b"; ctx.lineWidth = 3;
+  ctx.fillRect(-50, -230, 100, 230); ctx.strokeRect(-50, -230, 100, 230);
+  ctx.fillStyle = lit ? "#38bdf8" : "#475569";
+  ctx.beginPath(); ctx.arc(0, -230, 52, Math.PI, 0); ctx.fill(); ctx.stroke();
+  if (lit) {
+    const beam = ctx.createRadialGradient(0, -230, 10, 0, -230, 140);
+    beam.addColorStop(0, "rgba(253, 224, 71, 0.85)");
+    beam.addColorStop(1, "rgba(253, 224, 71, 0)");
+    ctx.fillStyle = beam;
+    ctx.beginPath(); ctx.arc(0, -230, 140, 0, Math.PI * 2); ctx.fill();
+  }
+  ctx.restore();
+}
+
+// ============================================================================
+// JOGABILIDADE, BRIEFING DO FOGUETE / SUPER CORRIDA E DESAFIOS MATEMÁTICOS
+// ============================================================================
+function beginGameplay(stageIdx) {
+  ensureAudio();
+  startBackgroundMusic();
+  currentStageIdx = stageIdx;
+  document.getElementById("startScreen").style.display = "none";
+  document.getElementById("gameOverScreen").style.display = "none";
+  document.getElementById("hud").style.display = "flex";
+  document.getElementById("progressContainer").style.display = "flex";
+
+  if ("ontouchstart" in window || navigator.maxTouchPoints > 0 || window.innerWidth < 1024) {
+    document.getElementById("touchControls").style.display = "flex";
+  }
+
+  buildStage2D(stageIdx);
+  gameState = "PLAYING";
+}
+
+function triggerSpaceBriefing(portalObj) {
+  gameState = "SPACE_BRIEFING";
+  briefingType = "SPACE";
+  keys.left = false; keys.right = false; keys.jump = false; keys.down = false;
+  portalObj.used = true;
+  player.vehicleMode = "SPACESHIP";
+  player.spaceEntryX = portalObj.x + 80;
+  player.x = player.spaceEntryX;
+  player.y = H * 0.45;
+  playSound("portal");
+
+  document.getElementById("briefingIcon").textContent = "🚀🪐☄️✨";
+  document.getElementById("briefingTitle").textContent = "VIAGEM PELO SISTEMA SOLAR!";
+  document.getElementById("briefingDesc").innerHTML =
+    `Coragem, nobre guerreiro Matheus! Você foi transportado para uma viagem pelo Sistema Solar! Pilote o <strong>Foguete Estelar</strong>, destrua os cometas flamejantes e avance com bravura até o portal de retorno!`;
+  document.getElementById("briefingCmds").innerHTML = `
+    <div class="cmd-item"><strong>▲ / W:</strong> Subir o Foguete</div>
+    <div class="cmd-item"><strong>▼ / S:</strong> Descer o Foguete</div>
+    <div class="cmd-item"><strong>◀ / ▶:</strong> Frear / Acelerar</div>
+    <div class="cmd-item"><strong>ESPAÇO (ou Botão 🔥):</strong> Atirar Laser</div>
+  `;
+  document.getElementById("briefingBtn").textContent = "DECOLAR AGORA 🚀";
+  document.getElementById("spaceBriefingModal").style.display = "flex";
+}
+
+function triggerRaceBriefing() {
+  gameState = "SPACE_BRIEFING";
+  briefingType = "RACE";
+  keys.left = false; keys.right = false; keys.jump = false; keys.down = false;
+  player.vehicleMode = "CAR";
+  playSound("portal");
+
+  document.getElementById("briefingIcon").textContent = "🏎️⚡🏁✨";
+  document.getElementById("briefingTitle").textContent = "SUPER CORRIDA DE CARROS MÁGICOS!";
+  document.getElementById("briefingDesc").innerHTML =
+    `Prepare-se, Matheus! Agora você vai participar de uma <strong>Super Corrida de Carros Mágicos</strong> em altíssima velocidade! Salte sobre os obstáculos energéticos, ultrapasse os carros rivais e chegue até o Livro Dourado!`;
+  document.getElementById("briefingCmds").innerHTML = `
+    <div class="cmd-item"><strong>ESPAÇO / ▲ / Pular:</strong> Saltar Obstáculos</div>
+    <div class="cmd-item"><strong>▶ / D:</strong> Turbo Máximo</div>
+    <div class="cmd-item"><strong>◀ / A:</strong> Reduzir Velocidade</div>
+    <div class="cmd-item"><strong>Meta:</strong> Alcançar o Livro Dourado!</div>
+  `;
+  document.getElementById("briefingBtn").textContent = "ACELERAR AGORA 🏎️";
+  document.getElementById("spaceBriefingModal").style.display = "flex";
+}
+
+function closeSpaceBriefing() {
+  playSound("coin");
+  document.getElementById("spaceBriefingModal").style.display = "none";
+  if (briefingType === "SPACE") {
+    document.getElementById("modeBanner").textContent = "🚀 FOGUETE ESTELAR • ESPAÇO PARA ATIRAR!";
+    document.getElementById("modeBanner").style.display = "block";
+    document.getElementById("btnFire").style.display = "flex";
+  } else {
+    document.getElementById("modeBanner").textContent = "🏎️ SUPER CORRIDA DE CARROS MÁGICOS!";
+    document.getElementById("modeBanner").style.display = "block";
+  }
+  gameState = "PLAYING";
+}
+
+function triggerInGameMelinaEvent(text, onDone) {
+  gameState = "IN_GAME_EVENT";
+  keys.left = false; keys.right = false; keys.jump = false;
+  stageMelinaEvent = {
+    active: true,
+    x: player.x + 150,
+    y: groundY - 8,
+    facing: -1,
+    runningAway: false,
+    waitingButton: true,
+    text,
+    onComplete: onDone
+  };
+
+  document.getElementById("melinaActionText").textContent = text;
+  document.getElementById("melinaActionBox").style.display = "block";
+}
+
+function confirmMelinaMessage() {
+  playSound("coin");
+  document.getElementById("melinaActionBox").style.display = "none";
+  stageMelinaEvent.waitingButton = false;
+  stageMelinaEvent.facing = 1;
+  stageMelinaEvent.runningAway = true;
+
+  setTimeout(() => {
+    stageMelinaEvent.active = false;
+    gameState = "PLAYING";
+    if (stageMelinaEvent.onComplete) stageMelinaEvent.onComplete();
+  }, 1100);
+}
+
+function openMathChallenge(bookType) {
+  gameState = "MATH_MODAL";
+  keys.left = false; keys.right = false; keys.jump = false;
+  questionErrorCount = 0;
+
+  const st = STAGES[currentStageIdx];
+  const skill = bookType === "BLUE_BOOK" ? st.skill1 : st.skill2;
+  const challenge = generateMathChallenge(skill, bossHits);
+  currentChallengeContext = { bookType, challenge };
+
+  const badge = document.getElementById("mathBadge");
+  const hintBox = document.getElementById("melinaHint");
+
+  if (bookType === "BLUE_BOOK") {
+    badge.textContent = `📘 LIVRO DO SABER • PONTO DE SALVAMENTO (FASE ${st.id})`;
+  } else if (currentStageIdx === 9) {
+    badge.textContent = `⚡ FEITIÇO ${bossHits + 1}/3 CONTRA O VILÃO! (Erros: ${bossErrors}/2)`;
+  } else {
+    badge.textContent = `📙 LIVRO DOURADO • ABRA O PORTAL (FASE ${st.id})`;
+  }
+
+  hintBox.style.display = "none";
+  hintBox.textContent = `👑 Projeção da Princesa Melina: "${challenge.hint}"`;
+  renderChallengeVisual(challenge.visual);
+  document.getElementById("mathQuestion").textContent = challenge.q;
+  document.getElementById("mathFeedback").textContent = "";
+  document.getElementById("resolutionBox").style.display = "none";
+
+  const grid = document.getElementById("mathOptions");
+  grid.innerHTML = "";
+  challenge.opts.forEach(opt => {
+    const btn = document.createElement("button");
+    btn.className = "opt-btn";
+    btn.textContent = opt;
+    btn.onclick = () => evaluateMathAnswer(opt);
+    grid.appendChild(btn);
+  });
+
+  document.getElementById("mathModal").style.display = "flex";
+}
+
+function drawNewQuestionAfterError() {
+  playSound("coin");
+  openMathChallenge(currentChallengeContext.bookType);
+}
+
+function evaluateMathAnswer(selected) {
+  const { bookType, challenge } = currentChallengeContext;
+  const fb = document.getElementById("mathFeedback");
+  const hintBox = document.getElementById("melinaHint");
+
+  if (selected === challenge.ans) {
+    document.querySelectorAll(".opt-btn").forEach(b => b.disabled = true);
+    playSound("win");
+    fb.style.color = "#2dd4bf";
+
+    if (bookType === "BLUE_BOOK") {
+      fb.textContent = "📘 PONTO DE SALVAMENTO ATIVADO!";
+    } else if (currentStageIdx === 9 && bossHits < 2) {
+      fb.textContent = "⚡ MATHEUS LANÇOU UM FEITIÇO LUMINOSO NO VILÃO!";
+    } else {
+      fb.textContent = "🌀 PORTAL DIMENSIONAL ABERTO!";
+    }
+
+    score += 250;
+
+    setTimeout(() => {
+      document.getElementById("mathModal").style.display = "none";
+
+      if (bookType === "BLUE_BOOK") {
+        blueBook.solved = true;
+        checkpointReached = true;
+        spawnParticles(blueBook.x + 23, blueBook.y + 23, "#10b981", 22);
+
+        if (currentStageIdx === 7) {
+          triggerInGameMelinaEvent(
+            "Matheus, vá rápido! O reino está sendo destruído pela névoa! Use este Super Carro Mágico logo à frente para vencer a corrida!",
+            () => {
+              magicCarPickup = { x: player.x + 220, taken: false };
+            }
+          );
+        } else {
+          gameState = "PLAYING";
+        }
+      } else {
+        if (currentStageIdx === 9) {
+          bossHits++;
+          playSound("spell");
+          activeSpellBeam = { x1: player.x + 30, y1: player.y + 30, x2: goldBook.x + 115, y2: groundY - 60, color: "#fde047" };
+          spawnParticles(goldBook.x + 115, groundY - 60, "#fde047", 30);
+          setTimeout(() => { activeSpellBeam = null; }, 750);
+
+          if (bossHits < 3) {
+            openMathChallenge("GOLD_BOOK");
+            return;
+          }
+        }
+
+        goldBook.solved = true;
+        endPortal.open = true;
+        playSound("portal");
+        spawnParticles(goldBook.x + 24, goldBook.y + 24, "#fde047", 28);
+        spawnParticles(endPortal.x, endPortal.y - 56, "#38bdf8", 30);
+
+        if (currentStageIdx === 8) {
+          triggerInGameMelinaEvent(
+            "Matheus, seu maior desafio está logo ali naquele portal! Desejo toda a sorte do mundo contra o grande vilão do reino!",
+            () => {
+              document.getElementById("portalHintBanner").style.display = "block";
+            }
+          );
+        } else {
+          document.getElementById("portalHintBanner").style.display = "block";
+          gameState = "PLAYING";
+        }
+      }
+    }, 850);
+  } else {
+    playSound("hurt");
+    questionErrorCount++;
+    fb.style.color = "#f43f5e";
+
+    if (questionErrorCount === 1) {
+      fb.textContent = "❌ Resposta incorreta! Veja a dica da Princesa Melina acima e tente novamente!";
+      hintBox.style.display = "block";
+    } else {
+      document.querySelectorAll(".opt-btn").forEach(b => b.disabled = true);
+
+      if (currentStageIdx === 9 && bookType === "GOLD_BOOK") {
+        bossErrors++;
+        lives = Math.max(0, lives - 1);
+        document.getElementById("hudLives").textContent = "❤️".repeat(Math.max(0, lives)) || "💔";
+
+        activeSpellBeam = { x1: goldBook.x + 115, y1: groundY - 60, x2: player.x + 20, y2: player.y + 30, color: "#a855f7" };
+        spawnParticles(player.x + 20, player.y + 30, "#a855f7", 26);
+        setTimeout(() => { activeSpellBeam = null; }, 700);
+
+        if (bossErrors >= 2 || lives <= 0) {
+          fb.textContent = "💥 O vilão acertou 2 feitiços! Você foi derrotado!";
+          setTimeout(() => {
+            document.getElementById("mathModal").style.display = "none";
+            triggerGameOver();
+          }, 1250);
+          return;
+        }
+        fb.textContent = `💥 Segundo erro! A resposta certa era: ${challenge.ans}. O vilão acertou um feitiço em você! (${bossErrors}/2 erros)`;
+      } else {
+        fb.textContent = `❌ Segundo erro! A resposta certa era: ${challenge.ans}`;
+        score = Math.max(0, score - 50);
+      }
+
+      document.getElementById("resolutionText").textContent = challenge.resolution;
+      document.getElementById("resolutionBox").style.display = "block";
+    }
+  }
+}
+
+// ============================================================================
+// SISTEMA DE DANO E QUEDA NOS PENHASCOS
+// ============================================================================
+function handlePlayerDeathOrHit() {
+  if (player.invuln > 0 || player.superPowerTimer > 0) return;
+
+  playSound("hurt");
+  lives--;
+  player.invuln = 1.6;
+  player.superPowerTimer = 0;
+
+  if (lives <= 0) {
+    triggerGameOver();
+  } else if (player.vehicleMode === "SPACESHIP") {
+    player.x = player.spaceEntryX;
+    player.y = H * 0.45;
+    player.vy = 0;
+  } else {
+    player.vehicleMode = "WALK";
+    document.getElementById("modeBanner").style.display = "none";
+    document.getElementById("btnFire").style.display = "none";
+    if (magicCarPickup) magicCarPickup.taken = false;
+
+    if (checkpointReached) {
+      player.x = blueBook.x - 40;
+      player.y = groundY - player.h;
+    } else {
+      player.x = 120;
+      player.y = groundY - player.h;
+    }
+    player.vy = 0;
+  }
+}
+
+function triggerGameOver() {
+  gameState = "GAME_OVER";
+  keys.left = false; keys.right = false; keys.jump = false;
+  document.getElementById("gameOverScreen").style.display = "flex";
+
+  const btnContainer = document.getElementById("gameOverButtons");
+  const desc = document.getElementById("gameOverDesc");
+
+  if (continues > 0) {
+    desc.textContent = `Você possui ${continues} Continue(s) conquistado(s) com suas esferas douradas! Deseja continuar desta fase?`;
+    btnContainer.innerHTML = `
+      <button class="btn-primary" onclick="useContinue()">🔄 USAR CONTINUE (${continues} restante)</button>
+      <button class="btn-secondary" onclick="location.reload()">🏠 Reiniciar do Começo</button>
+    `;
+  } else {
+    desc.textContent = "Você ainda não juntou 200 esferas douradas para ganhar um Continue. Tente novamente desde o início!";
+    btnContainer.innerHTML = `
+      <button class="btn-primary" onclick="location.reload()">🔄 JOGAR NOVAMENTE DO INÍCIO</button>
+    `;
+  }
+}
+
+function useContinue() {
+  continues--;
+  lives = 3;
+  bossHits = 0;
+  bossErrors = 0;
+  document.getElementById("gameOverScreen").style.display = "none";
+  beginGameplay(currentStageIdx);
+}
+
+function showFinalVictoryScreen() {
+  gameState = "END";
+  document.getElementById("endScreen").style.display = "flex";
+  const mins = String(Math.floor(totalTimeSeconds / 60)).padStart(2, "0");
+  const secs = String(Math.floor(totalTimeSeconds % 60)).padStart(2, "0");
+  const finalScore = score + lives * 300;
+
+  document.getElementById("finalStats").textContent =
+    `Pontuação Final: ${finalScore} pts • Cristais Recuperados: ${crystalsCollected}/10 • Tempo Total: ${mins}:${secs}`;
+}
+
+function spawnParticles(x, y, color, count = 10) {
+  for (let i = 0; i < count; i++) {
+    particles.push({
+      x, y,
+      vx: (Math.random() - 0.5) * 260,
+      vy: (Math.random() - 0.8) * 260,
+      size: 3 + Math.random() * 4.5,
+      color,
+      life: 1.0
+    });
+  }
+}
+
+function addCoinAndCheckRewards() {
+  coins++;
+  score += 25;
+
+  if (coins % 200 === 0) {
+    continues++;
+    lives++;
+    playSound("continue");
+    showRewardToast("🔄 +1 CONTINUE EXTRA & +1 VIDA! (200 ESFERAS)", "linear-gradient(90deg, #8b5cf6, #ec4899)");
+    spawnParticles(player.x + 20, player.y, "#c084fc", 36);
+  } else if (coins % 100 === 0) {
+    lives++;
+    playSound("1up");
+    showRewardToast("❤️ +1 VIDA EXTRA CONQUISTADA! (100 ESFERAS)", "linear-gradient(90deg, #10b981, #059669)");
+    spawnParticles(player.x + 20, player.y, "#10b981", 28);
+  } else {
+    playSound("coin");
+  }
+}
+
+function checkStompOnEnemy(prevPlayerY, enemyTopY) {
+  return player.vy > 0 && (prevPlayerY + player.h) <= (enemyTopY + 30);
+}
+
+// ============================================================================
+// LOOP PRINCIPAL DE JOGO (60 FPS)
+// ============================================================================
+let lastTime = performance.now();
+
+function loop(now) {
+  requestAnimationFrame(loop);
+  const dt = Math.min((now - lastTime) / 1000, 0.05);
+  lastTime = now;
+  const time = now * 0.001;
+
+  if (gameState === "MENU") {
+    camX = (time * 40) % 4000;
+    drawElaborateBackground(STAGES[0], time);
+    drawStageElements(STAGES[0], time);
+    return;
+  }
+
+  if (gameState === "CUTSCENE_INTRO" || gameState === "CUTSCENE_OUTRO") {
+    drawCutsceneStage(time);
+    return;
+  }
+
+  if (gameState === "IN_GAME_EVENT") {
+    if (stageMelinaEvent.runningAway) {
+      stageMelinaEvent.x += 360 * dt;
+    }
+    const st = STAGES[currentStageIdx];
+    drawElaborateBackground(st, time);
+    drawStageElements(st, time);
+    return;
+  }
+
+  if (gameState === "SPACE_BRIEFING") {
+    const st = STAGES[currentStageIdx];
+    drawElaborateBackground(st, time);
+    drawStageElements(st, time);
+    return;
+  }
+
+  if (gameState === "PLAYING") {
+    totalTimeSeconds += dt;
+    if (player.invuln > 0) player.invuln -= dt;
+
+    const prevY = player.y;
+
+    const powerBanner = document.getElementById("superPowerBanner");
+    if (player.superPowerTimer > 0) {
+      player.superPowerTimer = Math.max(0, player.superPowerTimer - dt);
+      powerBanner.style.display = "block";
+      document.getElementById("powerTimerText").textContent = Math.ceil(player.superPowerTimer) + "s";
+      if (Math.random() < 0.35) spawnParticles(player.x + player.w / 2, player.y + player.h / 2, "#fde047", 1);
+      if (player.superPowerTimer <= 0) {
+        powerBanner.style.display = "none";
+      }
+    }
+
+    platforms.forEach(p => {
+      const prevPx = p.x, prevPy = p.y;
+      if (p.moveType === "V_PIT") {
+        p.y = p.baseY + Math.sin(time * 2.2 + p.phase) * 85;
+      } else if (p.moveType === "H_PIT") {
+        p.x = p.baseX + Math.sin(time * 2.0 + p.phase) * (p.range || 85);
+      } else if (p.moveType === "RANDOM_2D") {
+        p.x = p.baseX + Math.sin(time * p.freqX + p.phaseX) * p.ampX;
+        p.y = p.baseY + Math.cos(time * p.freqY + p.phaseY) * p.ampY;
+      }
+      p.dx = p.x - prevPx;
+      p.dy = p.y - prevPy;
+    });
+
+    if (player.vehicleMode === "SPACESHIP") {
+      let vx = 270;
+      if (keys.left) vx = -190;
+      if (keys.right) vx = 440;
+      player.x += vx * dt;
+      player.x = Math.max(player.spaceEntryX, Math.min(10020, player.x));
+
+      if (keys.jump) player.y -= 330 * dt;
+      if (keys.down) player.y += 330 * dt;
+      player.y = Math.max(45, Math.min(H - 75, player.y));
+
+      for (let i = laserShots.length - 1; i >= 0; i--) {
+        const ls = laserShots[i];
+        ls.x += ls.vx * dt;
+
+        for (const c of comets) {
+          if (c.alive && Math.hypot((ls.x + ls.w) - c.x, ls.y - c.y) < c.r + 12) {
+            c.alive = false;
+            ls.dead = true;
+            score += 100;
+            playSound("stomp");
+            spawnParticles(c.x, c.y, "#f97316", 22);
+            spawnParticles(c.x, c.y, "#fde047", 14);
+            break;
+          }
+        }
+
+        if (ls.dead || ls.x > camX + W + 100) {
+          laserShots.splice(i, 1);
+        }
+      }
+
+      comets.forEach(c => {
+        if (!c.alive) return;
+        c.y += c.vy * dt;
+        if (c.y < 70 || c.y > H - 70) c.vy *= -1;
+        if (Math.hypot((player.x + 34) - c.x, (player.y + 24) - c.y) < c.r + 22) {
+          if (player.superPowerTimer > 0) {
+            c.alive = false;
+            score += 100;
+            playSound("stomp");
+            spawnParticles(c.x, c.y, "#fde047", 20);
+          } else {
+            handlePlayerDeathOrHit();
+          }
+        }
+      });
+
+      const backPortal = spacePortals.find(p => p.type === "TO_ISLAND");
+      if (backPortal && Math.abs(player.x - backPortal.x) < 48) {
+        player.vehicleMode = "WALK";
+        player.y = groundY - player.h;
+        document.getElementById("modeBanner").style.display = "none";
+        document.getElementById("btnFire").style.display = "none";
+        playSound("portal");
+      }
+    } else {
+      const isCar = player.vehicleMode === "CAR";
+      const baseSpd = isCar ? MOVE_SPEED * 1.55 : MOVE_SPEED;
+      const currentSpeed = player.superPowerTimer > 0 ? baseSpd * 1.2 : baseSpd;
+
+      let moveDir = isCar ? 1 : 0;
+      if (keys.left) moveDir = isCar ? 0.5 : -1;
+      if (keys.right) moveDir = 1;
+
+      player.vx = moveDir * currentSpeed;
+      if (moveDir !== 0) {
+        player.facing = moveDir >= 0 ? 1 : -1;
+        player.walkFrame += dt;
+      } else {
+        player.walkFrame = 0;
+      }
+
+      if (player.grounded) player.coyoteTimer = 0.12;
+      else player.coyoteTimer -= dt;
+
+      if (keys.jump) player.jumpBuffer = 0.12;
+      else player.jumpBuffer -= dt;
+
+      if (player.jumpBuffer > 0 && player.coyoteTimer > 0) {
+        player.vy = isCar ? JUMP_FORCE * 1.05 : JUMP_FORCE;
+        player.grounded = false;
+        player.coyoteTimer = 0;
+        player.jumpBuffer = 0;
+        playSound("jump");
+      }
+
+      player.x += player.vx * dt;
+      player.x = Math.max(20, Math.min(STAGE_LENGTH - 80, player.x));
+      player.vy += GRAVITY * dt;
+      player.y += player.vy * dt;
+      player.grounded = false;
+
+      const feetX = player.x + player.w / 2;
+      const onGroundSeg = groundSegments.some(s => feetX >= s.x1 && feetX <= s.x2);
+      if (onGroundSeg && prevY + player.h <= groundY + 12 && player.y + player.h >= groundY) {
+        player.y = groundY - player.h;
+        player.vy = 0;
+        player.grounded = true;
+      }
+
+      if (player.vy >= 0) {
+        for (const p of platforms) {
+          if (player.x + player.w - 8 >= p.x && player.x + 8 <= p.x + p.w) {
+            if (prevY + player.h <= p.y + 14 && player.y + player.h >= p.y - 6) {
+              player.y = p.y - player.h;
+              player.x += p.dx || 0;
+              player.vy = 0;
+              player.grounded = true;
+            }
+          }
+        }
+      }
+
+      // Queda no penhasco -> Morre imediatamente
+      if (!onGroundSeg && !player.grounded && (player.y + player.h) > (groundY + 22)) {
+        player.invuln = 0;
+        player.superPowerTimer = 0;
+        handlePlayerDeathOrHit();
+      }
+
+      // Pegar o Super Carro Mágico na Fase 8 -> Abre aviso de Super Corrida
+      if (magicCarPickup && !magicCarPickup.taken && Math.abs(player.x - magicCarPickup.x) < 55) {
+        magicCarPickup.taken = true;
+        triggerRaceBriefing();
+      }
+
+      // Obstáculos e Carros Rivais na Super Corrida (Fase 8)
+      raceObstacles.forEach(ro => {
+        if (player.x + 65 > ro.x && player.x < ro.x + ro.w && player.y + player.h > ro.y + 6) {
+          handlePlayerDeathOrHit();
+        }
+      });
+
+      rivalCars.forEach(rc => {
+        rc.x += rc.vx * dt;
+        if (Math.abs(player.x - rc.x) < 62 && Math.abs(player.y - rc.y) < 35) {
+          if (player.vy > 0 && prevY + player.h <= rc.y + 18) {
+            player.vy = -520;
+            score += 200;
+            playSound("stomp");
+          } else {
+            handlePlayerDeathOrHit();
+          }
+        }
+      });
+
+      // 1. SENHOR VULCÃO
+      volcanoMonsters.forEach(vm => {
+        if (!vm.alive) return;
+        vm.timer += dt;
+        if (vm.timer >= 2.1) {
+          vm.timer = 0;
+          fireballs.push({ x: vm.x + vm.w / 2, y: vm.y, vy: -680, r: 13 });
+        }
+        if (Math.abs((player.x + 21) - (vm.x + 42)) < 46 && Math.abs((player.y + 34) - (vm.y + 40)) < 54) {
+          if (player.superPowerTimer > 0 || checkStompOnEnemy(prevY, vm.y)) {
+            vm.alive = false;
+            player.vy = -500;
+            score += 150;
+            playSound("stomp");
+            spawnParticles(vm.x + 42, vm.y + 40, "#f97316", 24);
+          } else {
+            handlePlayerDeathOrHit();
+          }
+        }
+      });
+
+      for (let i = fireballs.length - 1; i >= 0; i--) {
+        const fb = fireballs[i];
+        fb.vy += 980 * dt;
+        fb.y += fb.vy * dt;
+        if (Math.hypot((player.x + 21) - fb.x, (player.y + 34) - fb.y) < fb.r + 18) {
+          handlePlayerDeathOrHit();
+        }
+        if (fb.y > groundY + 10) fireballs.splice(i, 1);
+      }
+
+      // 2. LOBO MAU
+      wolfMonsters.forEach(wm => {
+        if (!wm.alive) return;
+        wm.x += wm.vx * dt;
+        if (wm.x <= wm.minX || wm.x >= wm.maxX) wm.vx *= -1;
+        if (Math.abs((player.x + 21) - (wm.x + 27)) < 36 && Math.abs((player.y + 34) - (wm.y + 23)) < 38) {
+          if (player.superPowerTimer > 0 || checkStompOnEnemy(prevY, wm.y)) {
+            wm.alive = false;
+            player.vy = -480;
+            score += 150;
+            playSound("stomp");
+            spawnParticles(wm.x + 27, wm.y + 23, "#94a3b8", 20);
+          } else {
+            handlePlayerDeathOrHit();
+          }
+        }
+      });
+
+      // 3. MORCEGO
+      batMonsters.forEach(bat => {
+        if (!bat.alive) return;
+        bat.x += bat.vx * dt;
+        if (bat.x <= bat.minX || bat.x >= bat.maxX) bat.vx *= -1;
+        bat.y = bat.baseY + Math.sin(time * 4.5 + bat.phase) * 24;
+
+        if (Math.hypot((player.x + 21) - bat.x, (player.y + 34) - bat.y) < 34) {
+          if (player.superPowerTimer > 0 || checkStompOnEnemy(prevY, bat.y - 16)) {
+            bat.alive = false;
+            player.vy = -460;
+            score += 150;
+            playSound("stomp");
+            spawnParticles(bat.x, bat.y, "#f43f5e", 20);
+          } else {
+            handlePlayerDeathOrHit();
+          }
+        }
+      });
+
+      // 4. ET ALIENÍGENA
+      alienMonsters.forEach(al => {
+        if (!al.alive) return;
+        al.x += al.vx * dt;
+        if (al.x <= al.minX || al.x >= al.maxX) al.vx *= -1;
+        if (Math.abs((player.x + 21) - (al.x + 23)) < 34 && Math.abs((player.y + 34) - (al.y + 27)) < 42) {
+          if (player.superPowerTimer > 0 || checkStompOnEnemy(prevY, al.y)) {
+            al.alive = false;
+            player.vy = -480;
+            score += 150;
+            playSound("stomp");
+            spawnParticles(al.x + 23, al.y + 27, "#4ade80", 20);
+          } else {
+            handlePlayerDeathOrHit();
+          }
+        }
+      });
+
+      // 5. COGUMELO SALTADOR
+      mushroomMonsters.forEach(mm => {
+        if (!mm.alive) return;
+        mm.jumpTimer += dt;
+        if (mm.y >= groundY - mm.h && mm.jumpTimer >= 1.5) {
+          mm.jumpTimer = 0;
+          mm.vy = -570;
+        }
+        mm.vy += GRAVITY * dt;
+        mm.y += mm.vy * dt;
+        if (mm.y > groundY - mm.h) { mm.y = groundY - mm.h; mm.vy = 0; }
+
+        if (Math.abs((player.x + 21) - (mm.x + 23)) < 34 && Math.abs((player.y + 34) - (mm.y + 22)) < 38) {
+          if (player.superPowerTimer > 0 || checkStompOnEnemy(prevY, mm.y)) {
+            mm.alive = false;
+            player.vy = -480;
+            score += 150;
+            playSound("stomp");
+            spawnParticles(mm.x + 23, mm.y + 22, "#ef4444", 20);
+          } else {
+            handlePlayerDeathOrHit();
+          }
+        }
+      });
+
+      const toSpace = spacePortals.find(p => p.type === "TO_SPACE" && !p.used);
+      if (toSpace && Math.abs(player.x - toSpace.x) < 44) {
+        triggerSpaceBriefing(toSpace);
+      }
+
+      if (singlePowerBox) {
+        const pb = singlePowerBox;
+        if (pb.bounceOffset > 0) pb.bounceOffset = Math.max(0, pb.bounceOffset - dt * 60);
+        if (player.vy < 0 && player.x + player.w > pb.x && player.x < pb.x + pb.w) {
+          if (prevY >= pb.y + pb.h - 10 && player.y <= pb.y + pb.h) {
+            player.y = pb.y + pb.h;
+            player.vy = 140;
+            pb.bounceOffset = 16;
+            if (!pb.hit) {
+              pb.hit = true;
+              player.superPowerTimer = 14.0;
+              score += 300;
+              playSound("continue");
+              spawnParticles(pb.x + 22, pb.y, "#fde047", 24);
+            }
+          }
+        }
+      }
+    }
+
+    for (const o of orbs) {
+      if (!o.collected && Math.hypot((player.x + player.w / 2) - o.x, (player.y + player.h / 2) - o.y) < 38) {
+        o.collected = true;
+        addCoinAndCheckRewards();
+        spawnParticles(o.x, o.y, "#fde047", 8);
+      }
+    }
+
+    if (!blueBook.solved &&
+        Math.hypot((player.x + player.w / 2) - (blueBook.x + 23), (player.y + player.h / 2) - (blueBook.y + 23)) < 50) {
+      openMathChallenge("BLUE_BOOK");
+    }
+
+    if (!goldBook.solved &&
+        Math.hypot((player.x + player.w / 2) - (goldBook.x + 24), (player.y + player.h / 2) - (goldBook.y + 24)) < 52) {
+      openMathChallenge("GOLD_BOOK");
+    }
+
+    if (endPortal.open && Math.abs((player.x + player.w / 2) - endPortal.x) < 46) {
+      endPortal.open = false;
+      player.vehicleMode = "WALK";
+      playSound("portal");
+      crystalsCollected++;
+      score += 500 + coins * 10;
+      document.getElementById("portalHintBanner").style.display = "none";
+      document.getElementById("modeBanner").style.display = "none";
+      document.getElementById("btnFire").style.display = "none";
+
+      if (currentStageIdx < STAGES.length - 1) {
+        beginGameplay(currentStageIdx + 1);
+      } else {
+        startOutroCutscene();
+      }
+    }
+
+    for (let i = particles.length - 1; i >= 0; i--) {
+      const pt = particles[i];
+      pt.x += pt.vx * dt;
+      pt.y += pt.vy * dt;
+      pt.life -= dt * 2.2;
+      if (pt.life <= 0) particles.splice(i, 1);
+    }
+
+    const targetCamX = Math.max(0, Math.min(STAGE_LENGTH - W, player.x - W * 0.32));
+    camX += (targetCamX - camX) * 0.14;
+
+    const pct = Math.min(100, Math.max(0, (player.x / endPortal.x) * 100));
+    document.getElementById("progressFill").style.width = pct + "%";
+    document.getElementById("hudCoins").textContent = coins;
+    document.getElementById("hudContinues").textContent = continues;
+    document.getElementById("hudScore").textContent = score;
+    document.getElementById("hudLives").textContent = "❤️".repeat(Math.max(0, lives)) || "💔";
+    document.getElementById("hudCrystals").textContent = `${crystalsCollected}/10`;
+  }
+
+  const st = STAGES[currentStageIdx];
+  drawElaborateBackground(st, time);
+  drawStageElements(st, time);
+}
+
+// ============================================================================
+// CONTROLES DE TECLADO E TOQUE (ESPAÇO ATIRA NO FOGUETE NO PC!)
+// ============================================================================
+
+window.addEventListener("keydown", e => {
+  if (e.code === "ArrowLeft" || e.code === "KeyA") keys.left = true;
+  if (e.code === "ArrowRight" || e.code === "KeyD") keys.right = true;
+  if (e.code === "ArrowUp" || e.code === "KeyW") keys.jump = true;
+  if (e.code === "ArrowDown" || e.code === "KeyS") keys.down = true;
+  if (e.code === "Space") {
+    if (player.vehicleMode === "SPACESHIP") {
+      fireJetLaser();
+    } else {
+      keys.jump = true;
+    }
+  }
+  if (e.code === "KeyF" || e.code === "KeyZ") {
+    fireJetLaser();
+  }
+});
+window.addEventListener("keyup", e => {
+  if (e.code === "ArrowLeft" || e.code === "KeyA") keys.left = false;
+  if (e.code === "ArrowRight" || e.code === "KeyD") keys.right = false;
+  if (e.code === "ArrowUp" || e.code === "KeyW") keys.jump = false;
+  if (e.code === "ArrowDown" || e.code === "KeyS") keys.down = false;
+  if (e.code === "Space") keys.jump = false;
+});
+
+function bindTouchButton(id, prop) {
+  const el = document.getElementById(id);
+  const setPressed = (state) => {
+    keys[prop] = state;
+    if (state) el.classList.add("pressed");
+    else el.classList.remove("pressed");
+  };
+  el.addEventListener("touchstart", e => { e.preventDefault(); setPressed(true); }, { passive: false });
+  el.addEventListener("touchend", e => { e.preventDefault(); setPressed(false); }, { passive: false });
+  el.addEventListener("touchcancel", e => { e.preventDefault(); setPressed(false); }, { passive: false });
+}
+
+bindTouchButton("btnLeft", "left");
+bindTouchButton("btnRight", "right");
+bindTouchButton("btnJump", "jump");
+bindTouchButton("btnDown", "down");
+
+const leftPad = document.getElementById("leftTouchPad");
+leftPad.addEventListener("touchmove", e => {
+  e.preventDefault();
+  const bLeft = document.getElementById("btnLeft").getBoundingClientRect();
+  const bRight = document.getElementById("btnRight").getBoundingClientRect();
+  let overL = false, overR = false;
+  for (let i = 0; i < e.touches.length; i++) {
+    const tx = e.touches[i].clientX;
+    const ty = e.touches[i].clientY;
+    if (tx >= bLeft.left && tx <= bLeft.right && ty >= bLeft.top && ty <= bLeft.bottom) overL = true;
+    if (tx >= bRight.left && tx <= bRight.right && ty >= bRight.top && ty <= bRight.bottom) overR = true;
+  }
+  keys.left = overL;
+  keys.right = overR;
+  document.getElementById("btnLeft").classList.toggle("pressed", overL);
+  document.getElementById("btnRight").classList.toggle("pressed", overR);
+}, { passive: false });
+
+const btnFire = document.getElementById("btnFire");
+btnFire.addEventListener("touchstart", e => { e.preventDefault(); fireJetLaser(); }, { passive: false });
+btnFire.addEventListener("click", () => fireJetLaser());
+
+buildStage2D(0);
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>
