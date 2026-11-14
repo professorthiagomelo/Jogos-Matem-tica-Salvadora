@@ -2,7 +2,9 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
 <title>Detetive Matemático: Operação 16-Bits</title>
 <style>
   * {
@@ -11,66 +13,103 @@
     padding: 0;
     user-select: none;
     -webkit-user-select: none;
+    -webkit-touch-callout: none;
+    -webkit-tap-highlight-color: transparent;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   }
   html, body {
+    position: fixed;
+    inset: 0;
     width: 100%;
     height: 100%;
+    height: 100dvh;
     background: #060913;
     color: #f8fafc;
     overflow: hidden;
+    touch-action: none;
     display: flex;
     align-items: center;
     justify-content: center;
   }
   #game-wrapper {
     position: relative;
-    width: 100vw;
-    height: 100vh;
+    width: 100%;
+    height: 100%;
     background: #0f172a;
     overflow: hidden;
+    touch-action: none;
   }
   canvas {
     display: block;
     width: 100%;
     height: 100%;
     image-rendering: pixelated;
+    touch-action: none;
+  }
+
+  /* Aviso para girar o celular na horizontal */
+  #rotate-device-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 999;
+    background: radial-gradient(circle at center, #0f172a, #020617);
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    text-align: center;
+  }
+  #rotate-device-overlay .phone-icon {
+    font-size: 56px;
+    margin-bottom: 14px;
+    animation: tiltPhone 1.6s ease-in-out infinite;
+  }
+  @keyframes tiltPhone {
+    0%, 100% { transform: rotate(0deg); }
+    50% { transform: rotate(-90deg); }
+  }
+  @media screen and (max-width: 768px) and (orientation: portrait) {
+    #rotate-device-overlay {
+      display: flex;
+    }
   }
 
   /* HUD Superior */
   #hud {
     position: absolute;
-    top: 8px;
-    left: 10px;
-    right: 10px;
+    top: max(6px, env(safe-area-inset-top));
+    left: max(8px, env(safe-area-inset-left));
+    right: max(8px, env(safe-area-inset-right));
     z-index: 10;
     display: none;
     flex-wrap: wrap;
     justify-content: space-between;
     align-items: center;
-    gap: 6px;
+    gap: 4px;
     background: linear-gradient(180deg, rgba(15, 23, 42, 0.94), rgba(9, 13, 28, 0.94));
     border: 2px solid #facc15;
     border-radius: 10px;
-    padding: 6px 14px;
-    font-size: clamp(11px, 1.5vw, 15px);
+    padding: 5px 10px;
+    font-size: clamp(10px, 1.4vw, 15px);
     font-weight: 800;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
   }
   .hud-group {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 8px;
   }
   .hud-btn {
     background: linear-gradient(180deg, #1e293b, #0f172a);
     color: #fde047;
     border: 1.5px solid #facc15;
     border-radius: 7px;
-    padding: 5px 11px;
-    font-size: clamp(10px, 1.25vw, 13px);
+    padding: 4px 9px;
+    font-size: clamp(10px, 1.2vw, 13px);
     font-weight: 800;
     cursor: pointer;
+    touch-action: manipulation;
   }
   .hud-btn:active {
     background: #facc15;
@@ -87,15 +126,16 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 14px;
+    padding: 12px;
     text-align: center;
     overflow-y: auto;
+    touch-action: auto;
   }
   .hidden {
     display: none !important;
   }
   .title-main {
-    font-size: clamp(22px, 4vw, 38px);
+    font-size: clamp(20px, 4vw, 38px);
     font-weight: 900;
     background: linear-gradient(180deg, #fef08a 0%, #facc15 55%, #ca8a04 100%);
     -webkit-background-clip: text;
@@ -104,7 +144,7 @@
     margin-bottom: 2px;
   }
   .subtitle-main {
-    font-size: clamp(13px, 1.9vw, 18px);
+    font-size: clamp(12px, 1.9vw, 18px);
     color: #38bdf8;
     font-weight: 800;
     margin-bottom: 6px;
@@ -113,18 +153,18 @@
     background: rgba(250, 204, 21, 0.14);
     border: 1.5px solid #facc15;
     color: #fef08a;
-    padding: 4px 14px;
+    padding: 4px 12px;
     border-radius: 8px;
-    font-size: clamp(11px, 1.4vw, 14px);
+    font-size: clamp(10px, 1.3vw, 14px);
     font-weight: 800;
-    margin-bottom: 10px;
+    margin-bottom: 8px;
   }
   .player-input-box {
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 8px;
-    margin-bottom: 6px;
+    margin-bottom: 4px;
     flex-wrap: wrap;
   }
   .player-input-box label {
@@ -136,15 +176,16 @@
     background: #090d16;
     border: 2px solid #facc15;
     border-radius: 8px;
-    padding: 7px 12px;
+    padding: 6px 12px;
     color: #fef08a;
-    font-size: clamp(13px, 1.6vw, 16px);
+    font-size: 16px;
     font-weight: 800;
     text-align: center;
-    width: 220px;
+    width: 210px;
     outline: none;
     user-select: text;
     -webkit-user-select: text;
+    touch-action: manipulation;
   }
   .player-name-input:focus {
     border-color: #22c55e;
@@ -156,39 +197,39 @@
   }
   .name-warning {
     color: #fca5a5;
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 800;
-    margin-bottom: 8px;
-    min-height: 18px;
+    margin-bottom: 6px;
+    min-height: 16px;
   }
   .leaderboard-box {
     background: #090d16;
     border: 2px solid #facc15;
     border-radius: 9px;
-    padding: 8px 10px;
-    margin-bottom: 10px;
+    padding: 6px 8px;
+    margin-bottom: 8px;
     text-align: left;
   }
   .leaderboard-title {
     color: #facc15;
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 900;
     text-align: center;
-    margin-bottom: 5px;
+    margin-bottom: 4px;
   }
   .leaderboard-table {
     width: 100%;
     border-collapse: collapse;
-    font-size: clamp(11px, 1.35vw, 13px);
+    font-size: clamp(10px, 1.3vw, 13px);
   }
   .leaderboard-table th {
     color: #94a3b8;
     border-bottom: 1px solid #334155;
-    padding: 3px 5px;
+    padding: 2px 4px;
     text-align: left;
   }
   .leaderboard-table td {
-    padding: 4px 5px;
+    padding: 3px 4px;
     border-bottom: 1px solid rgba(51, 65, 85, 0.45);
     color: #f8fafc;
   }
@@ -202,12 +243,13 @@
     color: #fff;
     border: 2px solid #86efac;
     border-radius: 11px;
-    padding: 11px 26px;
-    font-size: clamp(14px, 1.95vw, 19px);
+    padding: 10px 22px;
+    font-size: clamp(13px, 1.9vw, 18px);
     font-weight: 900;
     cursor: pointer;
-    box-shadow: 0 5px 0 #14532d;
-    margin-bottom: 10px;
+    box-shadow: 0 4px 0 #14532d;
+    margin-bottom: 8px;
+    touch-action: manipulation;
   }
   .btn-primary:active {
     transform: translateY(3px);
@@ -217,26 +259,26 @@
   /* Barra da História e Cena Final */
   #ending-caption-bar {
     position: absolute;
-    bottom: 14px;
-    left: 16px;
-    right: 16px;
+    bottom: max(10px, env(safe-area-inset-bottom));
+    left: max(12px, env(safe-area-inset-left));
+    right: max(12px, env(safe-area-inset-right));
     z-index: 19;
     background: rgba(9, 13, 28, 0.96);
     border: 2.5px solid #facc15;
     border-radius: 12px;
-    padding: 12px 16px;
+    padding: 10px 14px;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 12px;
+    gap: 10px;
   }
   #ending-caption-text {
     color: #fef08a;
-    font-size: clamp(12px, 1.65vw, 15.5px);
+    font-size: clamp(11px, 1.6vw, 15px);
     font-weight: 800;
     text-align: left;
     flex: 1;
-    line-height: 1.38;
+    line-height: 1.35;
   }
 
   /* Modais */
@@ -244,50 +286,53 @@
     background: linear-gradient(180deg, #1e293b, #0f172a);
     border: 3px solid #facc15;
     border-radius: 14px;
-    padding: 14px 18px;
+    padding: 12px 16px;
     max-width: 640px;
-    width: 93%;
+    width: 94%;
+    max-height: 92dvh;
+    overflow-y: auto;
     box-shadow: 0 0 36px rgba(250, 204, 21, 0.45);
   }
   .modal-title {
     color: #facc15;
-    font-size: clamp(15px, 2.1vw, 21px);
+    font-size: clamp(14px, 2vw, 20px);
     font-weight: 900;
-    margin-bottom: 8px;
+    margin-bottom: 6px;
   }
   .modal-question {
     background: #090d16;
     border: 2px solid #38bdf8;
     border-radius: 9px;
-    padding: 12px 14px;
-    font-size: clamp(14px, 1.95vw, 18.5px);
+    padding: 10px 12px;
+    font-size: clamp(13px, 1.85vw, 18px);
     color: #ffffff;
     font-weight: 700;
-    margin-bottom: 10px;
+    margin-bottom: 8px;
     white-space: pre-line;
-    line-height: 1.38;
+    line-height: 1.35;
   }
   .modal-sub {
     color: #cbd5e1;
-    font-size: clamp(11px, 1.45vw, 14px);
-    margin-bottom: 12px;
+    font-size: clamp(11px, 1.4vw, 14px);
+    margin-bottom: 10px;
   }
   .boss-options {
     display: flex;
     flex-direction: column;
-    gap: 8px;
-    margin-top: 6px;
+    gap: 6px;
+    margin-top: 4px;
   }
   .boss-opt-btn {
     background: #1e293b;
     color: #f8fafc;
     border: 2px solid #facc15;
     border-radius: 9px;
-    padding: 10px 14px;
-    font-size: clamp(13.5px, 1.8vw, 17px);
+    padding: 8px 12px;
+    font-size: clamp(13px, 1.75vw, 16px);
     font-weight: 800;
     cursor: pointer;
     text-align: left;
+    touch-action: manipulation;
   }
   .boss-opt-btn:hover, .boss-opt-btn:active {
     background: #ca8a04;
@@ -297,9 +342,9 @@
   /* Controles Virtuais Grandes na Parte Inferior */
   #touch-controls {
     position: absolute;
-    bottom: 12px;
-    left: 14px;
-    right: 14px;
+    bottom: max(10px, env(safe-area-inset-bottom));
+    left: max(12px, env(safe-area-inset-left));
+    right: max(12px, env(safe-area-inset-right));
     z-index: 15;
     display: none;
     justify-content: space-between;
@@ -313,13 +358,13 @@
     pointer-events: auto;
   }
   .t-btn {
-    width: 68px;
-    height: 68px;
+    width: clamp(58px, 11vw, 72px);
+    height: clamp(58px, 11vw, 72px);
     border-radius: 16px;
-    background: rgba(30, 41, 59, 0.92);
+    background: rgba(30, 41, 59, 0.88);
     border: 2.5px solid #facc15;
     color: #fff;
-    font-size: 25px;
+    font-size: 24px;
     font-weight: 900;
     display: flex;
     align-items: center;
@@ -335,26 +380,36 @@
   }
   .t-btn-enter {
     width: auto;
-    min-width: 134px;
-    height: 70px;
-    padding: 0 20px;
+    min-width: clamp(108px, 18vw, 140px);
+    height: clamp(60px, 11vw, 72px);
+    padding: 0 16px;
     border-radius: 16px;
-    background: rgba(30, 41, 59, 0.88);
+    background: rgba(30, 41, 59, 0.85);
     border: 2.5px solid #64748b;
     color: #94a3b8;
-    font-size: 18px;
-    letter-spacing: 1px;
+    font-size: clamp(14px, 2.2vw, 18px);
+    letter-spacing: 0.5px;
   }
   .t-btn-enter.door-ready {
     background: linear-gradient(180deg, #22c55e, #15803d);
     border-color: #bbf7d0;
     color: #ffffff;
-    transform: scale(1.08);
+    transform: scale(1.06);
     box-shadow: 0 0 22px rgba(34, 197, 94, 0.9);
   }
 </style>
 </head>
 <body>
+
+<!-- Aviso automático se abrir no celular em pé -->
+<div id="rotate-device-overlay">
+  <div class="phone-icon">📱</div>
+  <div class="title-main" style="font-size: 22px; margin-bottom: 8px;">GIRE O CELULAR NA HORIZONTAL</div>
+  <div style="color: #cbd5e1; font-size: 15px; max-width: 300px; line-height: 1.4;">
+    Vire o aparelho deitado para liberar a tela panorâmica e os botões de controle!
+  </div>
+</div>
+
 <div id="game-wrapper">
   <canvas id="gameCanvas" width="800" height="450"></canvas>
 
@@ -393,16 +448,16 @@
       <div class="modal-title" id="clue-title">PISTA DECIFRADA!</div>
       <div class="modal-question" id="clue-question">Questão</div>
       <div class="modal-sub">
-        Vá até a <strong>PORTA (A, B ou C)</strong> correspondente à resposta e aperte <strong>ENTRAR</strong> (ou tecla E / Enter)!
+        Vá até a <strong>PORTA (A, B ou C)</strong> correspondente à resposta e aperte <strong>ENTRAR</strong>!
       </div>
       <button id="btn-close-clue" class="btn-primary" type="button" style="margin-bottom:0">VAMOS LÁ!</button>
     </div>
   </div>
 
   <!-- Modal do Confronto Final contra o Barão Zero -->
-  <div id="modal-boss" class="overlay hidden" style="background: rgba(4, 7, 18, 0.8);">
+  <div id="modal-boss" class="overlay hidden" style="background: rgba(4, 7, 18, 0.82);">
     <div class="modal-card" style="border-color: #f43f5e;">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; font-size:13px; font-weight:900;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; font-size:12px; font-weight:900;">
         <span style="color:#fda4af" id="boss-q-counter">DESAFIO #1</span>
         <span style="color:#4ade80" id="boss-hits-counter">ACERTOS: 0/3</span>
         <span style="color:#f87171" id="boss-err-counter">ERROS: 0/2</span>
@@ -415,14 +470,14 @@
   <!-- Barra da História Inicial e Cena Final em 3 Páginas -->
   <div id="ending-caption-bar" class="hidden">
     <div id="ending-caption-text">Carregando história...</div>
-    <button id="btn-next-ending" class="btn-primary" type="button" style="margin-bottom:0; padding:9px 18px; font-size:14px; white-space:nowrap;">PRÓXIMA PÁGINA ▶</button>
+    <button id="btn-next-ending" class="btn-primary" type="button" style="margin-bottom:0; padding:8px 14px; font-size:13px; white-space:nowrap;">PRÓXIMA ▶</button>
   </div>
 
   <!-- Tela de Game Over -->
   <div id="screen-gameover" class="overlay hidden">
     <div class="title-main" style="background: linear-gradient(180deg, #fca5a5, #ef4444); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">GAME OVER</div>
     <div class="subtitle-main" id="gameover-reason">O Barão Zero escapou!</div>
-    <div style="font-size:16px; color:#facc15; margin-bottom:14px; font-weight:900;" id="gameover-score">PONTUAÇÃO FINAL: 0</div>
+    <div style="font-size:15px; color:#facc15; margin-bottom:10px; font-weight:900;" id="gameover-score">PONTUAÇÃO FINAL: 0</div>
     <div class="copyright-banner">Todos os direitos reservados ao Professor Thiago Melo</div>
     <div style="display:flex; gap:10px; flex-wrap:wrap; justify-content:center;">
       <button id="btn-retry" class="btn-primary" type="button">↻ TENTAR NOVAMENTE</button>
@@ -431,13 +486,13 @@
   </div>
 
   <!-- Tela Final de Vitória -->
-  <div id="screen-victory" class="overlay hidden" style="background: rgba(4, 7, 18, 0.65); justify-content: flex-end; padding-bottom: 14px;">
+  <div id="screen-victory" class="overlay hidden" style="background: rgba(4, 7, 18, 0.72); justify-content: center;">
     <div class="modal-card" style="border-color:#22c55e; max-width:680px;">
-      <div class="title-main" style="font-size:clamp(19px,3.2vw,28px); background: linear-gradient(180deg, #86efac, #22c55e); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">CASO ENCERRADO! MISSÃO CUMPRIDA!</div>
-      <div style="color:#f8fafc; font-size:clamp(12px,1.6vw,14.5px); margin-bottom:6px;">
+      <div class="title-main" style="font-size:clamp(18px,3vw,26px); background: linear-gradient(180deg, #86efac, #22c55e); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">CASO ENCERRADO! MISSÃO CUMPRIDA!</div>
+      <div style="color:#f8fafc; font-size:clamp(11px,1.5vw,14px); margin-bottom:4px;">
         Parabéns! Você prendeu o Barão Zero e devolveu o Cofre Central à cidade de Numerópolis!
       </div>
-      <div style="color:#facc15; font-size:14px; font-weight:900; margin-bottom:6px;" id="victory-score">PONTUAÇÃO TOTAL: 0</div>
+      <div style="color:#facc15; font-size:13px; font-weight:900; margin-bottom:6px;" id="victory-score">PONTUAÇÃO TOTAL: 0</div>
       <div class="leaderboard-box">
         <div class="leaderboard-title">🏆 RANKING DOS MELHORES DETETIVES (ESCORE + TEMPO + VIDAS)</div>
         <table class="leaderboard-table">
@@ -453,8 +508,8 @@
           <tbody id="leaderboard-body"></tbody>
         </table>
       </div>
-      <div class="copyright-banner" style="margin-bottom:8px;">Todos os direitos reservados ao Professor Thiago Melo</div>
-      <button id="btn-victory-menu" class="btn-primary" type="button" style="margin-bottom:0; padding:9px 22px; font-size:15px;">JOGAR NOVAMENTE</button>
+      <div class="copyright-banner" style="margin-bottom:6px;">Todos os direitos reservados ao Professor Thiago Melo</div>
+      <button id="btn-victory-menu" class="btn-primary" type="button" style="margin-bottom:0; padding:8px 20px; font-size:14px;">JOGAR NOVAMENTE</button>
     </div>
   </div>
 
@@ -475,9 +530,6 @@
 (function() {
   'use strict';
 
-  // ==========================================
-  // 1. SINTETIZADOR DE ÁUDIO 16-BITS
-  // ==========================================
   const SoundFX = {
     ctx: null,
     muted: false,
@@ -556,9 +608,6 @@
     }
   };
 
-  // ==========================================
-  // 2. BANCO DE QUESTÕES (ENSINO FUNDAMENTAL II)
-  // ==========================================
   const VOL1_QUESTION_BANK = [
     { id: 1, topic: 'Equação do 1º Grau', q: 'Resolva a equação:\n3x + 7 = 25', opts: ['x = 6', 'x = 8', 'x = 9'], ans: 0 },
     { id: 2, topic: 'Porcentagem', q: 'Quanto é 25% de 160?', opts: ['35', '40', '45'], ans: 1 },
@@ -595,84 +644,16 @@
     return arr;
   }
 
-  // ==========================================
-  // 3. DISTRITOS DO JOGO
-  // ==========================================
   const STAGES = [
-    {
-      name: 'FASE 1: DISTRITO CENTRAL',
-      skyTop: '#0369a1',
-      skyBot: '#bae6fd',
-      groundMain: '#78350f',
-      groundTop: '#22c55e',
-      platMain: '#92400e',
-      platTop: '#facc15',
-      clueTitle: 'PISTA #1 — DISTRITO CENTRAL'
-    },
-    {
-      name: 'FASE 2: PARQUE DAS ÁRVORES',
-      skyTop: '#047857',
-      skyBot: '#a7f3d0',
-      groundMain: '#713f12',
-      groundTop: '#4ade80',
-      platMain: '#065f46',
-      platTop: '#fde047',
-      clueTitle: 'PISTA #2 — PARQUE DAS ÁRVORES'
-    },
-    {
-      name: 'FASE 3: PONTE DO PORTO',
-      skyTop: '#1d4ed8',
-      skyBot: '#bfdbfe',
-      groundMain: '#334155',
-      groundTop: '#f59e0b',
-      platMain: '#475569',
-      platTop: '#fde047',
-      clueTitle: 'PISTA #3 — PONTE DO PORTO'
-    },
-    {
-      name: 'FASE 4: ESTAÇÃO SUBTERRÂNEA',
-      skyTop: '#1e3a8a',
-      skyBot: '#7dd3fc',
-      groundMain: '#1e293b',
-      groundTop: '#38bdf8',
-      platMain: '#334155',
-      platTop: '#fef08a',
-      clueTitle: 'PISTA #4 — ESTAÇÃO SUBTERRÂNEA'
-    },
-    {
-      name: 'FASE 5: TORRE DO RELÓGIO',
-      skyTop: '#3730a3',
-      skyBot: '#c7d2fe',
-      groundMain: '#3b0764',
-      groundTop: '#facc15',
-      platMain: '#4338ca',
-      platTop: '#fde047',
-      clueTitle: 'PISTA #5 — TORRE DO RELÓGIO'
-    },
-    {
-      name: 'FASE 6: FORTALEZA DO NORTE',
-      skyTop: '#9a3412',
-      skyBot: '#fed7aa',
-      groundMain: '#27272a',
-      groundTop: '#fb923c',
-      platMain: '#3f3f46',
-      platTop: '#fde047',
-      clueTitle: 'PISTA #6 — FORTALEZA DO NORTE'
-    },
-    {
-      name: 'FASE 7: COVIL DO BARÃO ZERO',
-      skyTop: '#1e1b4b',
-      skyBot: '#6366f1',
-      groundMain: '#18181b',
-      groundTop: '#facc15',
-      platMain: '#27272a',
-      platTop: '#38bdf8'
-    }
+    { name: 'FASE 1: DISTRITO CENTRAL', skyTop: '#0369a1', skyBot: '#bae6fd', groundMain: '#78350f', groundTop: '#22c55e', platMain: '#92400e', platTop: '#facc15', clueTitle: 'PISTA #1 — DISTRITO CENTRAL' },
+    { name: 'FASE 2: PARQUE DAS ÁRVORES', skyTop: '#047857', skyBot: '#a7f3d0', groundMain: '#713f12', groundTop: '#4ade80', platMain: '#065f46', platTop: '#fde047', clueTitle: 'PISTA #2 — PARQUE DAS ÁRVORES' },
+    { name: 'FASE 3: PONTE DO PORTO', skyTop: '#1d4ed8', skyBot: '#bfdbfe', groundMain: '#334155', groundTop: '#f59e0b', platMain: '#475569', platTop: '#fde047', clueTitle: 'PISTA #3 — PONTE DO PORTO' },
+    { name: 'FASE 4: ESTAÇÃO SUBTERRÂNEA', skyTop: '#1e3a8a', skyBot: '#7dd3fc', groundMain: '#1e293b', groundTop: '#38bdf8', platMain: '#334155', platTop: '#fef08a', clueTitle: 'PISTA #4 — ESTAÇÃO SUBTERRÂNEA' },
+    { name: 'FASE 5: TORRE DO RELÓGIO', skyTop: '#3730a3', skyBot: '#c7d2fe', groundMain: '#3b0764', groundTop: '#facc15', platMain: '#4338ca', platTop: '#fde047', clueTitle: 'PISTA #5 — TORRE DO RELÓGIO' },
+    { name: 'FASE 6: FORTALEZA DO NORTE', skyTop: '#9a3412', skyBot: '#fed7aa', groundMain: '#27272a', groundTop: '#fb923c', platMain: '#3f3f46', platTop: '#fde047', clueTitle: 'PISTA #6 — FORTALEZA DO NORTE' },
+    { name: 'FASE 7: COVIL DO BARÃO ZERO', skyTop: '#1e1b4b', skyBot: '#6366f1', groundMain: '#18181b', groundTop: '#facc15', platMain: '#27272a', platTop: '#38bdf8' }
   ];
 
-  // ==========================================
-  // 4. ESTADO DO JOGO
-  // ==========================================
   const canvas = document.getElementById('gameCanvas');
   const ctx = canvas.getContext('2d');
   const V_W = 800;
@@ -711,7 +692,7 @@
   };
 
   const state = {
-    mode: 'menu', // 'menu', 'intro_story', 'playing', 'clue_modal', 'boss_question', 'ending_cutscene', 'gameover', 'victory'
+    mode: 'menu',
     playerName: '',
     elapsedFrames: 0,
     rankingSaved: false,
@@ -732,62 +713,18 @@
     bossQuestions: [],
     floatingTexts: [],
     particles: [],
-    boss: {
-      x: 560,
-      y: 268,
-      w: 84,
-      h: 112,
-      vx: -1.8,
-      vy: 0,
-      minX: 160,
-      maxX: 730,
-      jumpCooldown: 115,
-      qIndex: 0,
-      hits: 0,
-      errors: 0,
-      hurtTimer: 0,
-      stompCooldown: 0
-    },
-    ending: {
-      act: 0,
-      timer: 0,
-      detectiveX: 190,
-      banditX: 275,
-      vanX: 130,
-      confetti: []
-    }
+    boss: { x: 560, y: 268, w: 84, h: 112, vx: -1.8, vy: 0, minX: 160, maxX: 730, jumpCooldown: 115, qIndex: 0, hits: 0, errors: 0, hurtTimer: 0, stompCooldown: 0 },
+    ending: { act: 0, timer: 0, detectiveX: 190, banditX: 275, vanX: 130, confetti: [] }
   };
 
   const player = {
-    x: 80,
-    y: 300,
-    w: 28,
-    h: 44,
-    vx: 0,
-    vy: 0,
-    speed: 4.8,
-    jumpForce: -11.8,
-    gravity: 0.54,
-    grounded: false,
-    jumpsLeft: 2,
-    maxJumps: 2,
-    facing: 1,
-    invuln: 0,
-    walkFrame: 0,
-    ridingPlatform: null
+    x: 80, y: 300, w: 28, h: 44, vx: 0, vy: 0,
+    speed: 4.8, jumpForce: -11.8, gravity: 0.54,
+    grounded: false, jumpsLeft: 2, maxJumps: 2,
+    facing: 1, invuln: 0, walkFrame: 0, ridingPlatform: null
   };
 
-  let level = {
-    platforms: [],
-    hazards: [],
-    enemies: [],
-    rings: [],
-    checkpoint: null,
-    clueBlock: null,
-    doors: [],
-    endWallX: 5200
-  };
-
+  let level = { platforms: [], hazards: [], enemies: [], rings: [], checkpoint: null, clueBlock: null, doors: [], endWallX: 5200 };
   const keys = { left: false, right: false };
 
   function prepareSessionQuestions() {
@@ -810,9 +747,6 @@
     return nextQ;
   }
 
-  // ==========================================
-  // 5. HISTÓRIA INICIAL E VALIDAÇÃO DE NOME
-  // ==========================================
   const INTRO_SLIDES_VOL1 = [
     'CAPÍTULO 1 DE 3 — O MISTÉRIO DO COFRE CENTRAL: Na cidade de Numerópolis, o Cofre Central guardava todas as fórmulas, livros e tesouros científicos que mantinham as escolas funcionando!',
     'CAPÍTULO 2 DE 3 — A INVASÃO DO BARÃO ZERO: Durante a madrugada, o astuto vilão Barão Zero invadiu o cofre, trancou os 6 distritos da cidade com enigmas matemáticos e fugiu para seu covil secreto!',
@@ -828,9 +762,7 @@
   function validateAndGetPlayerName() {
     const typedName = (ui.playerNameInput && ui.playerNameInput.value || '').trim();
     if (!typedName) {
-      if (ui.nameWarning) {
-        ui.nameWarning.textContent = '⚠️ Por favor, digite o seu nome antes de iniciar o jogo!';
-      }
+      if (ui.nameWarning) ui.nameWarning.textContent = '⚠️ Por favor, digite o seu nome antes de iniciar o jogo!';
       if (ui.playerNameInput) {
         ui.playerNameInput.classList.add('input-error');
         ui.playerNameInput.focus();
@@ -843,10 +775,23 @@
     return typedName;
   }
 
+  function tryRequestFullscreenAndLandscape() {
+    try {
+      const el = document.documentElement;
+      if (el.requestFullscreen && !document.fullscreenElement) {
+        el.requestFullscreen().catch(() => {});
+      }
+      if (screen.orientation && screen.orientation.lock) {
+        screen.orientation.lock('landscape').catch(() => {});
+      }
+    } catch (e) {}
+  }
+
   function startAdventure() {
     const validName = validateAndGetPlayerName();
     if (!validName) return;
 
+    tryRequestFullscreenAndLandscape();
     SoundFX.init();
     SoundFX.startBGM();
     state.playerName = validName;
@@ -863,7 +808,7 @@
     ui.hud.style.display = 'none';
     ui.touchControls.style.display = 'none';
     ui.endingCaptionText.textContent = INTRO_SLIDES_VOL1[0];
-    document.getElementById('btn-next-ending').textContent = 'PRÓXIMA PÁGINA ▶';
+    document.getElementById('btn-next-ending').textContent = 'PRÓXIMA ▶';
     ui.endingCaptionBar.classList.remove('hidden');
   }
 
@@ -873,7 +818,7 @@
       SoundFX.clue();
       ui.endingCaptionText.textContent = INTRO_SLIDES_VOL1[state.introSlide];
       document.getElementById('btn-next-ending').textContent =
-        state.introSlide === INTRO_SLIDES_VOL1.length - 1 ? 'COMEÇAR FASE 1 ▶' : 'PRÓXIMA PÁGINA ▶';
+        state.introSlide === INTRO_SLIDES_VOL1.length - 1 ? 'JOGAR ▶' : 'PRÓXIMA ▶';
     } else {
       ui.endingCaptionBar.classList.add('hidden');
       ui.hud.style.display = 'flex';
@@ -883,14 +828,9 @@
     }
   }
 
-  // ==========================================
-  // 6. CONSTRUTOR DOS 7 DISTRITOS
-  // ==========================================
   function addPlat(x, y, w, h, isGround = false, moveOpts = null) {
     const p = {
-      x, y, w, h, isGround,
-      baseX: x, baseY: y,
-      dx: 0, dy: 0,
+      x, y, w, h, isGround, baseX: x, baseY: y, dx: 0, dy: 0,
       moveAxis: moveOpts ? moveOpts.axis : null,
       moveRange: moveOpts ? moveOpts.range : 0,
       moveSpeed: moveOpts ? moveOpts.speed : 0,
@@ -926,18 +866,10 @@
     level.endWallX = finalStart + finalWidth;
     addPlat(finalStart, 380, finalWidth, 90, true);
 
-    level.clueBlock = {
-      x: finalStart + 120,
-      y: 275,
-      w: 48,
-      h: 48,
-      hit: false
-    };
+    level.clueBlock = { x: finalStart + 120, y: 275, w: 48, h: 48, hit: false };
 
-    const platBX = finalStart + 505;
-    const platBY = 290;
-    const platCX = finalStart + 725;
-    const platCY = 215;
+    const platBX = finalStart + 505, platBY = 290;
+    const platCX = finalStart + 725, platCY = 215;
 
     addPlat(finalStart + 315, 330, 75, 16, false);
     addPlat(platBX, platBY, 170, 20, false);
@@ -951,10 +883,7 @@
   }
 
   function buildStage(idx) {
-    if (!state.stageQuestions || state.stageQuestions.length < 6) {
-      prepareSessionQuestions();
-    }
-
+    if (!state.stageQuestions || state.stageQuestions.length < 6) prepareSessionQuestions();
     state.stageIdx = idx;
     state.cameraX = 0;
     state.checkpointX = 80;
@@ -965,27 +894,11 @@
     state.particles = [];
     updateEnterButtonUI(null);
 
-    player.x = 80;
-    player.y = 300;
-    player.vx = 0;
-    player.vy = 0;
-    player.grounded = false;
-    player.jumpsLeft = 2;
-    player.facing = 1;
-    player.invuln = 0;
-    player.ridingPlatform = null;
+    player.x = 80; player.y = 300; player.vx = 0; player.vy = 0;
+    player.grounded = false; player.jumpsLeft = 2; player.facing = 1;
+    player.invuln = 0; player.ridingPlatform = null;
 
-    level = {
-      platforms: [],
-      hazards: [],
-      enemies: [],
-      rings: [],
-      checkpoint: null,
-      clueBlock: null,
-      doors: [],
-      endWallX: 5200
-    };
-
+    level = { platforms: [], hazards: [], enemies: [], rings: [], checkpoint: null, clueBlock: null, doors: [], endWallX: 5200 };
     const stageQ = idx < 6 ? state.stageQuestions[idx] : null;
 
     if (idx === 0) {
@@ -995,10 +908,8 @@
       addRingArc(310, 265, 5, 34, 30);
       addRingLine(580, 200, 5, 34);
       addSlime(980, 352, 820, 1340, 1.15);
-
       addPlat(1390, 295, 220, 18);
       addRingArc(1415, 260, 5, 36, 35);
-
       addPlat(1940, 380, 2240, 90, true);
       level.checkpoint = { x: 2010, y: 324, w: 24, h: 56, active: false };
       addPlat(2250, 305, 180, 18);
@@ -1008,24 +919,20 @@
       addSlime(2620, 352, 2260, 2980, 1.25);
       addSlime(3480, 352, 3280, 3760, 1.3);
       addRingArc(3650, 340, 6, 36, 45);
-
       buildFinalDoorsZone(4260, stageQ);
     } else if (idx === 1) {
       addPlat(0, 380, 760, 90, true);
       addPlat(250, 300, 180, 18);
       addRingArc(265, 265, 5, 34, 30);
       addSlime(560, 352, 360, 720, 1.35);
-
       addPlat(850, 325, 165, 18, false, { axis: 'x', range: 70, speed: 0.024, phase: 0 });
       addRingLine(880, 285, 4, 34);
-
       addPlat(1140, 380, 960, 90, true);
       addPlat(1260, 280, 220, 18);
       addPlat(1560, 215, 220, 18);
       addRingArc(1580, 180, 6, 34, 30);
       addSlime(1750, 352, 1450, 2040, 1.4);
       addBat(1480, 180, 1260, 1880, 1.45, 0);
-
       addPlat(2195, 320, 155, 18);
       addPlat(2445, 380, 1140, 90, true);
       level.checkpoint = { x: 2510, y: 324, w: 24, h: 56, active: false };
@@ -1033,23 +940,19 @@
       addPlat(3020, 220, 210, 18);
       addRingLine(3045, 185, 5, 36);
       addSlime(3120, 352, 2820, 3480, 1.5);
-
       addPlat(3680, 315, 165, 18, false, { axis: 'x', range: 75, speed: 0.025, phase: 1.5 });
       addPlat(3975, 380, 580, 90, true);
       addSlime(4260, 352, 3960, 4490, 1.6);
       addBat(3950, 165, 3760, 4350, 1.65, 1);
-
       buildFinalDoorsZone(4640, stageQ);
     } else if (idx === 2) {
       addPlat(0, 380, 840, 90, true);
       addPlat(260, 290, 185, 18);
       addRingLine(275, 255, 5, 35);
       addSlime(620, 352, 430, 800, 1.55);
-
       addPlat(935, 290, 160, 18, false, { axis: 'y', range: 55, speed: 0.026, phase: 0 });
       addPlat(1195, 255, 175, 18);
       addRingArc(1215, 220, 4, 36, 30);
-
       addPlat(1465, 380, 1180, 90, true);
       level.hazards.push({ x: 1840, y: 364, w: 54, h: 16 });
       addPlat(1690, 285, 180, 18);
@@ -1058,7 +961,6 @@
       addRingArc(1930, 185, 6, 34, 34);
       addBat(2020, 155, 1720, 2380, 1.75, 0.5);
       addSlime(2360, 352, 2060, 2600, 1.6);
-
       addPlat(2740, 380, 1020, 90, true);
       level.checkpoint = { x: 2800, y: 324, w: 24, h: 56, active: false };
       level.hazards.push({ x: 3160, y: 364, w: 54, h: 16 });
@@ -1066,24 +968,20 @@
       addPlat(3320, 225, 200, 18);
       addRingLine(3340, 190, 5, 36);
       addSlime(3480, 352, 3240, 3720, 1.7);
-
       addPlat(3855, 315, 160, 18, false, { axis: 'x', range: 80, speed: 0.027, phase: 0.8 });
       addPlat(4145, 380, 620, 90, true);
       addSlime(4460, 352, 4150, 4720, 1.8);
       addBat(4350, 195, 4050, 4650, 1.85, 2.2);
-
       buildFinalDoorsZone(4860, stageQ);
     } else if (idx === 3) {
       addPlat(0, 380, 740, 90, true);
       addPlat(250, 290, 175, 18);
       addRingArc(265, 255, 4, 36, 32);
       addSlime(520, 352, 340, 700, 1.7);
-
       addPlat(850, 325, 160, 18, false, { axis: 'x', range: 75, speed: 0.027, phase: 0 });
       addPlat(1140, 275, 160, 18, false, { axis: 'x', range: 75, speed: 0.027, phase: 3.1 });
       addRingLine(880, 285, 4, 34);
       addRingLine(1170, 235, 4, 34);
-
       addPlat(1430, 380, 1140, 90, true);
       level.hazards.push({ x: 1810, y: 364, w: 54, h: 16 });
       addPlat(1650, 285, 175, 18);
@@ -1091,20 +989,17 @@
       addRingArc(1900, 180, 6, 34, 32);
       addBat(1980, 175, 1660, 2320, 1.95, 0.3);
       addSlime(2260, 352, 1960, 2520, 1.8);
-
       addPlat(2670, 380, 980, 90, true);
       level.checkpoint = { x: 2730, y: 324, w: 24, h: 56, active: false };
       addPlat(2960, 280, 185, 18);
       addPlat(3220, 215, 195, 18);
       addRingLine(3240, 180, 5, 36);
       addSlime(3340, 352, 3040, 3600, 1.85);
-
       addPlat(3750, 315, 155, 18, false, { axis: 'y', range: 50, speed: 0.029, phase: 1.2 });
       addPlat(4000, 325, 155, 18);
       addPlat(4250, 380, 660, 90, true);
       addBat(4560, 215, 4240, 4840, 2.05, 1.7);
       addSlime(4680, 352, 4360, 4880, 1.9);
-
       buildFinalDoorsZone(5000, stageQ);
     } else if (idx === 4) {
       addPlat(0, 380, 820, 90, true);
@@ -1112,12 +1007,10 @@
       addPlat(470, 225, 185, 18);
       addRingLine(485, 190, 5, 35);
       addSlime(620, 352, 410, 780, 1.85);
-
       addPlat(925, 295, 150, 18, false, { axis: 'y', range: 60, speed: 0.029, phase: 0 });
       addPlat(1170, 240, 150, 18, false, { axis: 'y', range: 60, speed: 0.029, phase: 3.1 });
       addRingLine(975, 200, 3, 28);
       addRingLine(1220, 145, 3, 28);
-
       addPlat(1420, 380, 1180, 90, true);
       level.hazards.push({ x: 1790, y: 364, w: 54, h: 16 });
       level.hazards.push({ x: 2140, y: 364, w: 54, h: 16 });
@@ -1127,21 +1020,18 @@
       addRingArc(1910, 180, 6, 35, 32);
       addBat(2010, 160, 1680, 2400, 2.1, 0.8);
       addSlime(2360, 352, 2240, 2560, 1.95);
-
       addPlat(2700, 380, 980, 90, true);
       level.checkpoint = { x: 2760, y: 324, w: 24, h: 56, active: false };
       addPlat(2990, 285, 175, 18);
       addPlat(3240, 220, 195, 18);
       addRingLine(3260, 185, 5, 36);
       addBat(3320, 175, 2980, 3580, 2.0, 0.7);
-
       addPlat(3785, 305, 155, 18, false, { axis: 'x', range: 85, speed: 0.03, phase: 0.4 });
       addPlat(4075, 380, 910, 90, true);
       addPlat(4260, 275, 190, 18);
       addRingArc(4280, 240, 5, 36, 34);
       addBat(4580, 200, 4240, 4920, 2.2, 1.1);
       addSlime(4720, 352, 4420, 4960, 2.0);
-
       buildFinalDoorsZone(5080, stageQ);
     } else if (idx === 5) {
       addPlat(0, 380, 780, 90, true);
@@ -1150,11 +1040,9 @@
       addRingArc(245, 260, 4, 35, 30);
       addRingLine(465, 190, 4, 38);
       addSlime(590, 352, 390, 740, 2.0);
-
       addPlat(885, 310, 150, 18, false, { axis: 'x', range: 75, speed: 0.03, phase: 0 });
       addPlat(1165, 265, 150, 18, false, { axis: 'y', range: 55, speed: 0.03, phase: 1.2 });
       addRingLine(910, 270, 4, 34);
-
       addPlat(1415, 380, 1140, 90, true);
       level.hazards.push({ x: 1780, y: 364, w: 54, h: 16 });
       level.hazards.push({ x: 2110, y: 364, w: 54, h: 16 });
@@ -1164,11 +1052,9 @@
       addRingArc(1880, 175, 6, 35, 30);
       addBat(1980, 155, 1640, 2380, 2.25, 0.2);
       addSlime(2310, 352, 2200, 2510, 2.05);
-
       addPlat(2650, 320, 145, 18);
       addPlat(2880, 265, 150, 18, false, { axis: 'x', range: 80, speed: 0.031, phase: 2.1 });
       addRingArc(2665, 285, 4, 34, 30);
-
       addPlat(3155, 380, 980, 90, true);
       level.checkpoint = { x: 3215, y: 324, w: 24, h: 56, active: false };
       level.hazards.push({ x: 3560, y: 364, w: 54, h: 16 });
@@ -1176,13 +1062,11 @@
       addPlat(3700, 215, 195, 18);
       addRingLine(3720, 180, 5, 36);
       addBat(3780, 165, 3420, 4050, 2.15, 1.4);
-
       addPlat(4230, 290, 145, 18, false, { axis: 'y', range: 55, speed: 0.031, phase: 0.5 });
       addPlat(4470, 380, 610, 90, true);
       addPlat(4620, 275, 190, 18);
       addRingArc(4640, 240, 5, 36, 32);
       addBat(4820, 205, 4500, 5040, 2.35, 1.9);
-
       buildFinalDoorsZone(5170, stageQ);
     } else if (idx === 6) {
       level.endWallX = 800;
@@ -1192,32 +1076,13 @@
       addPlat(325, 205, 150, 18);
       addRingLine(110, 240, 4, 34);
       addRingLine(575, 240, 4, 34);
-
-      state.boss = {
-        x: 560,
-        y: 268,
-        w: 84,
-        h: 112,
-        vx: -1.8,
-        vy: 0,
-        minX: 160,
-        maxX: 730,
-        jumpCooldown: 115,
-        qIndex: 0,
-        hits: 0,
-        errors: 0,
-        hurtTimer: 0,
-        stompCooldown: 0
-      };
+      state.boss = { x: 560, y: 268, w: 84, h: 112, vx: -1.8, vy: 0, minX: 160, maxX: 730, jumpCooldown: 115, qIndex: 0, hits: 0, errors: 0, hurtTimer: 0, stompCooldown: 0 };
       addFloatingText(400, 130, 'PULE NA CABEÇA DO BARÃO ZERO 3 VEZES!', '#facc15');
     }
 
     updateHUD();
   }
 
-  // ==========================================
-  // 7. UI, PORTAS, BARÃO ZERO E RANKING
-  // ==========================================
   function hideAllScreens() {
     ui.screenStart.classList.add('hidden');
     ui.modalClue.classList.add('hidden');
@@ -1245,15 +1110,9 @@
       state.rankingSaved = true;
       state.highScores.forEach(item => { item.isCurrent = false; });
       state.highScores.push({
-        name: state.playerName,
-        baseScore: state.score,
-        timeBonus,
-        livesBonus,
-        finalScore: finalRankScore,
-        timeSec: totalSec,
-        timeStr: formattedTime,
-        lives: state.lives,
-        isCurrent: true
+        name: state.playerName, baseScore: state.score, timeBonus, livesBonus,
+        finalScore: finalRankScore, timeSec: totalSec, timeStr: formattedTime,
+        lives: state.lives, isCurrent: true
       });
       state.highScores.sort((a, b) => (b.finalScore - a.finalScore) || (a.timeSec - b.timeSec));
       if (state.highScores.length > 5) state.highScores.length = 5;
@@ -1304,13 +1163,7 @@
 
   function spawnParticles(x, y, color, count = 12) {
     for (let i = 0; i < count; i++) {
-      state.particles.push({
-        x, y,
-        vx: (Math.random() - 0.5) * 7,
-        vy: (Math.random() - 0.8) * 6,
-        color,
-        life: 24 + Math.random() * 18
-      });
+      state.particles.push({ x, y, vx: (Math.random() - 0.5) * 7, vy: (Math.random() - 0.8) * 6, color, life: 24 + Math.random() * 18 });
     }
   }
 
@@ -1508,24 +1361,11 @@
     ui.touchControls.style.display = 'none';
     ui.endingCaptionBar.classList.remove('hidden');
     ui.endingCaptionText.textContent = ENDING_STORIES_VOL1[0];
-    document.getElementById('btn-next-ending').textContent = 'PRÓXIMA PÁGINA ▶';
-    state.ending = {
-      act: 0,
-      timer: 0,
-      detectiveX: 190,
-      banditX: 275,
-      vanX: 130,
-      confetti: []
-    };
+    document.getElementById('btn-next-ending').textContent = 'PRÓXIMA ▶';
+    state.ending = { act: 0, timer: 0, detectiveX: 190, banditX: 275, vanX: 130, confetti: [] };
     const colors = ['#facc15', '#38bdf8', '#22c55e', '#f43f5e', '#c084fc'];
     for (let i = 0; i < 80; i++) {
-      state.ending.confetti.push({
-        x: Math.random() * V_W,
-        y: Math.random() * V_H - V_H,
-        vy: 1.5 + Math.random() * 2,
-        color: colors[i % colors.length],
-        size: 5 + Math.floor(Math.random() * 5)
-      });
+      state.ending.confetti.push({ x: Math.random() * V_W, y: Math.random() * V_H - V_H, vy: 1.5 + Math.random() * 2, color: colors[i % colors.length], size: 5 + Math.floor(Math.random() * 5) });
     }
     SoundFX.siren();
     SoundFX.victory();
@@ -1539,22 +1379,18 @@
       ui.endingCaptionText.textContent = ENDING_STORIES_VOL1[end.act];
       if (end.act === 1) SoundFX.siren();
       if (end.act === 2) SoundFX.victory();
-      document.getElementById('btn-next-ending').textContent = end.act === ENDING_STORIES_VOL1.length - 1 ? 'VER RANKING FINAL ▶' : 'PRÓXIMA PÁGINA ▶';
+      document.getElementById('btn-next-ending').textContent = end.act === ENDING_STORIES_VOL1.length - 1 ? 'RANKING ▶' : 'PRÓXIMA ▶';
     } else {
       showVictoryCard();
     }
   }
 
-  // ==========================================
-  // 8. FÍSICA E COLISÕES
-  // ==========================================
   function rectsOverlap(a, b) {
     return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
   }
 
   function update() {
     state.time++;
-
     const activeSessionModes = ['intro_story', 'playing', 'clue_modal', 'boss_question'];
     if (activeSessionModes.includes(state.mode)) {
       state.elapsedFrames++;
@@ -1563,16 +1399,12 @@
 
     for (let i = state.particles.length - 1; i >= 0; i--) {
       const p = state.particles[i];
-      p.x += p.vx;
-      p.y += p.vy;
-      p.vy += 0.25;
-      p.life--;
+      p.x += p.vx; p.y += p.vy; p.vy += 0.25; p.life--;
       if (p.life <= 0) state.particles.splice(i, 1);
     }
     for (let i = state.floatingTexts.length - 1; i >= 0; i--) {
       const ft = state.floatingTexts[i];
-      ft.y -= 0.7;
-      ft.life--;
+      ft.y -= 0.7; ft.life--;
       if (ft.life <= 0) state.floatingTexts.splice(i, 1);
     }
 
@@ -1580,19 +1412,11 @@
       const end = state.ending;
       end.timer++;
       if (end.act === 0) {
-        if (end.detectiveX < 310) {
-          end.detectiveX += 1.2;
-          end.banditX += 1.2;
-        }
+        if (end.detectiveX < 310) { end.detectiveX += 1.2; end.banditX += 1.2; }
       } else if (end.act === 1) {
-        if (end.vanX < 370) {
-          end.vanX += 2.2;
-        }
+        if (end.vanX < 370) end.vanX += 2.2;
       } else {
-        for (const c of end.confetti) {
-          c.y += c.vy;
-          if (c.y > V_H) c.y = -10;
-        }
+        for (const c of end.confetti) { c.y += c.vy; if (c.y > V_H) c.y = -10; }
       }
       return;
     }
@@ -1601,13 +1425,11 @@
 
     for (const plat of level.platforms) {
       if (!plat.moveAxis) continue;
-      const oldX = plat.x;
-      const oldY = plat.y;
+      const oldX = plat.x, oldY = plat.y;
       const offset = Math.sin(state.time * plat.moveSpeed + plat.movePhase) * plat.moveRange;
       if (plat.moveAxis === 'x') plat.x = plat.baseX + offset;
       else if (plat.moveAxis === 'y') plat.y = plat.baseY + offset;
-      plat.dx = plat.x - oldX;
-      plat.dy = plat.y - oldY;
+      plat.dx = plat.x - oldX; plat.dy = plat.y - oldY;
     }
 
     if (player.grounded && player.ridingPlatform) {
@@ -1618,13 +1440,9 @@
     if (player.invuln > 0) player.invuln--;
 
     if (keys.left && !keys.right) {
-      player.vx = -player.speed;
-      player.facing = -1;
-      player.walkFrame += 0.22;
+      player.vx = -player.speed; player.facing = -1; player.walkFrame += 0.22;
     } else if (keys.right && !keys.left) {
-      player.vx = player.speed;
-      player.facing = 1;
-      player.walkFrame += 0.22;
+      player.vx = player.speed; player.facing = 1; player.walkFrame += 0.22;
     } else {
       player.vx *= 0.78;
       if (Math.abs(player.vx) < 0.15) player.vx = 0;
@@ -1644,13 +1462,7 @@
     player.ridingPlatform = null;
 
     for (const plat of level.platforms) {
-      if (
-        player.vy >= 0 &&
-        prevBottom <= plat.y + 15 &&
-        player.y + player.h >= plat.y &&
-        player.x + player.w - 4 > plat.x &&
-        player.x + 4 < plat.x + plat.w
-      ) {
+      if (player.vy >= 0 && prevBottom <= plat.y + 15 && player.y + player.h >= plat.y && player.x + player.w - 4 > plat.x && player.x + 4 < plat.x + plat.w) {
         player.y = plat.y - player.h;
         player.vy = 0;
         player.grounded = true;
@@ -1659,19 +1471,11 @@
       }
     }
 
-    if (player.y > V_H + 50) {
-      hurtPlayer('Você caiu no buraco!');
-      return;
-    }
+    if (player.y > V_H + 50) { hurtPlayer('Você caiu no buraco!'); return; }
 
     for (const r of level.rings) {
       if (r.collected) continue;
-      if (
-        player.x + player.w > r.x - 13 &&
-        player.x < r.x + 13 &&
-        player.y + player.h > r.y - 13 &&
-        player.y < r.y + 13
-      ) {
+      if (player.x + player.w > r.x - 13 && player.x < r.x + 13 && player.y + player.h > r.y - 13 && player.y < r.y + 13) {
         r.collected = true;
         state.rings++;
         state.score += 10;
@@ -1694,10 +1498,7 @@
     }
 
     for (const h of level.hazards) {
-      if (rectsOverlap(player, h)) {
-        hurtPlayer('Você tocou nos espinhos!');
-        return;
-      }
+      if (rectsOverlap(player, h)) { hurtPlayer('Você tocou nos espinhos!'); return; }
     }
 
     for (const en of level.enemies) {
@@ -1709,10 +1510,7 @@
       if (rectsOverlap(player, en)) {
         const isStomp = player.vy > 0 && prevBottom <= en.y + en.h * 0.68;
         if (isStomp) {
-          en.alive = false;
-          player.vy = -9.5;
-          player.jumpsLeft = 1;
-          state.score += 150;
+          en.alive = false; player.vy = -9.5; player.jumpsLeft = 1; state.score += 150;
           SoundFX.stomp();
           spawnParticles(en.x + en.w / 2, en.y + en.h / 2, '#f97316', 12);
           addFloatingText(en.x, en.y - 15, '+150', '#fb923c');
@@ -1735,10 +1533,7 @@
     if (state.stageIdx < 6) {
       for (const d of level.doors) {
         const doorZone = { x: d.x - 10, y: d.y, w: d.w + 20, h: d.h };
-        if (rectsOverlap(player, doorZone)) {
-          foundDoor = d;
-          break;
-        }
+        if (rectsOverlap(player, doorZone)) { foundDoor = d; break; }
       }
     }
     if (state.activeDoor !== foundDoor) {
@@ -1746,32 +1541,21 @@
       updateEnterButtonUI(foundDoor);
     }
 
-    // FASE 7: BARÃO ZERO
     if (state.stageIdx === 6) {
       const b = state.boss;
       if (b.hurtTimer > 0) b.hurtTimer--;
       if (b.stompCooldown > 0) b.stompCooldown--;
-
       b.x += b.vx;
-      if (b.x <= b.minX) {
-        b.x = b.minX;
-        b.vx = Math.abs(b.vx);
-      } else if (b.x + b.w >= b.maxX) {
-        b.x = b.maxX - b.w;
-        b.vx = -Math.abs(b.vx);
-      }
+      if (b.x <= b.minX) { b.x = b.minX; b.vx = Math.abs(b.vx); }
+      else if (b.x + b.w >= b.maxX) { b.x = b.maxX - b.w; b.vx = -Math.abs(b.vx); }
 
       b.jumpCooldown--;
       if (b.jumpCooldown <= 0 && b.y >= 268) {
         b.vy = -8.4;
         b.jumpCooldown = 130 + Math.floor(Math.random() * 55);
       }
-      b.vy += 0.45;
-      b.y += b.vy;
-      if (b.y >= 268) {
-        b.y = 268;
-        b.vy = 0;
-      }
+      b.vy += 0.45; b.y += b.vy;
+      if (b.y >= 268) { b.y = 268; b.vy = 0; }
 
       if (rectsOverlap(player, b)) {
         const isHeadStomp = player.vy > 0 && prevBottom <= b.y + 34;
@@ -1798,9 +1582,6 @@
     updateHUD();
   }
 
-  // ==========================================
-  // 9. RENDERIZAÇÃO
-  // ==========================================
   function drawDetective(x, y, facing, walkFrame, invuln, showShadow = true) {
     if (invuln > 0 && Math.floor(invuln / 4) % 2 === 0) return;
     ctx.save();
@@ -1810,20 +1591,15 @@
       ctx.ellipse(x + player.w / 2, y + player.h + 2, 15, 4, 0, 0, Math.PI * 2);
       ctx.fill();
     }
-
     ctx.translate(x + player.w / 2, y);
     ctx.scale(facing, 1);
 
     const step = Math.sin(walkFrame) * 4.5;
     const armSwing = Math.cos(walkFrame) * 4;
 
-    // Braço de trás
-    ctx.fillStyle = '#b45309';
-    ctx.fillRect(-13 - armSwing * 0.4, 15, 5, 13);
-    ctx.fillStyle = '#fed7aa';
-    ctx.fillRect(-13 - armSwing * 0.4, 27, 5, 4);
+    ctx.fillStyle = '#b45309'; ctx.fillRect(-13 - armSwing * 0.4, 15, 5, 13);
+    ctx.fillStyle = '#fed7aa'; ctx.fillRect(-13 - armSwing * 0.4, 27, 5, 4);
 
-    // Pernas e sapatos
     ctx.fillStyle = '#1e293b';
     ctx.fillRect(-7, 30, 5.5, 11 + step * 0.4);
     ctx.fillRect(1.5, 30, 5.5, 11 - step * 0.4);
@@ -1831,57 +1607,29 @@
     ctx.fillRect(-7, 40 + step * 0.4, 7.5, 4);
     ctx.fillRect(1.5, 40 - step * 0.4, 7.5, 4);
 
-    // Sobretudo com lapela, gravata e cinto
-    ctx.fillStyle = '#f59e0b';
-    ctx.fillRect(-10, 13, 20, 19);
-    ctx.fillStyle = '#d97706';
-    ctx.fillRect(-10, 13, 5, 19);
-    ctx.fillStyle = '#f8fafc';
-    ctx.fillRect(-2, 13, 6, 9);
-    ctx.fillStyle = '#0284c7';
-    ctx.fillRect(0, 14, 3, 8);
-    ctx.fillStyle = '#451a03';
-    ctx.fillRect(-10, 25, 20, 3);
-    ctx.fillStyle = '#fef08a';
-    ctx.fillRect(0, 24.5, 5, 4);
+    ctx.fillStyle = '#f59e0b'; ctx.fillRect(-10, 13, 20, 19);
+    ctx.fillStyle = '#d97706'; ctx.fillRect(-10, 13, 5, 19);
+    ctx.fillStyle = '#f8fafc'; ctx.fillRect(-2, 13, 6, 9);
+    ctx.fillStyle = '#0284c7'; ctx.fillRect(0, 14, 3, 8);
+    ctx.fillStyle = '#451a03'; ctx.fillRect(-10, 25, 20, 3);
+    ctx.fillStyle = '#fef08a'; ctx.fillRect(0, 24.5, 5, 4);
 
-    // Cabeça com cabelo, rosto detalhado e chapéu fedora
-    ctx.fillStyle = '#fed7aa';
-    ctx.fillRect(-7, 2, 14, 11);
-    ctx.fillStyle = '#fdba74';
-    ctx.fillRect(6, 6, 2.5, 3);
-    ctx.fillStyle = '#451a03';
-    ctx.fillRect(-7, 3, 4, 5);
-    ctx.fillRect(1, 4.5, 4, 1.5);
-    ctx.fillStyle = '#0f172a';
-    ctx.fillRect(3, 6, 2.5, 3);
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(4, 6, 1, 1);
+    ctx.fillStyle = '#fed7aa'; ctx.fillRect(-7, 2, 14, 11);
+    ctx.fillStyle = '#fdba74'; ctx.fillRect(6, 6, 2.5, 3);
+    ctx.fillStyle = '#451a03'; ctx.fillRect(-7, 3, 4, 5); ctx.fillRect(1, 4.5, 4, 1.5);
+    ctx.fillStyle = '#0f172a'; ctx.fillRect(3, 6, 2.5, 3);
+    ctx.fillStyle = '#ffffff'; ctx.fillRect(4, 6, 1, 1);
 
-    ctx.fillStyle = '#78350f';
-    ctx.fillRect(-13, 1.5, 26, 3);
-    ctx.fillRect(-8, -4.5, 16, 6);
-    ctx.fillStyle = '#facc15';
-    ctx.fillRect(-8, -0.5, 16, 2);
+    ctx.fillStyle = '#78350f'; ctx.fillRect(-13, 1.5, 26, 3); ctx.fillRect(-8, -4.5, 16, 6);
+    ctx.fillStyle = '#facc15'; ctx.fillRect(-8, -0.5, 16, 2);
 
-    // Braço da frente com lupa brilhante
     const frontArmY = 15 - armSwing * 0.25;
-    ctx.fillStyle = '#fbbf24';
-    ctx.fillRect(4, frontArmY, 6, 11);
-    ctx.fillStyle = '#fed7aa';
-    ctx.fillRect(5, frontArmY + 10, 5, 4);
-    ctx.strokeStyle = '#78350f';
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(9, frontArmY + 11);
-    ctx.lineTo(14, frontArmY + 6);
-    ctx.stroke();
-    ctx.fillStyle = 'rgba(186, 230, 253, 0.8)';
-    ctx.strokeStyle = '#facc15';
-    ctx.beginPath();
-    ctx.arc(17, frontArmY + 3, 4.5, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.stroke();
+    ctx.fillStyle = '#fbbf24'; ctx.fillRect(4, frontArmY, 6, 11);
+    ctx.fillStyle = '#fed7aa'; ctx.fillRect(5, frontArmY + 10, 5, 4);
+    ctx.strokeStyle = '#78350f'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(9, frontArmY + 11); ctx.lineTo(14, frontArmY + 6); ctx.stroke();
+    ctx.fillStyle = 'rgba(186, 230, 253, 0.8)'; ctx.strokeStyle = '#facc15';
+    ctx.beginPath(); ctx.arc(17, frontArmY + 3, 4.5, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
 
     ctx.restore();
   }
@@ -1892,137 +1640,68 @@
     ctx.translate(bx + bw / 2, by);
     ctx.scale(facing, 1);
 
-    ctx.fillStyle = '#09090b';
-    ctx.fillRect(-18, bh - 30, 14, 30);
-    ctx.fillRect(4, bh - 30, 14, 30);
-
-    ctx.fillStyle = '#1e293b';
-    ctx.fillRect(-26, 32, 52, bh - 60);
-    ctx.strokeStyle = '#facc15';
-    ctx.lineWidth = 2;
-    ctx.strokeRect(-26, 32, 52, bh - 60);
-
-    ctx.fillStyle = '#ef4444';
-    ctx.fillRect(-5, 34, 10, 24);
-
-    ctx.fillStyle = '#fed7aa';
-    ctx.fillRect(-18, 8, 36, 24);
-    ctx.fillStyle = '#09090b';
-    ctx.fillRect(-18, 13, 36, 8);
-    ctx.fillStyle = '#ef4444';
-    ctx.fillRect(4, 15, 5, 4);
-    ctx.fillRect(-9, 15, 5, 4);
-
-    ctx.fillStyle = '#09090b';
-    ctx.fillRect(-28, 4, 56, 5);
-    ctx.fillRect(-18, -10, 36, 14);
-    ctx.fillStyle = '#facc15';
-    ctx.fillRect(-18, 0, 36, 4);
+    ctx.fillStyle = '#09090b'; ctx.fillRect(-18, bh - 30, 14, 30); ctx.fillRect(4, bh - 30, 14, 30);
+    ctx.fillStyle = '#1e293b'; ctx.fillRect(-26, 32, 52, bh - 60);
+    ctx.strokeStyle = '#facc15'; ctx.lineWidth = 2; ctx.strokeRect(-26, 32, 52, bh - 60);
+    ctx.fillStyle = '#ef4444'; ctx.fillRect(-5, 34, 10, 24);
+    ctx.fillStyle = '#fed7aa'; ctx.fillRect(-18, 8, 36, 24);
+    ctx.fillStyle = '#09090b'; ctx.fillRect(-18, 13, 36, 8);
+    ctx.fillStyle = '#ef4444'; ctx.fillRect(4, 15, 5, 4); ctx.fillRect(-9, 15, 5, 4);
+    ctx.fillStyle = '#09090b'; ctx.fillRect(-28, 4, 56, 5); ctx.fillRect(-18, -10, 36, 14);
+    ctx.fillStyle = '#facc15'; ctx.fillRect(-18, 0, 36, 4);
 
     if (handcuffed) {
-      ctx.strokeStyle = '#cbd5e1';
-      ctx.lineWidth = 3;
-      ctx.strokeRect(20, 48, 14, 10);
-      ctx.lineWidth = 1;
+      ctx.strokeStyle = '#cbd5e1'; ctx.lineWidth = 3; ctx.strokeRect(20, 48, 14, 10); ctx.lineWidth = 1;
     }
     ctx.restore();
   }
 
   function drawPoliceCar(vx, vy) {
     ctx.save();
-    // Sombra no asfalto
     ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
-    ctx.beginPath();
-    ctx.ellipse(vx + 95, vy + 78, 92, 10, 0, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Carroceria inferior (azul-escuro policial)
-    ctx.fillStyle = '#0f172a';
-    ctx.fillRect(vx, vy + 28, 190, 44);
-    // Faixa branca lateral e porta
-    ctx.fillStyle = '#f8fafc';
-    ctx.fillRect(vx + 42, vy + 30, 96, 40);
-    // Faixa dourada e emblema
-    ctx.fillStyle = '#facc15';
-    ctx.fillRect(vx + 4, vy + 46, 182, 7);
-    ctx.fillStyle = '#0f172a';
-    ctx.font = 'bold 13px Segoe UI';
-    ctx.textAlign = 'center';
+    ctx.beginPath(); ctx.ellipse(vx + 95, vy + 78, 92, 10, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#0f172a'; ctx.fillRect(vx, vy + 28, 190, 44);
+    ctx.fillStyle = '#f8fafc'; ctx.fillRect(vx + 42, vy + 30, 96, 40);
+    ctx.fillStyle = '#facc15'; ctx.fillRect(vx + 4, vy + 46, 182, 7);
+    ctx.fillStyle = '#0f172a'; ctx.font = 'bold 13px Segoe UI'; ctx.textAlign = 'center';
     ctx.fillText('POLÍCIA', vx + 90, vy + 43);
 
-    // Cabine e vidros
     ctx.fillStyle = '#1e293b';
-    ctx.beginPath();
-    ctx.moveTo(vx + 36, vy + 28);
-    ctx.lineTo(vx + 56, vy + 4);
-    ctx.lineTo(vx + 136, vy + 4);
-    ctx.lineTo(vx + 158, vy + 28);
-    ctx.closePath();
-    ctx.fill();
+    ctx.beginPath(); ctx.moveTo(vx + 36, vy + 28); ctx.lineTo(vx + 56, vy + 4); ctx.lineTo(vx + 136, vy + 4); ctx.lineTo(vx + 158, vy + 28); ctx.closePath(); ctx.fill();
 
-    ctx.fillStyle = '#38bdf8';
-    ctx.fillRect(vx + 58, vy + 8, 34, 17);
-    ctx.fillRect(vx + 98, vy + 8, 36, 17);
+    ctx.fillStyle = '#38bdf8'; ctx.fillRect(vx + 58, vy + 8, 34, 17); ctx.fillRect(vx + 98, vy + 8, 36, 17);
 
-    // Giroflex (sirene luminosa no teto)
     const flash = Math.floor(state.time / 6) % 2 === 0;
-    ctx.fillStyle = flash ? '#ef4444' : '#3b82f6';
-    ctx.fillRect(vx + 82, vy - 7, 14, 11);
-    ctx.fillStyle = flash ? '#3b82f6' : '#ef4444';
-    ctx.fillRect(vx + 96, vy - 7, 14, 11);
+    ctx.fillStyle = flash ? '#ef4444' : '#3b82f6'; ctx.fillRect(vx + 82, vy - 7, 14, 11);
+    ctx.fillStyle = flash ? '#3b82f6' : '#ef4444'; ctx.fillRect(vx + 96, vy - 7, 14, 11);
 
-    // Farol dianteiro e lanterna traseira
-    ctx.fillStyle = '#fef08a';
-    ctx.fillRect(vx + 184, vy + 34, 6, 12);
-    ctx.fillStyle = '#ef4444';
-    ctx.fillRect(vx, vy + 34, 5, 12);
+    ctx.fillStyle = '#fef08a'; ctx.fillRect(vx + 184, vy + 34, 6, 12);
+    ctx.fillStyle = '#ef4444'; ctx.fillRect(vx, vy + 34, 5, 12);
 
-    // Rodas com calotas cromadas
     ctx.fillStyle = '#09090b';
-    ctx.beginPath();
-    ctx.arc(vx + 42, vy + 72, 18, 0, Math.PI * 2);
-    ctx.arc(vx + 148, vy + 72, 18, 0, Math.PI * 2);
-    ctx.fill();
+    ctx.beginPath(); ctx.arc(vx + 42, vy + 72, 18, 0, Math.PI * 2); ctx.arc(vx + 148, vy + 72, 18, 0, Math.PI * 2); ctx.fill();
     ctx.fillStyle = '#cbd5e1';
-    ctx.beginPath();
-    ctx.arc(vx + 42, vy + 72, 8, 0, Math.PI * 2);
-    ctx.arc(vx + 148, vy + 72, 8, 0, Math.PI * 2);
-    ctx.fill();
+    ctx.beginPath(); ctx.arc(vx + 42, vy + 72, 8, 0, Math.PI * 2); ctx.arc(vx + 148, vy + 72, 8, 0, Math.PI * 2); ctx.fill();
     ctx.restore();
   }
 
   function drawScene() {
     if (state.mode === 'intro_story') {
       const grad = ctx.createLinearGradient(0, 0, 0, V_H);
-      grad.addColorStop(0, '#090d16');
-      grad.addColorStop(1, '#1e3a8a');
-      ctx.fillStyle = grad;
-      ctx.fillRect(0, 0, V_W, V_H);
+      grad.addColorStop(0, '#090d16'); grad.addColorStop(1, '#1e3a8a');
+      ctx.fillStyle = grad; ctx.fillRect(0, 0, V_W, V_H);
 
-      // Prédios da cidade ao fundo
-      ctx.fillStyle = '#0f172a';
-      ctx.fillRect(60, 120, 110, 220);
-      ctx.fillRect(620, 100, 120, 240);
+      ctx.fillStyle = '#0f172a'; ctx.fillRect(60, 120, 110, 220); ctx.fillRect(620, 100, 120, 240);
       ctx.fillStyle = '#facc15';
       for (let wy = 140; wy < 300; wy += 32) {
-        ctx.fillRect(80, wy, 16, 18);
-        ctx.fillRect(120, wy, 16, 18);
-        ctx.fillRect(645, wy, 16, 18);
-        ctx.fillRect(685, wy, 16, 18);
+        ctx.fillRect(80, wy, 16, 18); ctx.fillRect(120, wy, 16, 18);
+        ctx.fillRect(645, wy, 16, 18); ctx.fillRect(685, wy, 16, 18);
       }
+      ctx.fillStyle = '#334155'; ctx.fillRect(0, 330, V_W, 120);
+      ctx.fillStyle = '#facc15'; ctx.fillRect(0, 330, V_W, 6);
 
-      ctx.fillStyle = '#334155';
-      ctx.fillRect(0, 330, V_W, 120);
-      ctx.fillStyle = '#facc15';
-      ctx.fillRect(0, 330, V_W, 6);
-
-      // Cofre Central Dourado
-      ctx.fillStyle = '#d97706';
-      ctx.fillRect(560, 272, 56, 58);
-      ctx.strokeStyle = '#fef08a';
-      ctx.lineWidth = 3;
-      ctx.strokeRect(560, 272, 56, 58);
-      ctx.lineWidth = 1;
+      ctx.fillStyle = '#d97706'; ctx.fillRect(560, 272, 56, 58);
+      ctx.strokeStyle = '#fef08a'; ctx.lineWidth = 3; ctx.strokeRect(560, 272, 56, 58); ctx.lineWidth = 1;
 
       drawDetective(230, 286, 1, state.time * 0.14, 0);
       drawGangsterBoss(460, 218, 84, 112, -1, false, 0);
@@ -2032,58 +1711,32 @@
     if (state.mode === 'ending_cutscene') {
       const end = state.ending;
       const grad = ctx.createLinearGradient(0, 0, 0, V_H);
-      if (end.act === 2) {
-        grad.addColorStop(0, '#0284c7');
-        grad.addColorStop(1, '#bae6fd');
-      } else {
-        grad.addColorStop(0, '#090d16');
-        grad.addColorStop(1, '#1e3a8a');
-      }
-      ctx.fillStyle = grad;
-      ctx.fillRect(0, 0, V_W, V_H);
+      if (end.act === 2) { grad.addColorStop(0, '#0284c7'); grad.addColorStop(1, '#bae6fd'); }
+      else { grad.addColorStop(0, '#090d16'); grad.addColorStop(1, '#1e3a8a'); }
+      ctx.fillStyle = grad; ctx.fillRect(0, 0, V_W, V_H);
 
-      // Asfalto bem posicionado acima da barra de texto
-      ctx.fillStyle = '#334155';
-      ctx.fillRect(0, 315, V_W, 135);
-      ctx.fillStyle = '#facc15';
-      ctx.fillRect(0, 315, V_W, 5);
+      ctx.fillStyle = '#334155'; ctx.fillRect(0, 315, V_W, 135);
+      ctx.fillStyle = '#facc15'; ctx.fillRect(0, 315, V_W, 5);
 
       if (end.act === 0) {
         drawPoliceCar(475, 228);
-        drawDetective(end.detectiveX, 271, 1, state.detectiveX < 310 ? state.time * 0.2 : 0, 0);
+        drawDetective(end.detectiveX, 271, 1, end.detectiveX < 310 ? state.time * 0.2 : 0, 0);
         drawGangsterBoss(end.banditX, 203, 84, 112, 1, true, 0);
       } else if (end.act === 1) {
-        // Prédio da Delegacia Central bem visível à direita
-        ctx.fillStyle = '#475569';
-        ctx.fillRect(595, 105, 185, 210);
-        ctx.fillStyle = '#0f172a';
-        ctx.fillRect(610, 76, 155, 28);
-        ctx.fillStyle = '#facc15';
-        ctx.font = 'bold 14px Segoe UI';
-        ctx.textAlign = 'center';
+        ctx.fillStyle = '#475569'; ctx.fillRect(595, 105, 185, 210);
+        ctx.fillStyle = '#0f172a'; ctx.fillRect(610, 76, 155, 28);
+        ctx.fillStyle = '#facc15'; ctx.font = 'bold 14px Segoe UI'; ctx.textAlign = 'center';
         ctx.fillText('DELEGACIA CENTRAL', 687, 95);
-        ctx.fillStyle = '#1e293b';
-        ctx.fillRect(660, 235, 55, 80);
-
+        ctx.fillStyle = '#1e293b'; ctx.fillRect(660, 235, 55, 80);
         drawPoliceCar(end.vanX, 228);
       } else {
-        // Praça Central da Cidade em Festa
-        ctx.fillStyle = '#b45309';
-        ctx.fillRect(260, 115, 280, 200);
-        ctx.fillStyle = '#facc15';
-        ctx.fillRect(300, 86, 200, 28);
-        ctx.fillStyle = '#0f172a';
-        ctx.font = 'bold 14px Segoe UI';
-        ctx.textAlign = 'center';
+        ctx.fillStyle = '#b45309'; ctx.fillRect(260, 115, 280, 200);
+        ctx.fillStyle = '#facc15'; ctx.fillRect(300, 86, 200, 28);
+        ctx.fillStyle = '#0f172a'; ctx.font = 'bold 14px Segoe UI'; ctx.textAlign = 'center';
         ctx.fillText('PRAÇA DA VITÓRIA', 400, 105);
 
-        // Cofre recuperado ao lado do Detetive
-        ctx.fillStyle = '#d97706';
-        ctx.fillRect(330, 265, 46, 50);
-        ctx.strokeStyle = '#fef08a';
-        ctx.lineWidth = 2.5;
-        ctx.strokeRect(330, 265, 46, 50);
-        ctx.lineWidth = 1;
+        ctx.fillStyle = '#d97706'; ctx.fillRect(330, 265, 46, 50);
+        ctx.strokeStyle = '#fef08a'; ctx.lineWidth = 2.5; ctx.strokeRect(330, 265, 46, 50); ctx.lineWidth = 1;
 
         drawDetective(395, 271, 1, 0, 0);
         const people = [110, 185, 255, 515, 595, 675];
@@ -2094,20 +1747,15 @@
           ctx.fillStyle = '#fed7aa';
           ctx.fillRect(px - 7, 272 - jump, 14, 12);
         });
-        for (const cf of end.confetti) {
-          ctx.fillStyle = cf.color;
-          ctx.fillRect(cf.x, cf.y, cf.size, cf.size);
-        }
+        for (const cf of end.confetti) { ctx.fillStyle = cf.color; ctx.fillRect(cf.x, cf.y, cf.size, cf.size); }
       }
       return;
     }
 
     const cfg = STAGES[state.stageIdx];
     const grad = ctx.createLinearGradient(0, 0, 0, V_H);
-    grad.addColorStop(0, cfg.skyTop);
-    grad.addColorStop(1, cfg.skyBot);
-    ctx.fillStyle = grad;
-    ctx.fillRect(0, 0, V_W, V_H);
+    grad.addColorStop(0, cfg.skyTop); grad.addColorStop(1, cfg.skyBot);
+    ctx.fillStyle = grad; ctx.fillRect(0, 0, V_W, V_H);
 
     ctx.save();
     ctx.translate(-Math.floor(state.cameraX), 0);
@@ -2124,12 +1772,7 @@
       if (h.x + h.w < state.cameraX - 40 || h.x > state.cameraX + V_W + 40) continue;
       ctx.fillStyle = '#ef4444';
       for (let sx = h.x; sx < h.x + h.w; sx += 9) {
-        ctx.beginPath();
-        ctx.moveTo(sx, h.y + h.h);
-        ctx.lineTo(sx + 4.5, h.y);
-        ctx.lineTo(sx + 9, h.y + h.h);
-        ctx.closePath();
-        ctx.fill();
+        ctx.beginPath(); ctx.moveTo(sx, h.y + h.h); ctx.lineTo(sx + 4.5, h.y); ctx.lineTo(sx + 9, h.y + h.h); ctx.closePath(); ctx.fill();
       }
     }
 
@@ -2137,22 +1780,16 @@
     for (const r of level.rings) {
       if (r.collected) continue;
       if (r.x < state.cameraX - 30 || r.x > state.cameraX + V_W + 30) continue;
-      ctx.strokeStyle = '#facc15';
-      ctx.lineWidth = 3;
-      ctx.beginPath();
-      ctx.ellipse(r.x, r.y, Math.max(2, 9 * ringStretch), 9, 0, 0, Math.PI * 2);
-      ctx.stroke();
+      ctx.strokeStyle = '#facc15'; ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.ellipse(r.x, r.y, Math.max(2, 9 * ringStretch), 9, 0, 0, Math.PI * 2); ctx.stroke();
     }
     ctx.lineWidth = 1;
 
     if (level.checkpoint) {
       const cp = level.checkpoint;
-      ctx.fillStyle = '#e2e8f0';
-      ctx.fillRect(cp.x + 10, cp.y, 4, cp.h);
+      ctx.fillStyle = '#e2e8f0'; ctx.fillRect(cp.x + 10, cp.y, 4, cp.h);
       ctx.fillStyle = cp.active ? '#22c55e' : '#ef4444';
-      ctx.beginPath();
-      ctx.arc(cp.x + 12, cp.y + 6, 9, 0, Math.PI * 2);
-      ctx.fill();
+      ctx.beginPath(); ctx.arc(cp.x + 12, cp.y + 6, 9, 0, Math.PI * 2); ctx.fill();
     }
 
     for (const en of level.enemies) {
@@ -2160,63 +1797,22 @@
       if (en.x + en.w < state.cameraX - 40 || en.x > state.cameraX + V_W + 40) continue;
       if (en.type === 'slime') {
         ctx.fillStyle = '#ef4444';
-        ctx.beginPath();
-        ctx.arc(en.x + 16, en.y + 18, 14, Math.PI, 0);
-        ctx.fill();
+        ctx.beginPath(); ctx.arc(en.x + 16, en.y + 18, 14, Math.PI, 0); ctx.fill();
         ctx.fillRect(en.x + 2, en.y + 18, 28, 10);
-        ctx.strokeStyle = '#ffffff';
-        ctx.lineWidth = 1.8;
-        ctx.strokeRect(en.x + 2, en.y + 16, 28, 12);
-        ctx.fillStyle = '#fef08a';
-        ctx.fillRect(en.x + 8, en.y + 12, 5, 5);
-        ctx.fillRect(en.x + 20, en.y + 12, 5, 5);
+        ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 1.8; ctx.strokeRect(en.x + 2, en.y + 16, 28, 12);
+        ctx.fillStyle = '#fef08a'; ctx.fillRect(en.x + 8, en.y + 12, 5, 5); ctx.fillRect(en.x + 20, en.y + 12, 5, 5);
         ctx.lineWidth = 1;
       } else {
-        // Morcego de alto contraste (corpo escuro com contorno branco, asas magenta brilhante e olhos amarelos)
         const wing = Math.sin(state.time * 0.35) * 7;
         ctx.save();
-        // Aura sutil de visibilidade
         ctx.fillStyle = 'rgba(255, 255, 255, 0.22)';
-        ctx.beginPath();
-        ctx.ellipse(en.x + 17, en.y + 12, 24, 15, 0, 0, Math.PI * 2);
-        ctx.fill();
-
-        // Asas vibrantes com contorno branco
-        ctx.fillStyle = '#e11d48';
-        ctx.strokeStyle = '#ffffff';
-        ctx.lineWidth = 1.8;
-        ctx.beginPath();
-        ctx.moveTo(en.x + 8, en.y + 11);
-        ctx.lineTo(en.x - 9, en.y + 4 + wing);
-        ctx.lineTo(en.x - 3, en.y + 16 + wing);
-        ctx.closePath();
-        ctx.fill();
-        ctx.stroke();
-
-        ctx.beginPath();
-        ctx.moveTo(en.x + 26, en.y + 11);
-        ctx.lineTo(en.x + 43, en.y + 4 + wing);
-        ctx.lineTo(en.x + 37, en.y + 16 + wing);
-        ctx.closePath();
-        ctx.fill();
-        ctx.stroke();
-
-        // Corpo do morcego com contorno branco e orelhas pontudas
-        ctx.fillStyle = '#1e1b4b';
-        ctx.beginPath();
-        ctx.arc(en.x + 17, en.y + 12, 11, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.stroke();
-
-        // Orelhas
-        ctx.fillStyle = '#e11d48';
-        ctx.fillRect(en.x + 9, en.y - 2, 4, 6);
-        ctx.fillRect(en.x + 21, en.y - 2, 4, 6);
-
-        // Olhos amarelos brilhantes
-        ctx.fillStyle = '#facc15';
-        ctx.fillRect(en.x + 11, en.y + 9, 4, 4);
-        ctx.fillRect(en.x + 19, en.y + 9, 4, 4);
+        ctx.beginPath(); ctx.ellipse(en.x + 17, en.y + 12, 24, 15, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#e11d48'; ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 1.8;
+        ctx.beginPath(); ctx.moveTo(en.x + 8, en.y + 11); ctx.lineTo(en.x - 9, en.y + 4 + wing); ctx.lineTo(en.x - 3, en.y + 16 + wing); ctx.closePath(); ctx.fill(); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(en.x + 26, en.y + 11); ctx.lineTo(en.x + 43, en.y + 4 + wing); ctx.lineTo(en.x + 37, en.y + 16 + wing); ctx.closePath(); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = '#1e1b4b'; ctx.beginPath(); ctx.arc(en.x + 17, en.y + 12, 11, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = '#e11d48'; ctx.fillRect(en.x + 9, en.y - 2, 4, 6); ctx.fillRect(en.x + 21, en.y - 2, 4, 6);
+        ctx.fillStyle = '#facc15'; ctx.fillRect(en.x + 11, en.y + 9, 4, 4); ctx.fillRect(en.x + 19, en.y + 9, 4, 4);
         ctx.restore();
       }
     }
@@ -2226,12 +1822,8 @@
       const pulseY = cb.hit ? 0 : Math.sin(state.time * 0.1) * 3;
       ctx.fillStyle = cb.hit ? '#22c55e' : '#f59e0b';
       ctx.fillRect(cb.x, cb.y + pulseY, cb.w, cb.h);
-      ctx.strokeStyle = '#ffffff';
-      ctx.lineWidth = 3;
-      ctx.strokeRect(cb.x, cb.y + pulseY, cb.w, cb.h);
-      ctx.fillStyle = '#09090b';
-      ctx.font = 'bold 28px Segoe UI';
-      ctx.textAlign = 'center';
+      ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 3; ctx.strokeRect(cb.x, cb.y + pulseY, cb.w, cb.h);
+      ctx.fillStyle = '#09090b'; ctx.font = 'bold 28px Segoe UI'; ctx.textAlign = 'center';
       ctx.fillText('?', cb.x + cb.w / 2, cb.y + pulseY + 34);
       ctx.lineWidth = 1;
     }
@@ -2243,29 +1835,18 @@
       ctx.fillStyle = isSelected ? '#15803d' : (state.clueRead ? '#1d4ed8' : '#1e293b');
       ctx.fillRect(d.x, d.y, d.w, d.h);
 
-      const signW = 132;
-      const signH = 44;
-      const signX = d.x + d.w / 2 - signW / 2;
-      const signY = d.y - 54;
-      ctx.fillStyle = '#090d16';
-      ctx.fillRect(signX, signY, signW, signH);
-      ctx.strokeStyle = isSelected ? '#4ade80' : '#facc15';
-      ctx.lineWidth = 2.5;
-      ctx.strokeRect(signX, signY, signW, signH);
+      const signW = 132, signH = 44, signX = d.x + d.w / 2 - signW / 2, signY = d.y - 54;
+      ctx.fillStyle = '#090d16'; ctx.fillRect(signX, signY, signW, signH);
+      ctx.strokeStyle = isSelected ? '#4ade80' : '#facc15'; ctx.lineWidth = 2.5; ctx.strokeRect(signX, signY, signW, signH);
 
-      ctx.fillStyle = '#facc15';
-      ctx.font = 'bold 11.5px Segoe UI';
-      ctx.textAlign = 'center';
+      ctx.fillStyle = '#facc15'; ctx.font = 'bold 11.5px Segoe UI'; ctx.textAlign = 'center';
       ctx.fillText(d.label, d.x + d.w / 2, signY + 15);
-      ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 14.5px Segoe UI';
+      ctx.fillStyle = '#ffffff'; ctx.font = 'bold 14.5px Segoe UI';
       ctx.fillText(d.optionText, d.x + d.w / 2, signY + 35);
 
       if (isSelected) {
-        ctx.fillStyle = '#16a34a';
-        ctx.fillRect(d.x + d.w / 2 - 68, signY - 24, 136, 19);
-        ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 11px Segoe UI';
+        ctx.fillStyle = '#16a34a'; ctx.fillRect(d.x + d.w / 2 - 68, signY - 24, 136, 19);
+        ctx.fillStyle = '#ffffff'; ctx.font = 'bold 11px Segoe UI';
         ctx.fillText('[APERTE ENTRAR]', d.x + d.w / 2, signY - 11);
       }
     }
@@ -2278,24 +1859,15 @@
 
     drawDetective(player.x, player.y, player.facing, player.walkFrame, player.invuln, player.grounded);
 
-    for (const p of state.particles) {
-      ctx.fillStyle = p.color;
-      ctx.fillRect(p.x, p.y, 4, 4);
-    }
-
+    for (const p of state.particles) { ctx.fillStyle = p.color; ctx.fillRect(p.x, p.y, 4, 4); }
     for (const ft of state.floatingTexts) {
-      ctx.fillStyle = ft.color;
-      ctx.font = 'bold 14px Segoe UI';
-      ctx.textAlign = 'center';
+      ctx.fillStyle = ft.color; ctx.font = 'bold 14px Segoe UI'; ctx.textAlign = 'center';
       ctx.fillText(ft.text, ft.x, ft.y);
     }
 
     ctx.restore();
   }
 
-  // ==========================================
-  // 10. LOOP PRINCIPAL E EVENTOS
-  // ==========================================
   function gameLoop() {
     update();
     drawScene();
@@ -2313,10 +1885,7 @@
         }
       });
       ui.playerNameInput.addEventListener('keydown', (e) => {
-        if (e.code === 'Enter') {
-          e.preventDefault();
-          startAdventure();
-        }
+        if (e.code === 'Enter') { e.preventDefault(); startAdventure(); }
       });
     }
 
@@ -2347,24 +1916,15 @@
     window.addEventListener('keydown', (e) => {
       const code = e.code;
       if (state.mode === 'intro_story') {
-        if (code === 'Enter' || code === 'Space' || code === 'ArrowRight') {
-          e.preventDefault();
-          advanceIntroStoryVol1();
-        }
+        if (code === 'Enter' || code === 'Space' || code === 'ArrowRight') { e.preventDefault(); advanceIntroStoryVol1(); }
         return;
       }
       if (state.mode === 'ending_cutscene') {
-        if (code === 'Enter' || code === 'Space' || code === 'ArrowRight') {
-          e.preventDefault();
-          advanceEndingCutscene();
-        }
+        if (code === 'Enter' || code === 'Space' || code === 'ArrowRight') { e.preventDefault(); advanceEndingCutscene(); }
         return;
       }
       if (state.mode === 'clue_modal') {
-        if (code === 'Enter' || code === 'Space' || code === 'Escape') {
-          e.preventDefault();
-          closeClueModal();
-        }
+        if (code === 'Enter' || code === 'Space' || code === 'Escape') { e.preventDefault(); closeClueModal(); }
         return;
       }
       if (state.mode === 'boss_question') {
@@ -2376,17 +1936,8 @@
 
       if (code === 'ArrowLeft' || code === 'KeyA') keys.left = true;
       if (code === 'ArrowRight' || code === 'KeyD') keys.right = true;
-
-      if (code === 'KeyE' || code === 'Enter') {
-        e.preventDefault();
-        tryEnterActiveDoor();
-        return;
-      }
-
-      if (code === 'Space' || code === 'ArrowUp' || code === 'KeyW') {
-        e.preventDefault();
-        triggerJump();
-      }
+      if (code === 'KeyE' || code === 'Enter') { e.preventDefault(); tryEnterActiveDoor(); return; }
+      if (code === 'Space' || code === 'ArrowUp' || code === 'KeyW') { e.preventDefault(); triggerJump(); }
     });
 
     window.addEventListener('keyup', (e) => {
@@ -2396,25 +1947,32 @@
     });
 
     function bindHoldButton(el, onDown, onUp) {
-      el.addEventListener('pointerdown', (e) => {
-        e.preventDefault();
+      const press = (e) => {
+        if (e.cancelable) e.preventDefault();
         el.classList.add('active');
         onDown();
-      });
+      };
       const release = (e) => {
-        e.preventDefault();
+        if (e.cancelable) e.preventDefault();
         el.classList.remove('active');
         if (onUp) onUp();
       };
-      el.addEventListener('pointerup', release);
-      el.addEventListener('pointercancel', release);
-      el.addEventListener('pointerleave', release);
+      el.addEventListener('touchstart', press, { passive: false });
+      el.addEventListener('touchend', release, { passive: false });
+      el.addEventListener('touchcancel', release, { passive: false });
+      el.addEventListener('mousedown', press);
+      el.addEventListener('mouseup', release);
+      el.addEventListener('mouseleave', release);
     }
 
     bindHoldButton(document.getElementById('t-left'), () => { keys.left = true; }, () => { keys.left = false; });
     bindHoldButton(document.getElementById('t-right'), () => { keys.right = true; }, () => { keys.right = false; });
     bindHoldButton(document.getElementById('t-jump'), () => { triggerJump(); }, null);
     bindHoldButton(document.getElementById('t-enter'), () => { tryEnterActiveDoor(); }, null);
+
+    document.addEventListener('touchmove', (e) => {
+      if (state.mode === 'playing') e.preventDefault();
+    }, { passive: false });
   }
 
   function init() {
