@@ -1,0 +1,3580 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Detetive Matemático: O Mistério dos Reservatórios de Numéria</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #0b0e17;
+      --panel-bg: #141b2d;
+      --panel-border: #38bdf8;
+      --gold: #fbbf24;
+      --gold-dark: #b45309;
+      --water: #0ea5e9;
+      --danger: #ef4444;
+      --success: #22c55e;
+      --text-light: #f8fafc;
+    }
+
+    * {
+      box-sizing: border-box;
+      user-select: none;
+      -webkit-user-select: none;
+      touch-action: manipulation;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      background: radial-gradient(circle at top, #172038 0%, #070a12 100%);
+      color: var(--text-light);
+      font-family: 'VT323', monospace;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      overflow: hidden;
+    }
+
+    #game-wrapper {
+      position: relative;
+      width: 100vw;
+      max-width: 1024px;
+      aspect-ratio: 16 / 9;
+      max-height: 92vh;
+      max-height: 92dvh;
+      background: #000;
+      border: 4px solid #334155;
+      border-radius: 12px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.85), 0 0 25px rgba(14, 165, 233, 0.25);
+      overflow: hidden;
+    }
+
+    @media (max-width: 900px) and (orientation: landscape) {
+      #game-wrapper {
+        width: 100vw;
+        height: 100dvh;
+        max-height: 100dvh;
+        border-width: 2px;
+        border-radius: 0;
+      }
+      footer { display: none; }
+    }
+
+    @media (max-width: 768px) and (orientation: portrait) {
+      #game-wrapper {
+        width: 98vw;
+        aspect-ratio: 16 / 10;
+        max-height: 78dvh;
+      }
+    }
+
+    canvas#gameCanvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+      image-rendering: auto;
+      filter: contrast(1.06) saturate(1.16) brightness(1.03);
+    }
+
+    /* HUD SUPERIOR 32-BIT (ERA PS1 / SATURN) */
+    #hud {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      padding: 8px 14px;
+      background: linear-gradient(180deg, rgba(8, 13, 28, 0.94) 0%, rgba(15, 23, 42, 0.72) 85%, rgba(56, 189, 248, 0.15) 100%);
+      border-bottom: 2px solid rgba(125, 211, 252, 0.65);
+      box-shadow: 0 4px 18px rgba(0, 0, 0, 0.65);
+      backdrop-filter: blur(4px);
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      z-index: 10;
+      font-family: 'Press Start 2P', monospace;
+      font-size: clamp(9px, 1.25vw, 12px);
+      text-shadow: 2px 2px 2px #000;
+    }
+
+    .hud-group {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .hud-badge {
+      background: linear-gradient(180deg, rgba(30, 41, 59, 0.92) 0%, rgba(15, 23, 42, 0.95) 100%);
+      border: 2px solid #64748b;
+      border-radius: 8px;
+      padding: 5px 10px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 3px 6px rgba(0, 0, 0, 0.55);
+    }
+
+    /* HUD SUPERIOR 16-BIT */
+    #hud {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      padding: 8px 14px;
+      background: linear-gradient(180deg, rgba(10, 15, 28, 0.92) 0%, rgba(10, 15, 28, 0.65) 100%);
+      border-bottom: 2px solid rgba(56, 189, 248, 0.45);
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      z-index: 10;
+      font-family: 'Press Start 2P', monospace;
+      font-size: clamp(9px, 1.25vw, 12px);
+      text-shadow: 2px 2px 0 #000;
+    }
+
+    .hud-group {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .hud-badge {
+      background: rgba(15, 23, 42, 0.85);
+      border: 2px solid #475569;
+      border-radius: 6px;
+      padding: 5px 9px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .hud-gold { color: var(--gold); border-color: var(--gold-dark); }
+    .hud-water { color: #38bdf8; border-color: #0284c7; }
+    .hud-life { color: #f87171; border-color: #b91c1c; }
+
+    #sound-btn {
+      background: #1e293b;
+      color: #fff;
+      border: 2px solid #64748b;
+      border-radius: 6px;
+      padding: 5px 8px;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 10px;
+      cursor: pointer;
+    }
+    #sound-btn:hover { background: #334155; }
+
+    /* OVERLAYS & MODAIS */
+    .overlay-screen {
+      position: absolute;
+      inset: 0;
+      background: rgba(8, 12, 24, 0.92);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      z-index: 30;
+      text-align: center;
+      overflow-y: auto;
+    }
+
+    .hidden { display: none !important; }
+
+    .title-logo {
+      font-family: 'Press Start 2P', monospace;
+      font-size: clamp(16px, 2.8vw, 28px);
+      line-height: 1.45;
+      color: var(--gold);
+      text-shadow: 3px 3px 0 #7c2d12, 5px 5px 0 #000;
+      margin-bottom: 6px;
+    }
+
+    .subtitle-logo {
+      font-family: 'Press Start 2P', monospace;
+      font-size: clamp(10px, 1.5vw, 15px);
+      color: #38bdf8;
+      text-shadow: 2px 2px 0 #000;
+      margin-bottom: 18px;
+    }
+
+    .menu-card {
+      background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+      border: 3px solid #38bdf8;
+      border-radius: 12px;
+      padding: 18px 24px;
+      width: 100%;
+      max-width: 560px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
+    }
+
+    .input-row {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 16px;
+      text-align: left;
+    }
+
+    .input-row label {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 11px;
+      color: #93c5fd;
+    }
+
+    .pixel-input {
+      width: 100%;
+      padding: 10px 12px;
+      background: #090d16;
+      border: 3px solid var(--gold);
+      border-radius: 8px;
+      color: #fff;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 13px;
+      outline: none;
+    }
+
+    .btn-16bit {
+      font-family: 'Press Start 2P', monospace;
+      font-size: clamp(11px, 1.4vw, 14px);
+      padding: 12px 18px;
+      border-radius: 8px;
+      border: 3px solid #fff;
+      cursor: pointer;
+      text-transform: uppercase;
+      transition: transform 0.1s, filter 0.15s;
+      box-shadow: 0 5px 0 #000;
+      margin: 4px;
+    }
+    .btn-16bit:active {
+      transform: translateY(3px);
+      box-shadow: 0 2px 0 #000;
+    }
+    .btn-primary {
+      background: linear-gradient(180deg, #f59e0b 0%, #d97706 100%);
+      color: #000;
+      border-color: #fef08a;
+    }
+    .btn-secondary {
+      background: linear-gradient(180deg, #0284c7 0%, #0369a1 100%);
+      color: #fff;
+      border-color: #7dd3fc;
+    }
+    .btn-success {
+      background: linear-gradient(180deg, #22c55e 0%, #15803d 100%);
+      color: #fff;
+      border-color: #bbf7d0;
+    }
+
+    /* CUTSCENE DIALOGUE BOX */
+    #cutscene-box {
+      position: absolute;
+      bottom: 16px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 94%;
+      max-width: 900px;
+      background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
+      border: 4px solid #38bdf8;
+      border-radius: 12px;
+      padding: 14px 18px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      z-index: 25;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.9);
+    }
+
+    #portrait-canvas {
+      width: 84px;
+      height: 84px;
+      min-width: 84px;
+      background: #090d16;
+      border: 3px solid var(--gold);
+      border-radius: 8px;
+      image-rendering: pixelated;
+    }
+
+    .dialogue-content {
+      flex: 1;
+      text-align: left;
+    }
+
+    #speaker-name {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 12px;
+      color: var(--gold);
+      margin-bottom: 8px;
+      text-shadow: 2px 2px 0 #000;
+    }
+
+    #dialogue-text {
+      font-size: clamp(19px, 2.3vw, 24px);
+      line-height: 1.25;
+      color: #f1f5f9;
+      min-height: 54px;
+    }
+
+    .dialogue-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    /* MODAL MATEMÁTICO */
+    #math-modal {
+      position: absolute;
+      inset: 0;
+      background: rgba(5, 10, 20, 0.88);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 12px;
+      z-index: 40;
+    }
+
+    .math-card {
+      background: linear-gradient(180deg, #162238 0%, #0b1220 100%);
+      border: 4px solid var(--gold);
+      border-radius: 14px;
+      width: 100%;
+      max-width: 720px;
+      padding: 16px 20px;
+      box-shadow: 0 0 40px rgba(251, 191, 36, 0.35);
+      max-height: 94%;
+      overflow-y: auto;
+    }
+
+    .math-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 2px solid #334155;
+      padding-bottom: 8px;
+      margin-bottom: 12px;
+    }
+
+    .math-title {
+      font-family: 'Press Start 2P', monospace;
+      font-size: clamp(11px, 1.5vw, 15px);
+      color: var(--gold);
+    }
+
+    .math-body {
+      display: grid;
+      grid-template-columns: 200px 1fr;
+      gap: 16px;
+      align-items: center;
+    }
+
+    @media (max-width: 680px) {
+      .math-body {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    #diagramCanvas {
+      width: 100%;
+      max-width: 200px;
+      height: 170px;
+      margin: 0 auto;
+      background: #090e1a;
+      border: 2px solid #38bdf8;
+      border-radius: 8px;
+      display: block;
+    }
+
+    .math-question {
+      font-size: clamp(20px, 2.3vw, 24px);
+      line-height: 1.25;
+      color: #f8fafc;
+      margin-bottom: 10px;
+      text-align: left;
+    }
+
+    .math-hint {
+      font-size: 18px;
+      color: #7dd3fc;
+      background: rgba(2, 132, 199, 0.18);
+      border-left: 4px solid #38bdf8;
+      padding: 6px 10px;
+      margin-bottom: 12px;
+      text-align: left;
+      border-radius: 0 6px 6px 0;
+    }
+
+    .options-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .option-btn {
+      font-family: 'Press Start 2P', monospace;
+      font-size: clamp(10px, 1.3vw, 12px);
+      padding: 11px 10px;
+      background: #1e293b;
+      color: #fff;
+      border: 2px solid #64748b;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .option-btn:hover {
+      background: #0284c7;
+      border-color: #bae6fd;
+    }
+
+    #math-feedback {
+      margin-top: 12px;
+      padding: 10px 12px;
+      border-radius: 8px;
+      font-size: 20px;
+      line-height: 1.25;
+      text-align: left;
+    }
+    .feedback-error {
+      background: rgba(185, 28, 28, 0.3);
+      border: 2px solid #ef4444;
+      color: #fecaca;
+    }
+    .feedback-success {
+      background: rgba(21, 128, 61, 0.35);
+      border: 2px solid #22c55e;
+      color: #bbf7d0;
+    }
+
+    /* BANNER FLUTUANTE DE MENSAGENS IN-GAME */
+    #toast-banner {
+      position: absolute;
+      top: 52px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(15, 23, 42, 0.92);
+      border: 2px solid var(--gold);
+      color: #fef08a;
+      padding: 6px 16px;
+      border-radius: 999px;
+      font-family: 'Press Start 2P', monospace;
+      font-size: clamp(9px, 1.2vw, 11px);
+      z-index: 20;
+      pointer-events: none;
+      text-align: center;
+      white-space: nowrap;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.7);
+    }
+
+    /* AVISO CENTRAL DE MISSÃO DAS 3 CHAVES */
+    #center-notice-modal {
+      position: absolute;
+      inset: 0;
+      background: rgba(5, 10, 22, 0.78);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      z-index: 45;
+    }
+
+    .center-notice-card {
+      background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+      border: 4px solid var(--gold);
+      border-radius: 14px;
+      max-width: 560px;
+      width: 100%;
+      padding: 22px 24px;
+      text-align: center;
+      box-shadow: 0 0 35px rgba(251, 191, 36, 0.45);
+    }
+
+    /* CONTROLES VIRTUAIS MOBILE / TABLET */
+    #touch-controls {
+      position: absolute;
+      bottom: 14px;
+      left: 14px;
+      right: 14px;
+      display: none;
+      justify-content: space-between;
+      align-items: flex-end;
+      z-index: 22;
+      pointer-events: none;
+    }
+
+    @media (pointer: coarse), (max-width: 1024px) {
+      #touch-controls.active {
+        display: flex;
+      }
+    }
+
+    .touch-pad {
+      display: flex;
+      gap: 14px;
+      pointer-events: auto;
+    }
+
+    .touch-btn {
+      width: clamp(56px, 9vw, 72px);
+      height: clamp(56px, 9vw, 72px);
+      border-radius: 50%;
+      background: rgba(15, 23, 42, 0.32);
+      border: 2px solid rgba(56, 189, 248, 0.42);
+      color: rgba(255, 255, 255, 0.72);
+      font-family: 'Press Start 2P', monospace;
+      font-size: clamp(15px, 2.2vw, 20px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.28);
+      touch-action: none;
+    }
+    .touch-btn:active, .touch-btn.pressed {
+      background: rgba(56, 189, 248, 0.45);
+      color: #ffffff;
+      transform: scale(0.93);
+    }
+    .touch-action {
+      border-color: rgba(251, 191, 36, 0.45);
+      color: rgba(253, 224, 71, 0.75);
+    }
+
+    .name-error-msg {
+      color: #fca5a5;
+      background: rgba(185, 28, 28, 0.35);
+      border: 2px solid #ef4444;
+      border-radius: 6px;
+      padding: 6px 10px;
+      font-size: 18px;
+      margin-top: 4px;
+    }
+
+    /* TABELA DE RANKING */
+    .ranking-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 12px 0;
+      font-size: 20px;
+    }
+    .ranking-table th {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 10px;
+      color: var(--gold);
+      padding: 8px 6px;
+      border-bottom: 2px solid #334155;
+    }
+    .ranking-table td {
+      padding: 6px;
+      border-bottom: 1px solid #1e293b;
+    }
+
+    footer {
+      margin-top: 8px;
+      font-family: 'Press Start 2P', monospace;
+      font-size: clamp(8px, 1vw, 10px);
+      color: #94a3b8;
+      text-align: center;
+      padding: 4px 10px;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="game-wrapper">
+    <!-- HUD SUPERIOR -->
+    <div id="hud" class="hidden">
+      <div class="hud-group">
+        <div class="hud-badge hud-water" id="hud-player">🕵️ Detetive Matheus</div>
+        <div class="hud-badge hud-life" id="hud-lives">❤️ x3</div>
+        <div class="hud-badge hud-gold" id="hud-continues">⭐ CONT: 0</div>
+        <div class="hud-badge hud-gold" id="hud-drops">💧 00</div>
+        <div class="hud-badge hud-gold" id="hud-keys">🔑 0/3</div>
+      </div>
+      <div class="hud-group">
+        <div class="hud-badge" id="hud-act">ATO 1: CISTERNAS</div>
+        <div class="hud-badge hud-gold" id="hud-score">PTS: 00000</div>
+        <div class="hud-badge" id="hud-time">⏱️ 00:00</div>
+        <button id="sound-btn" title="Alternar Som">🔊 ON</button>
+      </div>
+    </div>
+
+    <!-- BANNER IN-GAME -->
+    <div id="toast-banner" class="hidden"></div>
+
+    <!-- AVISO CENTRAL (1ª CHAVE / FAROL DA SABEDORIA) -->
+    <div id="center-notice-modal" class="hidden">
+      <div class="center-notice-card">
+        <div id="center-notice-title" style="font-family:'Press Start 2P',monospace;font-size:clamp(13px,1.8vw,17px);color:#fbbf24;margin-bottom:14px;line-height:1.4;">
+          🔑 VOCÊ CONQUISTOU A 1ª CHAVE!
+        </div>
+        <div id="center-notice-body" style="font-size:clamp(21px,2.5vw,25px);color:#f8fafc;line-height:1.3;margin-bottom:18px;">
+          Para avançar para a próxima fase, você precisará encontrar e resolver os <strong>3 pergaminhos</strong> para coletar as <strong>3 chaves</strong> e abrir os <strong>3 cadeados da porta</strong> no final da fase!
+        </div>
+        <button class="btn-16bit btn-primary" id="btn-close-center-notice">ENTENDI, VAMOS LÁ! ▶</button>
+      </div>
+    </div>
+
+    <!-- MODAL DE CONCLUSÃO DE FASE (AO ENTRAR NA PORTA) -->
+    <div id="stage-clear-modal" class="hidden" style="position:absolute;inset:0;background:rgba(5,10,22,0.86);display:flex;align-items:center;justify-content:center;padding:16px;z-index:46;">
+      <div class="center-notice-card" style="border-color:#38bdf8;max-width:600px;">
+        <div id="stage-clear-badge" style="font-family:'Press Start 2P',monospace;font-size:11px;color:#38bdf8;margin-bottom:8px;">
+          🚪 PORTA DESTRANCADA!
+        </div>
+        <div id="stage-clear-title" style="font-family:'Press Start 2P',monospace;font-size:clamp(14px,2vw,19px);color:#fbbf24;margin-bottom:14px;line-height:1.4;">
+          ATO 1 CONCLUÍDO!
+        </div>
+        <div id="stage-clear-story" style="font-size:clamp(21px,2.4vw,24px);color:#f1f5f9;line-height:1.3;margin-bottom:14px;">
+          As comportas das cisternas voltaram a jorrar água cristalina para os moradores do vilarejo!
+        </div>
+        <div id="stage-clear-stats" style="font-family:'Press Start 2P',monospace;font-size:11px;color:#4ade80;margin-bottom:18px;">
+          +1.000 PTS DE BÔNUS DE FASE!
+        </div>
+        <button class="btn-16bit btn-success" id="btn-next-stage">CONTINUAR JORNADA ▶</button>
+      </div>
+    </div>
+
+    <!-- CANVAS PRINCIPAL 16-BIT -->
+    <canvas id="gameCanvas" width="960" height="540"></canvas>
+
+    <!-- CUTSCENE / DIÁLOGO RPG 16-BIT -->
+    <div id="cutscene-box" class="hidden">
+      <canvas id="portrait-canvas" width="48" height="48"></canvas>
+      <div class="dialogue-content">
+        <div id="speaker-name">Detetive Matheus</div>
+        <div id="dialogue-text">...</div>
+      </div>
+      <div class="dialogue-actions">
+        <button class="btn-16bit btn-primary" id="btn-next-dialogue">AVANÇAR ▶</button>
+        <button class="btn-16bit btn-secondary" id="btn-skip-cutscene" style="font-size:9px;padding:7px 10px;">PULAR ⏭</button>
+      </div>
+    </div>
+
+    <!-- MODAL DE DESAFIO MATEMÁTICO -->
+    <div id="math-modal" class="hidden">
+      <div class="math-card">
+        <div class="math-header">
+          <span class="math-title" id="math-modal-title">🔒 CADEADO VOLUMÉTRICO</span>
+          <span style="font-family:'Press Start 2P';font-size:10px;color:#38bdf8;" id="math-step-badge">1/1</span>
+        </div>
+        <div class="math-body">
+          <canvas id="diagramCanvas" width="200" height="170"></canvas>
+          <div>
+            <div class="math-question" id="math-question-text">Carregando desafio...</div>
+            <div class="math-hint" id="math-hint-text">Dica: V = c × l × h</div>
+            <div class="options-grid" id="math-options"></div>
+          </div>
+        </div>
+        <div id="math-feedback" class="hidden"></div>
+        <div id="math-retry-bar" class="hidden" style="margin-top:12px;text-align:right;">
+          <button class="btn-16bit btn-primary" id="btn-new-question">SORTEAR OUTRA QUESTÃO ↻</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- TELA INICIAL -->
+    <div id="start-screen" class="overlay-screen">
+      <div class="title-logo">DETETIVE MATEMÁTICO</div>
+      <div class="subtitle-logo">O Mistério dos Reservatórios de Numéria</div>
+      <div class="menu-card">
+        <div class="input-row">
+          <label for="detective-name-input">DIGITE SEU NOME PARA COMEÇAR:</label>
+          <input type="text" id="detective-name-input" class="pixel-input" value="" maxlength="22" placeholder="Ex: João Silva..." required />
+          <div id="name-error-msg" class="name-error-msg hidden">⚠️ Por favor, digite o seu nome antes de iniciar a missão!</div>
+        </div>
+        <div style="font-size: 20px; color: #cbd5e1; margin-bottom: 14px; line-height: 1.25;">
+          O excêntrico <strong>Barão Vácuo</strong> drenou toda a água de Numéria e prendeu a <strong>Princesa Melina</strong>!<br>
+          Com a ajuda de <strong>Loopy</strong> e <strong>Pérola</strong>, pule sobre capangas, colete power-ups e resolva desafios de <strong>Volume e Capacidade</strong> para restaurar o reino!
+        </div>
+        <div>
+          <button class="btn-16bit btn-primary" id="btn-start-game">▶ INICIAR MISSÃO</button>
+          <button class="btn-16bit btn-secondary" id="btn-show-ranking">🏆 RANKING TOP 5</button>
+        </div>
+        <div style="margin-top: 12px; font-size: 17px; color: #94a3b8;">
+          PC: <strong>Setas / WASD</strong> + <strong>E / Enter</strong> | Celular & Tablet: <strong>Botões na tela</strong>
+        </div>
+      </div>
+    </div>
+
+    <!-- TELA DE RANKING / GAME OVER / VITÓRIA FINAL -->
+    <div id="end-screen" class="overlay-screen hidden">
+      <div class="title-logo" id="end-title">MISSÃO CONCLUÍDA!</div>
+      <div class="subtitle-logo" id="end-subtitle">As fontes de Numéria voltaram a brilhar!</div>
+      <div class="menu-card">
+        <div id="motivational-box" class="hidden" style="background:rgba(14,165,233,0.18);border:2px solid #38bdf8;border-radius:10px;padding:12px 14px;margin-bottom:12px;font-size:21px;line-height:1.3;color:#e0f2fe;"></div>
+        <div id="final-stats" style="font-size: 22px; color: #fef08a; margin-bottom: 10px;"></div>
+        <div style="font-family:'Press Start 2P';font-size:11px;color:#38bdf8;margin-top:8px;">🏆 TOP 5 DETETIVES DE NUMÉRIA</div>
+        <table class="ranking-table" id="ranking-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>DETETIVE</th>
+              <th>PONTOS</th>
+              <th>TEMPO</th>
+            </tr>
+          </thead>
+          <tbody id="ranking-body"></tbody>
+        </table>
+        <div style="margin-top: 12px;">
+          <button class="btn-16bit btn-success hidden" id="btn-use-continue">⭐ USAR CONTINUE</button>
+          <button class="btn-16bit btn-primary" id="btn-restart-game">↻ TENTAR NOVAMENTE</button>
+          <button class="btn-16bit btn-secondary" id="btn-back-menu">🏠 MENU INICIAL</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- CONTROLES VIRTUAIS MOBILE -->
+    <div id="touch-controls">
+      <div class="touch-pad">
+        <button class="touch-btn" id="touch-left">◀</button>
+        <button class="touch-btn" id="touch-right">▶</button>
+      </div>
+      <div class="touch-pad">
+        <button class="touch-btn touch-action" id="touch-interact">E</button>
+        <button class="touch-btn" id="touch-jump">▲</button>
+      </div>
+    </div>
+  </div>
+
+  <footer>Todos os direitos reservados ao Professor Thiago Melo</footer>
+
+<script>
+/**
+ * ============================================================================
+ * DETETIVE MATEMÁTICO: O MISTÉRIO DOS RESERVATÓRIOS DE NUMÉRIA
+ * Desenvolvido pelo Professor Thiago Melo
+ * Estilo: 32-Bit Platformer + Desafios de Volume e Capacidade
+ * ============================================================================
+ */
+
+// ============================================================================
+// 1. SINTETIZADOR DE ÁUDIO RETRO 32-BIT (WEB AUDIO API - SEM ARQUIVOS EXTERNOS)
+// ============================================================================
+const sfx = {
+  ctx: null,
+  enabled: true,
+  init() {
+    if (!this.ctx) {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (AudioCtx) this.ctx = new AudioCtx();
+    }
+    if (this.ctx && this.ctx.state === 'suspended') {
+      this.ctx.resume();
+    }
+  },
+  playTone(freq, type = 'triangle', duration = 0.12, gainVal = 0.14, delay = 0) {
+    if (!this.enabled) return;
+    this.init();
+    if (!this.ctx) return;
+    const now = this.ctx.currentTime + delay;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, now);
+    gain.gain.setValueAtTime(gainVal, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
+    osc.connect(gain);
+    gain.connect(this.ctx.destination);
+    osc.start(now);
+    osc.stop(now + duration);
+  },
+  jump() {
+    this.playTone(260, 'square', 0.08, 0.11, 0);
+    this.playTone(420, 'triangle', 0.14, 0.13, 0.04);
+  },
+  drop() {
+    this.playTone(587.33, 'sine', 0.09, 0.12, 0);
+    this.playTone(880, 'triangle', 0.15, 0.12, 0.05);
+  },
+  blockHit() {
+    this.playTone(320, 'square', 0.07, 0.11, 0);
+    this.playTone(480, 'triangle', 0.1, 0.11, 0.04);
+  },
+  powerup() {
+    [330, 392, 493.88, 659.25, 783.99].forEach((f, i) => {
+      this.playTone(f, 'triangle', 0.14, 0.14, i * 0.055);
+    });
+  },
+  superPower() {
+    [440, 554.37, 659.25, 880, 1108.73, 1318.51].forEach((f, i) => {
+      this.playTone(f, 'sawtooth', 0.16, 0.11, i * 0.05);
+    });
+  },
+  stomp() {
+    this.playTone(190, 'sawtooth', 0.09, 0.14, 0);
+    this.playTone(110, 'square', 0.12, 0.14, 0.04);
+  },
+  bossHit() {
+    this.playTone(150, 'sawtooth', 0.16, 0.18, 0);
+    this.playTone(95, 'square', 0.22, 0.18, 0.06);
+  },
+  hurt() {
+    this.playTone(280, 'sawtooth', 0.12, 0.15, 0);
+    this.playTone(170, 'sawtooth', 0.2, 0.15, 0.08);
+  },
+  error() {
+    this.playTone(200, 'sawtooth', 0.16, 0.15, 0);
+    this.playTone(145, 'sawtooth', 0.24, 0.15, 0.1);
+  },
+  success() {
+    [523.25, 659.25, 783.99, 1046.5].forEach((f, i) => {
+      this.playTone(f, 'triangle', 0.18, 0.15, i * 0.075);
+    });
+  }
+};
+
+// ============================================================================
+// 2. GERADOR DINÂMICO DE QUESTÕES MATEMÁTICAS (BANCO AMPLO SEM REPETIÇÃO)
+// ============================================================================
+class MathGenerator {
+  static usedSignatures = new Set();
+
+  static resetHistory() {
+    this.usedSignatures.clear();
+  }
+
+  static randInt(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+  }
+
+  static shuffle(arr) {
+    return arr.sort(() => Math.random() - 0.5);
+  }
+
+  static buildOptions(correctVal, unit, altValues = []) {
+    const set = new Set([correctVal]);
+    altValues.forEach(v => { if (v > 0 && v !== correctVal) set.add(v); });
+    while (set.size < 4) {
+      const factor = [0.5, 1.5, 2, 0.25, 10][this.randInt(0, 4)];
+      let fake = Math.round(correctVal * factor * 100) / 100;
+      if (fake <= 0 || fake === correctVal) fake = correctVal + this.randInt(2, 35);
+      set.add(fake);
+    }
+    return this.shuffle(Array.from(set)).map(val => ({
+      value: val,
+      label: `${val.toLocaleString('pt-BR')} ${unit}`
+    }));
+  }
+
+  static generateUnique(actNum, variant = 0) {
+    for (let attempt = 0; attempt < 60; attempt++) {
+      let q;
+      if (actNum === 1) q = this.generateAct1(variant);
+      else if (actNum === 2) q = this.generateAct2(variant);
+      else if (actNum === 3) q = this.generateAct3(variant);
+      else q = this.generateBossQuestion(variant);
+
+      if (!this.usedSignatures.has(q.signature)) {
+        this.usedSignatures.add(q.signature);
+        return q;
+      }
+      variant++;
+    }
+    return actNum === 1 ? this.generateAct1(variant)
+      : actNum === 2 ? this.generateAct2(variant)
+      : actNum === 3 ? this.generateAct3(variant)
+      : this.generateBossQuestion(variant);
+  }
+
+  // ATO 1: Cubos e Paralelepípedos (Grande variedade de dimensões e cenários)
+  static generateAct1(variant = 0) {
+    const mode = variant % 3;
+    if (mode === 0) {
+      const a = this.randInt(2, 12);
+      const vol = a * a * a;
+      const lugares = ['cisterna cúbica da praça', 'caixa d’água cúbica do moinho', 'reserva cúbica do aqueduto', 'tanque cúbico da torre norte'];
+      const lugar = lugares[this.randInt(0, lugares.length - 1)];
+      return {
+        signature: `A1_CUBE_${a}`,
+        title: '📜 PERGAMINHO: CISTERNA CÚBICA',
+        type: 'cube',
+        dims: { a },
+        question: `Loopy farejou a placa de uma ${lugar} com aresta de ${a} m. Qual é o volume total de água que ela comporta?`,
+        hint: `Fórmula do Cubo: V = a × a × a (a³)`,
+        correct: vol,
+        unit: 'm³',
+        options: this.buildOptions(vol, 'm³', [a * 3, a * a, a * a * 6]),
+        explanation: `Resolução: Em um cubo de aresta a = ${a} m, multiplicamos as três dimensões iguais: V = ${a} × ${a} × ${a} = ${vol} m³.`
+      };
+    } else if (mode === 1) {
+      const c = this.randInt(3, 14);
+      const l = this.randInt(2, 8);
+      const h = this.randInt(2, 6);
+      const vol = c * l * h;
+      return {
+        signature: `A1_BOX_${c}_${l}_${h}`,
+        title: '📜 PERGAMINHO: RESERVATÓRIO RETANGULAR',
+        type: 'box',
+        dims: { c, l, h },
+        question: `Um reservatório retangular do vilarejo mede ${c} m de comprimento, ${l} m de largura e ${h} m de altura. Qual é o seu volume?`,
+        hint: `Paralelepípedo: V = comprimento × largura × altura`,
+        correct: vol,
+        unit: 'm³',
+        options: this.buildOptions(vol, 'm³', [c + l + h, c * l + h, (c + l) * h]),
+        explanation: `Resolução: Multiplicamos comprimento, largura e altura: V = ${c} × ${l} × ${h} = ${vol} m³.`
+      };
+    } else {
+      const c = this.randInt(4, 10);
+      const l = this.randInt(2, 6);
+      const h = this.randInt(2, 5);
+      const halfVol = (c * l * h) / 2;
+      return {
+        signature: `A1_HALF_${c}_${l}_${h}`,
+        title: '📜 PERGAMINHO: CISTERNA PELA METADE',
+        type: 'box',
+        dims: { c, l, h },
+        question: `Uma cisterna de ${c} m × ${l} m × ${h} m está preenchida exatamente até a METADE de sua altura. Quantos m³ de água há nela?`,
+        hint: `Calcule o volume total (c × l × h) e divida por 2`,
+        correct: halfVol,
+        unit: 'm³',
+        options: this.buildOptions(halfVol, 'm³', [c * l * h, c + l + h, halfVol * 3]),
+        explanation: `Resolução: Volume total = ${c} × ${l} × ${h} = ${c * l * h} m³. Como está pela metade, dividimos por 2: ${c * l * h} ÷ 2 = ${halfVol} m³.`
+      };
+    }
+  }
+
+  // ATO 2: Conversão de Unidades (m³, dm³, cm³, L, mL)
+  static generateAct2(variant = 0) {
+    const mode = variant % 4;
+    if (mode === 0) {
+      const m3 = [1.2, 1.5, 2.4, 2.5, 3.2, 3.8, 4.5, 5.6, 6.4, 7.5, 8.2, 9.5][this.randInt(0, 11)];
+      const liters = Math.round(m3 * 1000);
+      return {
+        signature: `A2_M3_L_${m3}`,
+        title: '📜 PERGAMINHO: CONVERSÃO m³ → L',
+        type: 'conv_m3',
+        dims: { m3 },
+        question: `Pérola segurou a válvula! Um tanque da fábrica possui ${m3.toLocaleString('pt-BR')} m³ de capacidade. Quantos LITROS cabem nele?`,
+        hint: `Lembre-se: 1 m³ equivale a 1.000 Litros!`,
+        correct: liters,
+        unit: 'L',
+        options: this.buildOptions(liters, 'L', [m3 * 100, m3 * 10, m3 * 10000]),
+        explanation: `Resolução: Como 1 m³ = 1.000 L, multiplicamos por 1.000: ${m3.toLocaleString('pt-BR')} × 1.000 = ${liters.toLocaleString('pt-BR')} L.`
+      };
+    } else if (mode === 1) {
+      const dm3 = this.randInt(2, 15);
+      const bottleMl = [200, 250, 500][this.randInt(0, 2)];
+      const totalMl = dm3 * 1000;
+      const bottles = totalMl / bottleMl;
+      return {
+        signature: `A2_DM3_ML_${dm3}_${bottleMl}`,
+        title: '📜 PERGAMINHO: ENGARRAFAMENTO (dm³ → mL)',
+        type: 'conv_dm3',
+        dims: { dm3, bottleMl },
+        question: `Um galão de ${dm3} dm³ (= ${dm3} L) será engarrafado em frascos de ${bottleMl} mL. Quantos frascos serão preenchidos?`,
+        hint: `1 dm³ = 1 Litro = 1.000 mL`,
+        correct: bottles,
+        unit: 'frascos',
+        options: this.buildOptions(bottles, 'frascos', [dm3, bottles * 2, Math.max(2, bottles / 2)]),
+        explanation: `Resolução: 1 dm³ = 1.000 mL, então ${dm3} dm³ = ${totalMl} mL. Dividindo pelo volume de cada frasco: ${totalMl} ÷ ${bottleMl} = ${bottles} frascos.`
+      };
+    } else if (mode === 2) {
+      const liters = [1500, 2500, 3500, 4200, 5800, 6500, 7200, 8500][this.randInt(0, 7)];
+      const m3 = liters / 1000;
+      return {
+        signature: `A2_L_M3_${liters}`,
+        title: '📜 PERGAMINHO: CONVERSÃO L → m³',
+        type: 'conv_m3',
+        dims: { m3 },
+        question: `O visor de pressão indica ${liters.toLocaleString('pt-BR')} Litros drenados. A quantos METROS CÚBICOS (m³) esse volume corresponde?`,
+        hint: `Para transformar Litros em m³, divida por 1.000!`,
+        correct: m3,
+        unit: 'm³',
+        options: this.buildOptions(m3, 'm³', [liters / 100, liters / 10, m3 * 10]),
+        explanation: `Resolução: Como 1.000 L = 1 m³, dividimos ${liters.toLocaleString('pt-BR')} por 1.000: ${liters.toLocaleString('pt-BR')} ÷ 1.000 = ${m3.toLocaleString('pt-BR')} m³.`
+      };
+    } else {
+      const cm3 = [2000, 3000, 4500, 6000, 7500, 9000][this.randInt(0, 5)];
+      const liters = cm3 / 1000;
+      return {
+        signature: `A2_CM3_L_${cm3}`,
+        title: '📜 PERGAMINHO: CONVERSÃO cm³ → L',
+        type: 'conv_dm3',
+        dims: { dm3: liters, bottleMl: 1000 },
+        question: `Um frasco de laboratório da fábrica comporta ${cm3.toLocaleString('pt-BR')} cm³. Sabendo que 1.000 cm³ = 1 L, quantos LITROS ele armazena?`,
+        hint: `1 Litro = 1 dm³ = 1.000 cm³`,
+        correct: liters,
+        unit: 'L',
+        options: this.buildOptions(liters, 'L', [cm3 / 100, cm3 / 10, liters * 10]),
+        explanation: `Resolução: Como 1.000 cm³ equivalem a 1 Litro, dividimos ${cm3.toLocaleString('pt-BR')} por 1.000 = ${liters.toLocaleString('pt-BR')} L.`
+      };
+    }
+  }
+
+  // ATO 3: Cilindros (Torre do Relógio d'Água)
+  static generateAct3(variant = 0) {
+    const pairs = [
+      [2, 3], [2, 4], [2, 5], [2, 6], [2, 7], [2, 8],
+      [3, 2], [3, 3], [3, 4], [3, 5], [3, 6],
+      [4, 2], [4, 3], [4, 4], [4, 5],
+      [5, 2], [5, 3], [5, 4]
+    ];
+    const [r, h] = pairs[(variant + this.randInt(0, pairs.length - 1)) % pairs.length];
+    const pi = 3;
+    const vol = pi * r * r * h;
+    return {
+      signature: `A3_CYL_${r}_${h}`,
+      title: '📜 PERGAMINHO: SILO CILÍNDRICO (π = 3)',
+      type: 'cylinder',
+      dims: { r, h, pi },
+      question: `Calcule o volume do reservatório cilíndrico de raio r = ${r} m e altura h = ${h} m para acionar o contrapeso da torre (use π = 3):`,
+      hint: `Volume do Cilindro: V = π × r² × h (com π = 3)`,
+      correct: vol,
+      unit: 'm³',
+      options: this.buildOptions(vol, 'm³', [pi * r * h, 2 * pi * r * h, r * r * h]),
+      explanation: `Resolução: Aplicamos V = π × r² × h → V = 3 × (${r}²) × ${h} = 3 × ${r * r} × ${h} = ${vol} m³.`
+    };
+  }
+
+  // ATO 4 (CHEFE FINAL): Volume + Conversão para Litros
+  static generateBossQuestion(hitNumber) {
+    if (hitNumber % 2 === 1) {
+      const c = this.randInt(2, 6);
+      const l = this.randInt(1, 4);
+      const h = this.randInt(2, 4);
+      const m3 = c * l * h;
+      const liters = m3 * 1000;
+      return {
+        signature: `A4_BOX_${c}_${l}_${h}`,
+        title: `💥 VISOR DO SUGADOR-3000 (GOLPE ${hitNumber}/4)`,
+        type: 'box',
+        dims: { c, l, h },
+        question: `O tanque auxiliar do Barão mede ${c} m × ${l} m × ${h} m. Qual a capacidade dele em LITROS para sobrecarregar o sistema?`,
+        hint: `1º Calcule V = c × l × h (em m³) | 2º Multiplique por 1.000 para Litros`,
+        correct: liters,
+        unit: 'L',
+        options: this.buildOptions(liters, 'L', [m3, m3 * 100, liters * 2]),
+        explanation: `Resolução: Volume = ${c} × ${l} × ${h} = ${m3} m³. Convertendo para litros (× 1.000): ${m3} × 1.000 = ${liters.toLocaleString('pt-BR')} L!`
+      };
+    } else {
+      const r = this.randInt(1, 4);
+      const h = this.randInt(2, 5);
+      const m3 = 3 * r * r * h;
+      const liters = m3 * 1000;
+      return {
+        signature: `A4_CYL_${r}_${h}`,
+        title: `💥 NÚCLEO DO SUGADOR-3000 (GOLPE ${hitNumber}/4)`,
+        type: 'cylinder',
+        dims: { r, h, pi: 3 },
+        question: `Câmara cilíndrica principal com raio r = ${r} m e altura h = ${h} m (use π = 3). Quantos LITROS de água roubada há nela?`,
+        hint: `V = 3 × r² × h (em m³) e depois × 1.000 = Litros`,
+        correct: liters,
+        unit: 'L',
+        options: this.buildOptions(liters, 'L', [m3, 3 * r * h * 1000, liters / 10]),
+        explanation: `Resolução: Volume = 3 × ${r}² × ${h} = ${m3} m³. Convertendo para litros (× 1.000): ${m3} × 1.000 = ${liters.toLocaleString('pt-BR')} L!`
+      };
+    }
+  }
+}
+
+// Desenha o diagrama geométrico 16-bit no modal de matemática
+function drawMathDiagram(q) {
+  const cvs = document.getElementById('diagramCanvas');
+  const ctx = cvs.getContext('2d');
+  ctx.clearRect(0, 0, cvs.width, cvs.height);
+
+  // Grade azul estilo blueprint hidráulico
+  ctx.strokeStyle = 'rgba(56, 189, 248, 0.15)';
+  ctx.lineWidth = 1;
+  for (let x = 0; x < cvs.width; x += 16) {
+    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, cvs.height); ctx.stroke();
+  }
+  for (let y = 0; y < cvs.height; y += 16) {
+    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(cvs.width, y); ctx.stroke();
+  }
+
+  ctx.font = 'bold 14px VT323, monospace';
+  ctx.textAlign = 'center';
+
+  if (q.type === 'cube' || q.type === 'box') {
+    const w = q.type === 'cube' ? 76 : 96;
+    const h = q.type === 'cube' ? 76 : 62;
+    const d = 26;
+    const x = 44, y = 55;
+
+    // Água interna
+    ctx.fillStyle = 'rgba(14, 165, 233, 0.45)';
+    ctx.fillRect(x, y + 14, w, h - 14);
+
+    // Contorno 3D isométrico
+    ctx.strokeStyle = '#38bdf8';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(x, y, w, h);
+    ctx.strokeRect(x + d, y - d, w, h);
+
+    ctx.beginPath();
+    ctx.moveTo(x, y); ctx.lineTo(x + d, y - d);
+    ctx.moveTo(x + w, y); ctx.lineTo(x + w + d, y - d);
+    ctx.moveTo(x + w, y + h); ctx.lineTo(x + w + d, y + h - d);
+    ctx.moveTo(x, y + h); ctx.lineTo(x + d, y + h - d);
+    ctx.stroke();
+
+    ctx.fillStyle = '#fde047';
+    if (q.type === 'cube') {
+      ctx.fillText(`a = ${q.dims.a} m`, x + w / 2, y + h + 18);
+      ctx.fillText(`${q.dims.a} m`, x - 20, y + h / 2);
+      ctx.fillText(`${q.dims.a} m`, x + w + 26, y + h - 8);
+    } else {
+      ctx.fillText(`c = ${q.dims.c} m`, x + w / 2, y + h + 18);
+      ctx.fillText(`h = ${q.dims.h} m`, x - 22, y + h / 2);
+      ctx.fillText(`l = ${q.dims.l} m`, x + w + 28, y + h - 6);
+    }
+  } else if (q.type === 'cylinder') {
+    const cx = 100, topY = 38, botY = 128, rx = 44, ry = 14;
+    // Corpo com água
+    ctx.fillStyle = 'rgba(14, 165, 233, 0.45)';
+    ctx.fillRect(cx - rx, topY + 12, rx * 2, botY - topY - 12);
+
+    ctx.strokeStyle = '#38bdf8';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.ellipse(cx, topY, rx, ry, 0, 0, Math.PI * 2);
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.ellipse(cx, botY, rx, ry, 0, 0, Math.PI);
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(cx - rx, topY); ctx.lineTo(cx - rx, botY);
+    ctx.moveTo(cx + rx, topY); ctx.lineTo(cx + rx, botY);
+    ctx.stroke();
+
+    // Linha do raio
+    ctx.strokeStyle = '#fbbf24';
+    ctx.beginPath();
+    ctx.moveTo(cx, topY); ctx.lineTo(cx + rx, topY);
+    ctx.stroke();
+
+    ctx.fillStyle = '#fde047';
+    ctx.fillText(`r = ${q.dims.r} m`, cx + rx / 2, topY - 8);
+    ctx.fillText(`h = ${q.dims.h} m`, cx + rx + 26, (topY + botY) / 2);
+    ctx.fillText(`π = 3`, cx, botY + 26);
+  } else if (q.type === 'conv_m3') {
+    ctx.fillStyle = '#0284c7';
+    ctx.fillRect(30, 48, 55, 70);
+    ctx.strokeStyle = '#fff';
+    ctx.strokeRect(30, 48, 55, 70);
+    ctx.fillStyle = '#fde047';
+    ctx.fillText(`${q.dims.m3} m³`, 57, 88);
+
+    ctx.fillStyle = '#fff';
+    ctx.fillText(`➔ × 1.000 ➔`, 115, 85);
+    ctx.fillStyle = '#38bdf8';
+    ctx.fillText(`? Litros`, 165, 85);
+  } else if (q.type === 'conv_dm3') {
+    ctx.fillStyle = '#0284c7';
+    ctx.fillRect(24, 52, 52, 62);
+    ctx.strokeStyle = '#fff';
+    ctx.strokeRect(24, 52, 52, 62);
+    ctx.fillStyle = '#fde047';
+    ctx.fillText(`${q.dims.dm3} dm³`, 50, 86);
+    ctx.fillStyle = '#fff';
+    ctx.fillText(`= ${q.dims.dm3 * 1000} mL`, 50, 132);
+    ctx.fillText(`÷ ${q.dims.bottleMl} mL`, 135, 86);
+  }
+}
+
+// ============================================================================
+// 3. RENDERIZADOR PIXEL ART 16-BIT PROCEDURAL (PERSONAGENS, INIMIGOS E CENÁRIO)
+// ============================================================================
+const SpriteArt = {
+  // Desenha o Detetive Matheus fiel ao sprite sheet Sherlock enviado (Formas: 'small', 'big', 'super')
+  drawDetective(ctx, x, y, facing, form, animState, frameTick, invincibleTimer) {
+    if (invincibleTimer > 0 && Math.floor(frameTick / 3) % 2 === 0 && form !== 'super') {
+      return; // Piscar após levar dano
+    }
+
+    ctx.save();
+    const isBig = form === 'big' || form === 'super';
+    const scale = isBig ? 1.08 : 0.82;
+    const width = 32;
+    const height = isBig ? 48 : 34;
+
+    ctx.translate(Math.round(x + width / 2), Math.round(y + height));
+    if (facing < 0) ctx.scale(-1, 1);
+    ctx.scale(scale, scale);
+
+    const isSuper = form === 'super';
+    const isRunning = animState === 'run';
+    const isJumping = animState === 'jump';
+    const isVictory = animState === 'victory';
+
+    // Ciclo de 4 quadros suaves fiel ao sprite sheet
+    const runPhase = Math.floor(frameTick * 0.28) % 4;
+    const idleInspect = !isRunning && !isJumping && (Math.floor(frameTick / 70) % 2 === 1);
+    const bob = isRunning
+      ? (runPhase % 2 === 1 ? -2 : 0)
+      : (!isJumping ? Math.round(Math.sin(frameTick * 0.1)) : 0);
+
+    // Aura Dourada estilo Super Sonic na Forma 3 (Essência de Arquimedes)
+    if (isSuper) {
+      ctx.save();
+      const pulse = 1 + Math.sin(frameTick * 0.4) * 0.14;
+      ctx.scale(pulse, pulse);
+      ctx.fillStyle = 'rgba(253, 224, 71, 0.36)';
+      ctx.beginPath();
+      for (let i = 0; i < 8; i++) {
+        const ang = (i * Math.PI) / 4 + frameTick * 0.15;
+        const r = i % 2 === 0 ? 32 : 18;
+        ctx.lineTo(Math.cos(ang) * r, -24 + Math.sin(ang) * r);
+      }
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+    }
+
+    // Paleta fiel ao desenho enviado (ou dourada no modo Super)
+    const outline = '#120b07';
+    const hatMain = isSuper ? '#eab308' : '#7a441e';
+    const hatLight = isSuper ? '#fef08a' : '#a45d2a';
+    const hatDark = isSuper ? '#a16207' : '#4e2910';
+    const hairColor = isSuper ? '#ca8a04' : '#3b1e0e';
+    const skinMain = isSuper ? '#fef08a' : '#ffbe98';
+    const skinShade = isSuper ? '#fde047' : '#e08e67';
+    const scarfMain = isSuper ? '#f97316' : '#dc2626';
+    const scarfDark = isSuper ? '#c2410c' : '#991b1b';
+    const coatMain = isSuper ? '#facc15' : '#9c5a25';
+    const coatLight = isSuper ? '#fef08a' : '#bd7234';
+    const coatDark = isSuper ? '#a16207' : '#693813';
+    const shirtColor = isSuper ? '#ffffff' : '#cbd5e1';
+    const pantsMain = isSuper ? '#ca8a04' : '#1e293b';
+    const pantsLight = isSuper ? '#eab308' : '#334155';
+    const bootColor = isSuper ? '#fef9c3' : '#4a2511';
+
+    // Helper para desenhar pixels nítidos com contorno
+    const px = (color, rx, ry, rw, rh) => {
+      ctx.fillStyle = color;
+      ctx.fillRect(Math.round(rx), Math.round(ry), Math.round(rw), Math.round(rh));
+    };
+
+    ctx.translate(0, bob);
+
+    // 1. CACHECOL VERMELHO ESVOAÇANTE ATRÁS (durante corrida ou pulo)
+    if (isRunning || isJumping) {
+      const wave = Math.round(Math.sin(frameTick * 0.5) * 2);
+      px(outline, -24, -33 + wave, 15, 7);
+      px(scarfMain, -23, -32 + wave, 13, 5);
+      px(scarfDark, -21, -29 + wave, 9, 2);
+    }
+
+    // 2. PERNAS (CALÇA AZUL-MARINHO ESCURA) E BOTAS MARRONS
+    if (isJumping) {
+      // Pose dinâmica de salto com joelhos dobrados (igual à linha 3 do sprite sheet)
+      // Perna de trás
+      px(outline, -12, -16, 9, 10);
+      px(pantsMain, -11, -15, 7, 8);
+      px(outline, -13, -8, 8, 6);
+      px(bootColor, -12, -7, 6, 4);
+      // Perna da frente dobrada
+      px(outline, 0, -17, 10, 9);
+      px(pantsLight, 1, -16, 8, 7);
+      px(outline, 2, -10, 9, 7);
+      px(bootColor, 3, -9, 7, 5);
+    } else if (isRunning) {
+      // Passada atlética de corrida (igual à linha 2 do sprite sheet)
+      const stride = [
+        { bx: -12, by: -14, fx: 4, fy: -15 },
+        { bx: -6, by: -15, fx: -1, fy: -15 },
+        { bx: 5, by: -14, fx: -13, fy: -15 },
+        { bx: -2, by: -15, fx: -6, fy: -15 }
+      ][runPhase];
+
+      // Perna traseira
+      px(outline, stride.bx, stride.by, 8, 11);
+      px(pantsMain, stride.bx + 1, stride.by + 1, 6, 9);
+      px(outline, stride.bx - 1, -5, 9, 5);
+      px(bootColor, stride.bx, -4, 7, 3);
+
+      // Perna dianteira
+      px(outline, stride.fx, stride.fy, 8, 11);
+      px(pantsLight, stride.fx + 1, stride.fy + 1, 6, 9);
+      px(outline, stride.fx, -5, 10, 5);
+      px(bootColor, stride.fx + 1, -4, 8, 3);
+    } else {
+      // Parado (idle): postura elegante com pés firmes (linha 1 do sprite sheet)
+      px(outline, -9, -15, 8, 15);
+      px(pantsMain, -8, -14, 6, 10);
+      px(bootColor, -8, -4, 7, 3);
+
+      px(outline, 1, -15, 8, 15);
+      px(pantsLight, 2, -14, 6, 10);
+      px(bootColor, 2, -4, 7, 3);
+    }
+
+    // 3. SOBRETUDO MARROM-CARAMELO ABERTO + CAMISA CINZA + CAPA NOS OMBROS
+    const flare = (isRunning || isJumping) ? -5 : 0; // Aba do casaco voando para trás
+    // Contorno geral do casaco
+    px(outline, -12 + flare, -31, 22 - flare, 18);
+    // Camisa interna clara
+    px(shirtColor, -1, -29, 6, 14);
+    // Aba esquerda (traseira) do sobretudo
+    px(coatMain, -11 + flare, -30, 10 - flare, 16);
+    px(coatDark, -11 + flare, -21, 5, 7);
+    // Aba direita (dianteira) do sobretudo
+    px(coatMain, 5, -30, 4, 16);
+    px(coatLight, 6, -29, 2, 14);
+    // Capa curta nos ombros (detalhe clássico de detetive do desenho)
+    px(outline, -12, -31, 22, 8);
+    px(coatLight, -11, -30, 20, 6);
+    px(coatDark, -11, -26, 20, 2);
+
+    // 4. CACHECOL VERMELHO NO PESCOÇO E PONTA PENDENTE NO PEITO
+    px(outline, -8, -33, 17, 5);
+    px(scarfMain, -7, -32, 15, 3);
+    if (!isRunning && !isJumping) {
+      // Ponta vertical da gravata/cachecol vermelho no peito
+      px(outline, 0, -29, 5, 9);
+      px(scarfMain, 1, -28, 3, 7);
+      px(scarfDark, 1, -24, 3, 2);
+    }
+
+    // 5. CABEÇA, CABELO CASTANHO E ROSTO EXPRESSIVO
+    px(outline, -9, -45, 19, 13);
+    px(skinMain, -7, -43, 16, 10);
+    px(skinShade, -7, -36, 15, 3);
+    // Costeleta e cabelo castanho escuro na nuca
+    px(hairColor, -8, -44, 5, 10);
+    px(hairColor, -4, -44, 3, 4);
+    // Orelha
+    px(skinShade, -5, -39, 2, 3);
+    // Sobrancelha e olho expressivo
+    px(hairColor, 2, -41, 5, 2);
+    px(outline, 4, -39, 3, 3);
+    px('#ffffff', 4, -39, 1, 1); // Brilho no olhar
+
+    // 6. CHAPÉU DEERSTALKER MARROM (ESTILO SHERLOCK HOLMES DO DESENHO)
+    // Botão no topo
+    px(outline, -2, -52, 5, 3);
+    px(hatLight, -1, -51, 3, 2);
+    // Copa arredondada
+    px(outline, -10, -50, 21, 7);
+    px(hatMain, -9, -49, 19, 5);
+    px(hatLight, -6, -49, 12, 2);
+    // Aba traseira e aba frontal características do deerstalker
+    px(outline, -13, -45, 27, 4);
+    px(hatDark, -12, -44, 25, 2);
+    px(hatMain, 6, -44, 8, 2); // Aba frontal destacada
+
+    // 7. BRAÇO E LUPA DE PRECISÃO COM LENTE AZUL-CRISTAL
+    const holdLensUp = isRunning || idleInspect || isVictory;
+    if (holdLensUp) {
+      // Braço estendido segurando a lupa à frente
+      px(outline, 6, -29, 9, 6);
+      px(coatMain, 7, -28, 7, 4);
+      px(skinMain, 13, -28, 3, 4);
+
+      // Cabo da lupa
+      const lensY = isVictory ? -44 : -36;
+      px(outline, 14, lensY + 6, 3, 6);
+      px(hatDark, 15, lensY + 6, 1, 5);
+
+      // Aro e lente azul brilhante da lupa
+      px(outline, 11, lensY - 2, 9, 9);
+      px('#475569', 12, lensY - 1, 7, 7);
+      px('#38bdf8', 13, lensY, 5, 5);
+      px('#e0f2fe', 14, lensY + 1, 2, 2); // Reflexo na lente
+    } else {
+      // Braço relaxado ao lado do corpo
+      px(outline, -2, -28, 6, 11);
+      px(coatMain, -1, -27, 4, 8);
+      px(skinMain, -1, -19, 4, 2);
+    }
+
+    ctx.restore();
+  },
+
+  // Desenha os 4 Capangas fiéis ao sprite sheet enviado (vivo animado + pose derrotado X_X)
+  drawEnemy(ctx, en, tick) {
+    ctx.save();
+    const facing = en.vx >= 0 ? 1 : -1;
+    const isDefeated = !en.alive;
+    ctx.translate(Math.round(en.x + 20), Math.round(en.y + 38));
+    if (facing < 0) ctx.scale(-1, 1);
+    ctx.scale(1.28, 1.28);
+
+    const px = (color, rx, ry, rw, rh) => {
+      ctx.fillStyle = color;
+      ctx.fillRect(Math.round(rx), Math.round(ry), Math.round(rw), Math.round(rh));
+    };
+
+    const outline = '#110a08';
+    const step = Math.floor(tick * 0.22) % 2;
+
+    if (en.type === 'thief') {
+      // LINHA 1 DO SPRITE SHEET: Ladrão Capanga
+      if (isDefeated) {
+        px(outline, -18, -11, 36, 11);
+        px('#2563eb', -17, -9, 12, 7);
+        px('#374151', -6, -10, 14, 8);
+        px('#ffbe98', 7, -10, 10, 8);
+        px('#dc2626', 9, -12, 9, 4);
+        px('#ffffff', 10, -7, 6, 3);
+        px('#000000', 11, -7, 1, 1);
+        px('#000000', 12, -6, 1, 1);
+        px('#000000', 14, -7, 1, 1);
+        px('#000000', 15, -6, 1, 1);
+      } else {
+        const legOff = step === 0 ? -3 : 3;
+        px(outline, -8 + legOff, -12, 7, 10);
+        px('#2563eb', -7 + legOff, -11, 5, 8);
+        px('#78350f', -8 + legOff, -4, 7, 4);
+
+        px(outline, 1 - legOff, -12, 7, 10);
+        px('#3b82f6', 2 - legOff, -11, 5, 8);
+        px('#78350f', 2 - legOff, -4, 7, 4);
+
+        px(outline, -10, -25, 20, 14);
+        px('#374151', -9, -24, 18, 12);
+        px('#dc2626', -3, -24, 7, 12);
+
+        px(outline, -9, -37, 18, 13);
+        px('#ffbe98', -8, -36, 16, 11);
+        px('#000000', -6, -33, 14, 5);
+        px('#ffffff', -3, -32, 3, 3);
+        px('#ffffff', 4, -32, 3, 3);
+        px('#000000', -1, -32, 1, 2);
+        px('#000000', 6, -32, 1, 2);
+
+        px(outline, -10, -43, 20, 8);
+        px('#dc2626', -9, -42, 18, 6);
+        px('#991b1b', -10, -39, 20, 2);
+      }
+    } else if (en.type === 'wasp') {
+      // LINHA 2 DO SPRITE SHEET: Vespa Cibernética Roxa
+      const hoverY = isDefeated ? 0 : Math.sin(tick * 0.35) * 4 - 8;
+      ctx.translate(0, hoverY);
+
+      if (isDefeated) {
+        px(outline, -16, -15, 32, 15);
+        px('#7e22ce', -15, -18, 12, 12);
+        px('#d946ef', -13, -16, 8, 3);
+        px('#1e1b4b', -4, -13, 18, 11);
+        px('#d946ef', 8, -10, 5, 5);
+        const smokeY = (tick % 16);
+        px('#94a3b8', 6, -20 - smokeY, 5, 5);
+        px('#cbd5e1', 9, -26 - smokeY, 4, 4);
+      } else {
+        const wingAngle = step === 0 ? -28 : -20;
+        px(outline, -16, wingAngle, 20, 9);
+        px('#d946ef', -15, wingAngle + 1, 18, 7);
+        px('#f0abfc', -12, wingAngle + 2, 12, 3);
+
+        px(outline, -19, -18, 14, 12);
+        px('#6b21a8', -18, -17, 12, 10);
+        px('#d946ef', -16, -15, 3, 7);
+        px('#d946ef', -10, -15, 3, 7);
+        px(outline, -23, -12, 5, 3);
+
+        px(outline, -7, -21, 16, 14);
+        px('#1e1b4b', -6, -20, 14, 12);
+        px('#3b82f6', -4, -24, 3, 4);
+        px('#3b82f6', 2, -24, 3, 4);
+
+        px(outline, 6, -19, 11, 11);
+        px('#312e81', 7, -18, 9, 9);
+        px('#e879f9', 10, -16, 5, 5);
+        px('#ffffff', 11, -15, 2, 2);
+      }
+    } else if (en.type === 'knight') {
+      // LINHA 3 DO SPRITE SHEET: Robô Cavaleiro Blindado
+      if (isDefeated) {
+        px(outline, -18, -15, 36, 15);
+        px('#64748b', -17, -14, 34, 13);
+        px('#16a34a', -6, -14, 4, 13);
+        px('#94a3b8', 4, -13, 12, 11);
+        px('#000000', 7, -10, 3, 3);
+        px('#000000', 12, -10, 3, 3);
+        const bounce = Math.sin(tick * 0.4) * 3;
+        px('#cbd5e1', -8, -22 + bounce, 5, 2);
+        px('#cbd5e1', 6, -24 - bounce, 5, 2);
+      } else {
+        const stride = step === 0 ? -2 : 2;
+        px(outline, -10 + stride, -13, 8, 13);
+        px('#475569', -9 + stride, -12, 6, 11);
+        px(outline, 2 - stride, -13, 8, 13);
+        px('#64748b', 3 - stride, -12, 6, 11);
+
+        px(outline, -13, -30, 26, 18);
+        px('#64748b', -12, -29, 24, 16);
+        px('#94a3b8', -10, -28, 18, 6);
+        px('#16a34a', -11, -16, 22, 4);
+
+        px(outline, -9, -42, 19, 13);
+        px('#94a3b8', -8, -41, 17, 11);
+        px('#000000', -2, -37, 12, 3);
+        px('#000000', 3, -37, 3, 7);
+        px('#fde047', 0, -36, 3, 2);
+        px('#fde047', 6, -36, 3, 2);
+
+        px(outline, 9, -26, 6, 15);
+        px('#cbd5e1', 10, -25, 4, 13);
+      }
+    } else {
+      // LINHA 4 DO SPRITE SHEET: Morcego Caveira Roxo
+      const flyY = isDefeated ? 0 : Math.sin(tick * 0.28) * 5 - 10;
+      ctx.translate(0, flyY);
+
+      if (isDefeated) {
+        px(outline, -15, -12, 30, 12);
+        px('#7e22ce', -14, -10, 18, 9);
+        px('#c026d3', -12, -8, 14, 5);
+        px('#f5f5dc', 3, -11, 10, 10);
+        px('#000000', 5, -8, 2, 3);
+        px('#000000', 9, -8, 2, 3);
+      } else {
+        const wingY = step === 0 ? -26 : -14;
+        px(outline, -22, wingY, 18, 12);
+        px('#a21caf', -21, wingY + 1, 16, 10);
+        px('#581c87', -18, wingY + 3, 12, 6);
+
+        px(outline, -7, -20, 14, 14);
+        px('#581c87', -6, -19, 12, 12);
+        px('#7e22ce', -4, -24, 3, 4);
+        px('#7e22ce', 2, -24, 3, 4);
+
+        px(outline, 0, -21, 12, 13);
+        px('#f5f5dc', 1, -20, 10, 11);
+        px('#d6d3d1', 1, -12, 10, 3);
+        px('#000000', 3, -17, 3, 3);
+        px('#000000', 8, -17, 3, 3);
+        px('#000000', 6, -13, 2, 2);
+      }
+    }
+
+    ctx.restore();
+  },
+
+  // Desenha os cães Loopy (Branco) e Pérola (Preta) maiores e fiéis ao Anexo 1
+  drawDog(ctx, x, y, facing, type, tick, actionText) {
+    ctx.save();
+    ctx.translate(Math.round(x + 18), Math.round(y + 24));
+    if (facing < 0) ctx.scale(-1, 1);
+    ctx.scale(1.48, 1.48);
+
+    const hop = Math.abs(Math.sin(tick * 0.25)) * -3;
+    ctx.translate(0, hop);
+
+    const px = (color, rx, ry, rw, rh) => {
+      ctx.fillStyle = color;
+      ctx.fillRect(Math.round(rx), Math.round(ry), Math.round(rw), Math.round(rh));
+    };
+
+    const outline = '#110a08';
+    const legSwing = Math.sin(tick * 0.35) * 2;
+
+    if (type === 'loopy') {
+      // Loopy: Cachorro branco de orelhas caídas e rabinho curvo
+      px(outline, -14, -16, 5, 7);
+      px('#f8fafc', -13, -15, 3, 5);
+      px('#94a3b8', -13, -16, 2, 2);
+
+      px(outline, -10 + legSwing, -6, 4, 6);
+      px('#e2e8f0', -9 + legSwing, -5, 2, 4);
+      px(outline, 4 - legSwing, -6, 4, 6);
+      px('#f8fafc', 5 - legSwing, -5, 2, 4);
+
+      px(outline, -12, -13, 20, 9);
+      px('#ffffff', -11, -12, 18, 7);
+      px('#cbd5e1', -11, -7, 18, 2);
+
+      px(outline, 2, -20, 13, 11);
+      px('#ffffff', 3, -19, 11, 9);
+      px(outline, 2, -17, 5, 7);
+      px('#e2e8f0', 3, -16, 3, 5);
+      px('#334155', 3, -17, 3, 2);
+      px(outline, 10, -17, 2, 2);
+      px(outline, 13, -14, 2, 2);
+    } else {
+      // Pérola: Cachorra preta esguia com detalhe caramelo e orelhas pontudas
+      px(outline, -15, -14, 5, 6);
+      px('#1e293b', -14, -13, 3, 4);
+
+      px(outline, -10 + legSwing, -6, 4, 6);
+      px('#1e293b', -9 + legSwing, -5, 2, 4);
+      px(outline, 4 - legSwing, -6, 4, 6);
+      px('#334155', 5 - legSwing, -5, 2, 4);
+
+      px(outline, -12, -13, 20, 9);
+      px('#1e293b', -11, -12, 18, 7);
+      px('#9a5b32', 4, -11, 3, 5);
+
+      px(outline, 2, -21, 13, 11);
+      px('#1e293b', 3, -20, 11, 9);
+      px(outline, 3, -25, 4, 5);
+      px('#334155', 4, -24, 2, 4);
+      px(outline, 8, -25, 4, 5);
+      px('#334155', 9, -24, 2, 4);
+      px('#fde047', 10, -17, 2, 2);
+      px('#000000', 13, -15, 2, 2);
+    }
+
+    ctx.restore();
+
+    if (actionText) {
+      ctx.fillStyle = '#fef08a';
+      ctx.font = 'bold 14px VT323, monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText(actionText, x + 18, y - 16);
+    }
+  },
+
+  // Desenha o Vilão Barão Vácuo fiel ao Anexo 2 (p1.jpg)
+  drawBaron(ctx, x, y, facing, tick, hp, maxHp, isDefeated = false) {
+    ctx.save();
+    ctx.translate(Math.round(x + 28), Math.round(y + 64));
+    if (facing < 0) ctx.scale(-1, 1);
+
+    const px = (color, rx, ry, rw, rh) => {
+      ctx.fillStyle = color;
+      ctx.fillRect(Math.round(rx), Math.round(ry), Math.round(rw), Math.round(rh));
+    };
+
+    const outline = '#120b09';
+    const floatY = isDefeated ? 0 : Math.sin(tick * 0.12) * 3;
+    ctx.translate(0, floatY);
+
+    if (isDefeated) {
+      px(outline, -24, -14, 48, 14);
+      px('#334f46', -22, -12, 26, 10);
+      px('#ffbe98', 4, -12, 12, 9);
+      px('#1e293b', 16, -15, 16, 13);
+      px('#64748b', 16, -16, 3, 15);
+      px(outline, -22, -26, 20, 14);
+      px('#0ea5e9', -20, -24, 16, 10);
+      const s = tick % 14;
+      px('#cbd5e1', -14, -30 - s, 5, 5);
+      px('#94a3b8', -8, -35 - s, 4, 4);
+      ctx.restore();
+      return;
+    }
+
+    // 1. SUGADOR-3000 NAS COSTAS
+    px(outline, -28, -56, 20, 42);
+    px('#b45309', -27, -56, 18, 4);
+    px('#b45309', -27, -18, 18, 4);
+    px('#0c4a6e', -26, -52, 16, 34);
+    const waterH = Math.max(6, Math.round((hp / maxHp) * 30));
+    px('#0ea5e9', -26, -18 - waterH, 16, waterH);
+    px('#bae6fd', -24, -18 - waterH, 12, 3);
+    px('#e0f2fe', -22, -44, 2, 2);
+    px('#e0f2fe', -16, -34, 2, 2);
+    px('#f8fafc', -25, -59, 6, 6);
+
+    // 2. CAPA VERDE-OLIVA ESVOAÇANTE E SOBRETUDO
+    const capeWave = Math.round(Math.sin(tick * 0.25) * 2);
+    px(outline, -22, -40 + capeWave, 16, 28);
+    px('#4b5548', -21, -39 + capeWave, 14, 26);
+
+    px(outline, -8, -14, 7, 14);
+    px('#1e293b', -7, -13, 5, 9);
+    px('#4a2511', -7, -4, 7, 4);
+
+    px(outline, 2, -14, 7, 14);
+    px('#334155', 3, -13, 5, 9);
+    px('#4a2511', 3, -4, 7, 4);
+
+    px(outline, -12, -41, 24, 28);
+    px('#2f4842', -11, -40, 22, 26);
+    px('#44645c', -9, -39, 8, 24);
+    px('#d97706', -2, -35, 2, 2);
+    px('#d97706', -2, -28, 2, 2);
+
+    // 3. MANGUEIRA E BOCAL ASPIRADOR
+    px(outline, -18, -22, 26, 5);
+    px('#0284c7', -17, -21, 24, 3);
+    px(outline, 8, -25, 16, 8);
+    px('#64748b', 9, -24, 14, 6);
+    px('#94a3b8', 22, -27, 4, 12);
+
+    // 4. CABEÇA, MONÓCULO AZUL E BIGODE PONTUDO
+    px(outline, -8, -55, 19, 14);
+    px('#ffbe98', -7, -54, 17, 12);
+    px('#3b1e0e', -8, -54, 4, 7);
+    px(outline, 4, -51, 6, 6);
+    px('#38bdf8', 5, -50, 4, 4);
+    px('#ffffff', 6, -50, 1, 1);
+    px('#000000', -2, -50, 3, 2);
+    px('#ff9e7d', 9, -48, 4, 3);
+    px(outline, -1, -45, 16, 3);
+    px('#291509', 0, -44, 14, 2);
+    px('#291509', 13, -46, 3, 4);
+
+    // 5. CARTOLA ALTA DE CILINDRO GRADUADO
+    px(outline, -12, -57, 27, 4);
+    px('#334155', -11, -56, 25, 2);
+    px(outline, -8, -77, 19, 20);
+    px('#1e293b', -7, -76, 17, 18);
+    px('#475569', -5, -75, 5, 16);
+    px('#7dd3fc', 3, -73, 5, 1);
+    px('#7dd3fc', 4, -69, 4, 1);
+    px('#7dd3fc', 3, -65, 5, 1);
+    px('#7dd3fc', 4, -61, 4, 1);
+
+    ctx.restore();
+  },
+
+  // Desenha a Princesa Melina fiel ao Anexo 1 (p2.jpg)
+  drawMelina(ctx, x, y, trapped, tick) {
+    ctx.save();
+    ctx.translate(Math.round(x + 16), Math.round(y + 44));
+
+    const px = (color, rx, ry, rw, rh) => {
+      ctx.fillStyle = color;
+      ctx.fillRect(Math.round(rx), Math.round(ry), Math.round(rw), Math.round(rh));
+    };
+
+    const outline = '#1a0b12';
+    const celebrate = !trapped && (Math.floor(tick / 14) % 2 === 0);
+
+    px(outline, -11, -39, 22, 26);
+    px('#5c2c16', -10, -38, 20, 24);
+    px('#7c3f22', -8, -37, 6, 20);
+
+    px(outline, -12, -26, 24, 26);
+    px('#f472b6', -11, -25, 22, 24);
+    px('#db2777', -11, -9, 22, 8);
+    px('#fbcfe8', -5, -24, 10, 10);
+    px('#f9a8d4', -2, -14, 4, 13);
+
+    if (!trapped) {
+      const armY = celebrate ? -33 : -28;
+      px(outline, -15, armY, 5, 10);
+      px('#ffbe98', -14, armY + 1, 3, 8);
+      px(outline, 10, armY, 5, 10);
+      px('#ffbe98', 11, armY + 1, 3, 8);
+    } else {
+      const knock = Math.floor(tick / 10) % 2;
+      px(outline, 6, -24 - knock, 7, 5);
+      px('#ffbe98', 7, -23 - knock, 5, 3);
+    }
+
+    px(outline, -8, -39, 16, 13);
+    px('#ffbe98', -7, -38, 14, 11);
+    px('#5c2c16', -8, -39, 16, 4);
+    px('#000000', -4, -33, 2, 3);
+    px('#000000', 3, -33, 2, 3);
+    px('#f43f5e', -5, -30, 2, 1);
+    px('#f43f5e', 4, -30, 2, 1);
+
+    px(outline, -6, -43, 12, 4);
+    px('#e2e8f0', -5, -42, 10, 3);
+    px('#ec4899', -1, -42, 2, 2);
+
+    if (trapped) {
+      ctx.fillStyle = 'rgba(125, 211, 252, 0.28)';
+      ctx.fillRect(-18, -52, 36, 54);
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.35)';
+      ctx.fillRect(-14, -50, 4, 50);
+      ctx.strokeStyle = '#38bdf8';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(-18, -52, 36, 54);
+      px('#475569', -20, -56, 40, 5);
+      px('#94a3b8', -18, -55, 36, 2);
+      px('#475569', -20, 1, 40, 5);
+    }
+
+    ctx.restore();
+  },
+
+  // Desenha Retrato 48x48 para caixa de diálogo RPG
+  drawPortrait(speaker) {
+    const cvs = document.getElementById('portrait-canvas');
+    const ctx = cvs.getContext('2d');
+    ctx.clearRect(0, 0, 48, 48);
+
+    if (speaker.includes('Barão')) {
+      ctx.fillStyle = '#1e1b4b';
+      ctx.fillRect(0, 0, 48, 48);
+      this.drawBaron(ctx, -4, -6, 1, 0, 4, 4, false);
+    } else if (speaker.includes('Melina')) {
+      ctx.fillStyle = '#4c0519';
+      ctx.fillRect(0, 0, 48, 48);
+      this.drawMelina(ctx, 8, 6, false, 0);
+    } else if (speaker.includes('Loopy')) {
+      ctx.fillStyle = '#0c4a6e';
+      ctx.fillRect(0, 0, 48, 48);
+      this.drawDog(ctx, 10, 14, 1, 'loopy', 0);
+    } else {
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(0, 0, 48, 48);
+      this.drawDetective(ctx, 8, 4, 1, 'big', 'idle', 0, 0);
+    }
+  }
+};
+
+// ============================================================================
+// 4. ENGINE PRINCIPAL DO JOGO 16-BIT (FÍSICA, FASES, CUTSCENE E RANKING)
+// ============================================================================
+class NumeriaGame {
+  constructor() {
+    this.canvas = document.getElementById('gameCanvas');
+    this.ctx = this.canvas.getContext('2d');
+    this.state = 'MENU'; // MENU, CUTSCENE, PLAYING, TRANSITION, MATH_MODAL, ENDED
+    this.playerName = 'Detetive Matheus';
+    this.act = 1;
+    this.score = 0;
+    this.drops = 0;
+    this.lives = 3;
+    this.continues = 0;
+    this.elapsedSeconds = 0;
+    this.lastTimestamp = 0;
+    this.frameTick = 0;
+    this.cameraX = 0;
+    this.levelWidth = 3400;
+
+    this.keys = {};
+    this.player = null;
+    this.loopy = null;
+    this.perola = null;
+    this.melina = null;
+    this.boss = null;
+
+    this.platforms = [];
+    this.conveyors = [];
+    this.blocks = [];
+    this.items = [];
+    this.collectibles = [];
+    this.terminals = [];
+    this.exitDoor = null;
+    this.beacon = null;
+    this.keysCollected = 0;
+    this.firstKeyNoticeShown = false;
+    this.firstBeaconNoticeShown = false;
+    this.pendingNextAct = 2;
+    this.cutsceneMode = 'INTRO'; // 'INTRO' ou 'ENDING'
+    this.enemies = [];
+    this.projectiles = [];
+    this.particles = [];
+
+    this.activeTerminal = null;
+    this.currentQuestion = null;
+    this.currentTargetObj = null;
+    this.toastTimer = 0;
+
+    this.cutsceneStep = 0;
+    this.introCutsceneLines = [
+      {
+        speaker: 'Detetive Matheus',
+        text: '(Ajustando o chapéu e olhando pela lupa) Estranho... Loopy, Pérola, não há sinal de vazamento nos canos. Toda a água de Numéria simplesmente sumiu!'
+      },
+      {
+        speaker: 'Loopy',
+        text: 'Au! Au! (Loopy fareja o chão seco da fonte e aponta o focinho para o céu enquanto uma sombra gigante cobre a praça!)'
+      },
+      {
+        speaker: 'Barão Vácuo',
+        text: 'Bwahahaha! Procurando por isto, Detetive? Cada metro cúbico, cada litro, cada mísero mililitro de Numéria agora está no meu Sugador-3000!'
+      },
+      {
+        speaker: 'Princesa Melina',
+        text: '(Batendo no vidro da cápsula) Matheus! Ele trancou todas as comportas com senhas geométricas! Resolva os 3 pergaminhos de cada área para liberar a água!'
+      },
+      {
+        speaker: 'Barão Vácuo',
+        text: 'Nem uma gota! Nem um mililitro! Toda a capacidade deste reino agora pertence ao meu acervo! Bwahahaha!'
+      },
+      {
+        speaker: 'Detetive Matheus',
+        text: 'Vamos nessa, Loopy e Pérola! O Barão Vácuo vai aprender que, quando o assunto é volume, a matemática nunca transborda!'
+      }
+    ];
+
+    this.endingCutsceneLines = [
+      {
+        speaker: 'Barão Vácuo',
+        text: 'Nããão! Meu Sugador-3000 superaqueceu com tanta precisão matemática! Como você conseguiu converter metros cúbicos em litros tão rápido?!'
+      },
+      {
+        speaker: 'Princesa Melina',
+        text: 'Você conseguiu, Detetive Matheus! Veja: as nuvens de chuva voltaram e as Cachoeiras de Arquimedes estão transbordando de alegria novamente!'
+      },
+      {
+        speaker: 'Loopy',
+        text: 'Au! Au! (Loopy e Pérola saltam felizes ao redor de Matheus enquanto a água cristalina enche todas as fontes do Reino de Numéria!)'
+      },
+      {
+        speaker: 'Detetive Matheus',
+        text: 'Mistério resolvido! Em Numéria, o conhecimento geométrico sempre vence qualquer vilão. Parabéns, jogador — você zerou a aventura!'
+      }
+    ];
+
+    this.cutsceneLines = this.introCutsceneLines;
+
+    this.setupEvents();
+    this.renderRankingTable();
+    requestAnimationFrame((t) => this.loop(t));
+  }
+
+  setupEvents() {
+    window.addEventListener('keydown', (e) => {
+      this.keys[e.code] = true;
+      if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space'].includes(e.code)) {
+        e.preventDefault();
+      }
+      if (this.state === 'PLAYING' && (e.code === 'KeyE' || e.code === 'Enter' || e.code === 'ArrowUp' || e.code === 'KeyW')) {
+        this.tryInteractTerminal();
+      }
+      if (this.state === 'CUTSCENE' && (e.code === 'Enter' || e.code === 'Space')) {
+        this.advanceCutscene();
+      }
+    });
+
+    window.addEventListener('keyup', (e) => {
+      this.keys[e.code] = false;
+    });
+
+    document.getElementById('btn-start-game').addEventListener('click', () => {
+      sfx.init();
+      const nameInput = document.getElementById('detective-name-input');
+      const errorBox = document.getElementById('name-error-msg');
+      const inputVal = nameInput.value.trim();
+
+      if (!inputVal) {
+        errorBox.classList.remove('hidden');
+        nameInput.style.borderColor = '#ef4444';
+        nameInput.focus();
+        sfx.error();
+        return;
+      }
+
+      errorBox.classList.add('hidden');
+      nameInput.style.borderColor = 'var(--gold)';
+      this.playerName = inputVal;
+      this.startNewRun();
+    });
+
+    document.getElementById('detective-name-input').addEventListener('input', (e) => {
+      if (e.target.value.trim().length > 0) {
+        document.getElementById('name-error-msg').classList.add('hidden');
+        e.target.style.borderColor = 'var(--gold)';
+      }
+    });
+
+    document.getElementById('detective-name-input').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        document.getElementById('btn-start-game').click();
+      }
+    });
+
+    document.getElementById('btn-show-ranking').addEventListener('click', () => {
+      this.showEndScreen(true, true);
+    });
+
+    document.getElementById('btn-next-dialogue').addEventListener('click', () => this.advanceCutscene());
+    document.getElementById('btn-skip-cutscene').addEventListener('click', () => this.beginGameplay());
+
+    document.getElementById('btn-restart-game').addEventListener('click', () => {
+      document.getElementById('end-screen').classList.add('hidden');
+      this.startNewRun();
+    });
+
+    document.getElementById('btn-use-continue').addEventListener('click', () => {
+      if (this.continues > 0) {
+        this.continues--;
+        this.lives = 3;
+        document.getElementById('end-screen').classList.add('hidden');
+        document.getElementById('hud').classList.remove('hidden');
+        document.getElementById('touch-controls').classList.add('active');
+        this.respawnPlayer();
+        this.state = 'PLAYING';
+        this.updateHUD();
+        sfx.superPower();
+        this.showToast('⭐ CONTINUE USADO! 3 Vidas restauradas!', 200);
+      }
+    });
+
+    document.getElementById('btn-back-menu').addEventListener('click', () => {
+      document.getElementById('end-screen').classList.add('hidden');
+      document.getElementById('start-screen').classList.remove('hidden');
+      this.state = 'MENU';
+    });
+
+    document.getElementById('btn-close-center-notice').addEventListener('click', () => {
+      document.getElementById('center-notice-modal').classList.add('hidden');
+      this.state = 'PLAYING';
+    });
+
+    document.getElementById('btn-next-stage').addEventListener('click', () => {
+      document.getElementById('stage-clear-modal').classList.add('hidden');
+      this.loadAct(this.pendingNextAct);
+      this.state = 'PLAYING';
+    });
+
+    document.getElementById('btn-new-question').addEventListener('click', () => {
+      this.rerollCurrentQuestion();
+    });
+
+    document.getElementById('sound-btn').addEventListener('click', (e) => {
+      sfx.enabled = !sfx.enabled;
+      e.target.textContent = sfx.enabled ? '🔊 ON' : '🔇 OFF';
+    });
+
+    const bindTouch = (id, keyCode, onPress = null) => {
+      const btn = document.getElementById(id);
+      const press = (e) => {
+        if (e) e.preventDefault();
+        sfx.init();
+        this.keys[keyCode] = true;
+        btn.classList.add('pressed');
+        if (onPress) onPress();
+      };
+      const release = (e) => {
+        if (e) e.preventDefault();
+        this.keys[keyCode] = false;
+        btn.classList.remove('pressed');
+      };
+      btn.addEventListener('touchstart', press, { passive: false });
+      btn.addEventListener('touchend', release, { passive: false });
+      btn.addEventListener('touchcancel', release, { passive: false });
+      btn.addEventListener('mousedown', press);
+      btn.addEventListener('mouseup', release);
+      btn.addEventListener('mouseleave', release);
+    };
+    bindTouch('touch-left', 'ArrowLeft');
+    bindTouch('touch-right', 'ArrowRight');
+    bindTouch('touch-jump', 'Space');
+    bindTouch('touch-interact', 'KeyE', () => this.tryInteractTerminal());
+  }
+
+  showToast(msg, duration = 180) {
+    const banner = document.getElementById('toast-banner');
+    banner.textContent = msg;
+    banner.classList.remove('hidden');
+    this.toastTimer = duration;
+  }
+
+  startNewRun() {
+    MathGenerator.resetHistory();
+    this.act = 1;
+    this.score = 0;
+    this.drops = 0;
+    this.lives = 3;
+    this.continues = 0;
+    this.elapsedSeconds = 0;
+    this.keysCollected = 0;
+    this.firstKeyNoticeShown = false;
+    this.firstBeaconNoticeShown = false;
+    this.player = null;
+    document.getElementById('start-screen').classList.add('hidden');
+    document.getElementById('end-screen').classList.add('hidden');
+    this.updateHUD();
+    this.startCutscene('INTRO');
+  }
+
+  startCutscene(mode = 'INTRO') {
+    this.state = 'CUTSCENE';
+    this.cutsceneMode = mode;
+    this.cutsceneLines = mode === 'ENDING' ? this.endingCutsceneLines : this.introCutsceneLines;
+    this.cutsceneStep = 0;
+    document.getElementById('hud').classList.add('hidden');
+    document.getElementById('touch-controls').classList.remove('active');
+    document.getElementById('cutscene-box').classList.remove('hidden');
+    this.renderCutsceneLine();
+  }
+
+  renderCutsceneLine() {
+    const line = this.cutsceneLines[this.cutsceneStep];
+    document.getElementById('speaker-name').textContent = line.speaker;
+    document.getElementById('dialogue-text').textContent = line.text;
+    SpriteArt.drawPortrait(line.speaker);
+    if (line.speaker.includes('Barão')) sfx.error();
+    else if (line.speaker.includes('Melina')) sfx.success();
+    else sfx.blockHit();
+  }
+
+  advanceCutscene() {
+    this.cutsceneStep++;
+    if (this.cutsceneStep >= this.cutsceneLines.length) {
+      if (this.cutsceneMode === 'ENDING') {
+        document.getElementById('cutscene-box').classList.add('hidden');
+        this.showEndScreen(true);
+      } else {
+        this.beginGameplay();
+      }
+    } else {
+      this.renderCutsceneLine();
+    }
+  }
+
+  beginGameplay() {
+    document.getElementById('cutscene-box').classList.add('hidden');
+    if (this.cutsceneMode === 'ENDING') {
+      this.showEndScreen(true);
+      return;
+    }
+    document.getElementById('hud').classList.remove('hidden');
+    document.getElementById('touch-controls').classList.add('active');
+    this.loadAct(1);
+    this.state = 'PLAYING';
+  }
+
+  loadAct(actNum) {
+    this.act = actNum;
+    this.cameraX = 0;
+    this.levelWidth = actNum === 4 ? 1200 : 5400;
+    this.platforms = [];
+    this.conveyors = [];
+    this.blocks = [];
+    this.items = [];
+    this.collectibles = [];
+    this.terminals = [];
+    this.exitDoor = null;
+    this.beacon = actNum < 4 ? { x: Math.round(this.levelWidth * 0.52), y: 324, activated: false } : null;
+    this.keysCollected = 0;
+    this.enemies = [];
+    this.projectiles = [];
+    this.particles = [];
+    this.melina = null;
+    this.boss = null;
+
+    this.player = {
+      x: 80,
+      y: 380,
+      vx: 0,
+      vy: 0,
+      w: 32,
+      h: this.player && (this.player.form === 'big' || this.player.form === 'super') ? 48 : 34,
+      facing: 1,
+      onGround: false,
+      form: (this.player && this.player.form) || 'small',
+      anim: 'idle',
+      invincibleTimer: 0,
+      superTimer: 0
+    };
+
+    this.loopy = { x: 40, y: 436, facing: 1, hintActive: false };
+    this.perola = { x: 16, y: 436, facing: 1, valveActive: false };
+
+    const groundStyle = actNum === 1 ? 'stone' : actNum === 2 ? 'metal' : 'airship';
+    this.platforms.push({ x: 0, y: 460, w: this.levelWidth, h: 80, style: groundStyle });
+
+    if (actNum === 1) {
+      document.getElementById('hud-act').textContent = 'ATO 1: CISTERNAS';
+      this.showToast('ATO 1: Encontre os 3 pergaminhos para ganhar 3 chaves e abrir a porta!', 260);
+
+      const plats = [
+        { x: 260, y: 360, w: 190, h: 34 },
+        { x: 540, y: 290, w: 200, h: 34 },
+        { x: 960, y: 355, w: 210, h: 34 },
+        { x: 1280, y: 280, w: 200, h: 34 },
+        { x: 1850, y: 350, w: 220, h: 34 },
+        { x: 2180, y: 270, w: 210, h: 34 },
+        { x: 2760, y: 350, w: 220, h: 34 },
+        { x: 3100, y: 275, w: 210, h: 34 },
+        { x: 3680, y: 350, w: 220, h: 34 },
+        { x: 4020, y: 270, w: 210, h: 34 },
+        { x: 4580, y: 345, w: 220, h: 34 }
+      ];
+      plats.forEach(p => this.platforms.push({ ...p, style: 'island_grass' }));
+
+      this.blocks.push(
+        { x: 330, y: 265, used: false, reward: 'big' },
+        { x: 1350, y: 185, used: false, reward: 'drop' },
+        { x: 2250, y: 175, used: false, reward: 'super' },
+        { x: 3180, y: 180, used: false, reward: 'drop' },
+        { x: 4090, y: 175, used: false, reward: 'big' }
+      );
+
+      this.terminals.push(
+        { x: 1480, y: 404, unlocked: false, label: 'Pergaminho 1', variant: 0, question: MathGenerator.generateUnique(1, 0) },
+        { x: 3260, y: 404, unlocked: false, label: 'Pergaminho 2', variant: 1, question: MathGenerator.generateUnique(1, 1) },
+        { x: 4820, y: 404, unlocked: false, label: 'Pergaminho 3', variant: 2, question: MathGenerator.generateUnique(1, 2) }
+      );
+
+      this.exitDoor = { x: 5180, y: 356, w: 74, h: 104 };
+
+      this.enemies.push(
+        { type: 'thief', x: 480, y: 422, vx: -1.4, minX: 340, maxX: 840, alive: true, defeatTimer: 0 },
+        { type: 'wasp', x: 1120, y: 320, vx: -1.6, minX: 950, maxX: 1420, alive: true, defeatTimer: 0 },
+        { type: 'thief', x: 1960, y: 422, vx: -1.5, minX: 1780, maxX: 2450, alive: true, defeatTimer: 0 },
+        { type: 'knight', x: 2840, y: 422, vx: -1.3, minX: 2600, maxX: 3180, alive: true, defeatTimer: 0 },
+        { type: 'wasp', x: 3780, y: 315, vx: -1.7, minX: 3580, maxX: 4250, alive: true, defeatTimer: 0 },
+        { type: 'knight', x: 4460, y: 422, vx: -1.4, minX: 4300, maxX: 4760, alive: true, defeatTimer: 0 }
+      );
+    } else if (actNum === 2) {
+      document.getElementById('hud-act').textContent = 'ATO 2: FÁBRICA';
+      this.showToast('ATO 2: Resolva os 3 pergaminhos de conversão para abrir os 3 cadeados!', 260);
+
+      const plats = [
+        { x: 250, y: 355, w: 200, h: 34 },
+        { x: 560, y: 280, w: 220, h: 34 },
+        { x: 1050, y: 350, w: 220, h: 34 },
+        { x: 1380, y: 270, w: 210, h: 34 },
+        { x: 1950, y: 345, w: 230, h: 34 },
+        { x: 2300, y: 265, w: 220, h: 34 },
+        { x: 2880, y: 345, w: 230, h: 34 },
+        { x: 3240, y: 265, w: 210, h: 34 },
+        { x: 3820, y: 340, w: 230, h: 34 },
+        { x: 4180, y: 265, w: 220, h: 34 },
+        { x: 4620, y: 340, w: 210, h: 34 }
+      ];
+      plats.forEach(p => this.platforms.push({ ...p, style: 'island_industrial' }));
+
+      this.conveyors.push(
+        { x: 560, y: 268, w: 220, speed: 1.5 },
+        { x: 1950, y: 333, w: 230, speed: -1.5 },
+        { x: 3820, y: 328, w: 230, speed: 1.6 }
+      );
+
+      this.blocks.push(
+        { x: 320, y: 260, used: false, reward: 'big' },
+        { x: 1450, y: 175, used: false, reward: 'super' },
+        { x: 2380, y: 170, used: false, reward: 'drop' },
+        { x: 3310, y: 170, used: false, reward: 'big' },
+        { x: 4250, y: 170, used: false, reward: 'super' }
+      );
+
+      this.terminals.push(
+        { x: 1520, y: 404, unlocked: false, label: 'Pergaminho 1', variant: 0, question: MathGenerator.generateUnique(2, 0) },
+        { x: 3320, y: 404, unlocked: false, label: 'Pergaminho 2', variant: 1, question: MathGenerator.generateUnique(2, 1) },
+        { x: 4840, y: 404, unlocked: false, label: 'Pergaminho 3', variant: 2, question: MathGenerator.generateUnique(2, 2) }
+      );
+
+      this.exitDoor = { x: 5180, y: 356, w: 74, h: 104 };
+
+      this.enemies.push(
+        { type: 'knight', x: 480, y: 422, vx: -1.3, minX: 340, maxX: 880, alive: true, defeatTimer: 0 },
+        { type: 'wasp', x: 1220, y: 310, vx: -1.8, minX: 1040, maxX: 1460, alive: true, defeatTimer: 0 },
+        { type: 'bat', x: 2120, y: 300, vx: -1.9, minX: 1920, maxX: 2560, alive: true, defeatTimer: 0 },
+        { type: 'knight', x: 2960, y: 422, vx: -1.4, minX: 2720, maxX: 3240, alive: true, defeatTimer: 0 },
+        { type: 'wasp', x: 3920, y: 300, vx: -1.9, minX: 3740, maxX: 4380, alive: true, defeatTimer: 0 },
+        { type: 'bat', x: 4540, y: 305, vx: -1.8, minX: 4400, maxX: 4780, alive: true, defeatTimer: 0 }
+      );
+    } else if (actNum === 3) {
+      document.getElementById('hud-act').textContent = 'ATO 3: TORRE';
+      this.showToast('ATO 3: Colete as 3 chaves nos pergaminhos para abrir a porta até Melina!', 260);
+
+      const plats = [
+        { x: 280, y: 360, w: 200, h: 34 },
+        { x: 580, y: 280, w: 210, h: 34 },
+        { x: 1120, y: 350, w: 220, h: 34 },
+        { x: 1450, y: 270, w: 210, h: 34 },
+        { x: 2020, y: 345, w: 230, h: 34 },
+        { x: 2360, y: 265, w: 210, h: 34 },
+        { x: 2940, y: 345, w: 230, h: 34 },
+        { x: 3280, y: 265, w: 210, h: 34 },
+        { x: 3860, y: 340, w: 230, h: 34 },
+        { x: 4220, y: 265, w: 220, h: 34 },
+        { x: 4620, y: 340, w: 210, h: 34 }
+      ];
+      plats.forEach(p => this.platforms.push({ ...p, style: 'island_sky' }));
+
+      this.blocks.push(
+        { x: 340, y: 265, used: false, reward: 'big' },
+        { x: 1520, y: 175, used: false, reward: 'super' },
+        { x: 2430, y: 170, used: false, reward: 'drop' },
+        { x: 3350, y: 170, used: false, reward: 'big' },
+        { x: 4290, y: 170, used: false, reward: 'super' }
+      );
+
+      this.terminals.push(
+        { x: 1560, y: 404, unlocked: false, label: 'Pergaminho 1', variant: 0, question: MathGenerator.generateUnique(3, 0) },
+        { x: 3360, y: 404, unlocked: false, label: 'Pergaminho 2', variant: 1, question: MathGenerator.generateUnique(3, 1) },
+        { x: 4840, y: 404, unlocked: false, label: 'Pergaminho 3', variant: 2, question: MathGenerator.generateUnique(3, 2) }
+      );
+
+      this.exitDoor = { x: 5180, y: 356, w: 74, h: 104 };
+      this.melina = { x: 5285, y: 416, trapped: true };
+
+      this.enemies.push(
+        { type: 'bat', x: 520, y: 310, vx: -1.8, minX: 360, maxX: 880, alive: true, defeatTimer: 0 },
+        { type: 'knight', x: 1280, y: 422, vx: -1.4, minX: 1100, maxX: 1500, alive: true, defeatTimer: 0 },
+        { type: 'wasp', x: 2140, y: 300, vx: -2.0, minX: 1960, maxX: 2640, alive: true, defeatTimer: 0 },
+        { type: 'bat', x: 3020, y: 290, vx: -1.8, minX: 2820, maxX: 3280, alive: true, defeatTimer: 0 },
+        { type: 'knight', x: 3960, y: 422, vx: -1.5, minX: 3780, maxX: 4380, alive: true, defeatTimer: 0 },
+        { type: 'wasp', x: 4540, y: 295, vx: -2.0, minX: 4380, maxX: 4780, alive: true, defeatTimer: 0 }
+      );
+    } else if (actNum === 4) {
+      document.getElementById('hud-act').textContent = 'ATO 4: BARÃO VÁCUO';
+      this.showToast('BATALHA FINAL: Pule sobre o Barão Vácuo para hackear o Sugador-3000!', 260);
+
+      this.platforms.push(
+        { x: 160, y: 350, w: 190, h: 34, style: 'island_sky' },
+        { x: 620, y: 350, w: 190, h: 34, style: 'island_sky' },
+        { x: 390, y: 270, w: 190, h: 34, style: 'island_sky' }
+      );
+      this.blocks.push({ x: 464, y: 170, used: false, reward: 'super' });
+
+      this.boss = {
+        x: 780,
+        y: 396,
+        vx: -2.2,
+        facing: -1,
+        hp: 4,
+        maxHp: 4,
+        shootCooldown: 110,
+        hurtCooldown: 0
+      };
+    }
+
+    // Distribui Gotas Douradas ao longo da fase
+    const dropCount = actNum === 4 ? 14 : 60;
+    for (let i = 0; i < dropCount; i++) {
+      const dx = 180 + i * Math.floor((this.levelWidth - 360) / dropCount);
+      const dy = (i % 3 === 1) ? 240 : (i % 2 === 0 ? 325 : 415);
+      this.collectibles.push({ x: dx, y: dy, collected: false });
+    }
+
+    this.updateHUD();
+  }
+
+  showCenterNotice(titleHtml, bodyHtml) {
+    this.state = 'CENTER_NOTICE';
+    this.keys = {};
+    document.getElementById('center-notice-title').innerHTML = titleHtml;
+    document.getElementById('center-notice-body').innerHTML = bodyHtml;
+    document.getElementById('center-notice-modal').classList.remove('hidden');
+  }
+
+  tryInteractTerminal() {
+    if (this.state !== 'PLAYING' || !this.player) return;
+
+    // Verifica interação com os 3 Pergaminhos
+    for (const term of this.terminals) {
+      if (!term.unlocked && Math.abs((this.player.x + 16) - (term.x + 20)) < 78 && Math.abs(this.player.y - term.y) < 95) {
+        this.openMathModal(term, term.question, () => {
+          term.unlocked = true;
+          this.keysCollected++;
+          this.score += 500;
+          sfx.success();
+          this.updateHUD();
+
+          if (this.keysCollected === 1 && !this.firstKeyNoticeShown) {
+            this.firstKeyNoticeShown = true;
+            this.showCenterNotice(
+              '🔑 VOCÊ CONQUISTOU A 1ª CHAVE!',
+              'Para avançar para a próxima fase, você precisará encontrar e resolver os <strong>3 pergaminhos</strong> para coletar as <strong>3 chaves</strong> e abrir os <strong>3 cadeados da porta</strong> no final da fase!'
+            );
+          } else if (this.keysCollected < 3) {
+            this.showToast(`🔑 Chave ${this.keysCollected}/3 conquistada! Faltam ${3 - this.keysCollected} pergaminho(s)!`, 200);
+          } else {
+            this.showToast('🔑 3/3 CHAVES CONQUISTADAS! Vá até a porta no final da fase para abrir os 3 cadeados!', 240);
+          }
+        });
+        return;
+      }
+    }
+
+    // Verifica interação com a Porta Monumental no final da fase
+    if (this.exitDoor && Math.abs((this.player.x + 16) - (this.exitDoor.x + this.exitDoor.w / 2)) < 68) {
+      if (this.keysCollected >= 3) {
+        this.enterExitDoor();
+      } else {
+        sfx.error();
+        this.showToast(`🔒 Porta trancada! Você tem ${this.keysCollected}/3 chaves. Resolva os ${3 - this.keysCollected} pergaminho(s) restante(s)!`, 200);
+      }
+    }
+  }
+
+  respawnPlayer() {
+    const spawnX = (this.beacon && this.beacon.activated) ? this.beacon.x : 80;
+    this.player.x = spawnX;
+    this.player.y = 380;
+    this.player.vx = 0;
+    this.player.vy = 0;
+    this.player.invincibleTimer = 110;
+    this.loopy.x = Math.max(10, spawnX - 40);
+    this.perola.x = Math.max(10, spawnX - 72);
+    this.cameraX = Math.max(0, Math.min(this.levelWidth - 960, spawnX - 360));
+  }
+
+  hurtPlayer() {
+    if (this.player.invincibleTimer > 0 || this.player.form === 'super') return;
+    sfx.hurt();
+    if (this.player.form === 'big') {
+      this.player.form = 'small';
+      this.player.h = 34;
+      this.player.invincibleTimer = 90;
+      this.showToast('Você perdeu a Lupa de Crescimento!', 140);
+    } else {
+      this.lives--;
+      this.updateHUD();
+      if (this.lives <= 0) {
+        this.showEndScreen(false);
+      } else {
+        this.respawnPlayer();
+        if (this.beacon && this.beacon.activated) {
+          this.showToast(`🏮 Renasceu no Farol da Sabedoria! Restam ${this.lives} vida(s)!`, 170);
+        } else {
+          this.showToast(`↩️ Voltou ao início da fase! Restam ${this.lives} vida(s)!`, 170);
+        }
+      }
+    }
+  }
+
+  enterExitDoor() {
+    if (this.state !== 'PLAYING') return;
+    sfx.success();
+    this.state = 'STAGE_CLEAR';
+    this.keys = {};
+    this.score += 1000;
+    this.updateHUD();
+
+    const stageStories = {
+      1: {
+        badge: '🚪 ATO 1 CONCLUÍDO — CISTERNAS RELIGADAS!',
+        title: 'AS ÁGUAS VOLTARAM AO VILAREJO!',
+        story: 'Você abriu os 3 cadeados com o volume dos cubos e paralelepípedos! Os moradores de Numéria voltaram a ter água fresca e Loopy farejou a trilha do Barão Vácuo rumo à Fábrica de Engarrafamento!'
+      },
+      2: {
+        badge: '🚪 ATO 2 CONCLUÍDO — FÁBRICA EQUILIBRADA!',
+        title: 'PRESSÃO ESTABILIZADA COM SUCESSO!',
+        story: 'Com a ajuda ágil da Pérola nas válvulas e suas conversões precisas entre m³, dm³, L e mL, as caldeiras do Barão pararam! Agora só falta subir a Torre do Relógio para salvar a Princesa Melina!'
+      },
+      3: {
+        badge: '🚪 ATO 3 CONCLUÍDO — PRINCESA RESGATADA!',
+        title: 'MELINA ESTÁ LIVRE!',
+        story: 'O volume exato dos silos cilíndricos acionou o elevador hidráulico! A Princesa Melina entregou a Chave Mestra de Arquimedes para você invadir a Fortaleza Flutuante do Barão Vácuo!'
+      }
+    };
+
+    if (this.act === 3 && this.melina) {
+      this.melina.trapped = false;
+    }
+
+    const info = stageStories[this.act] || stageStories[1];
+    this.pendingNextAct = this.act + 1;
+    document.getElementById('stage-clear-badge').textContent = info.badge;
+    document.getElementById('stage-clear-title').textContent = info.title;
+    document.getElementById('stage-clear-story').textContent = info.story;
+    document.getElementById('stage-clear-stats').textContent = `BÔNUS DE FASE: +1.000 PTS | PONTUAÇÃO ATUAL: ${this.score} PTS`;
+    document.getElementById('stage-clear-modal').classList.remove('hidden');
+  }
+
+  openMathModal(targetObj, questionData, onSuccessCallback) {
+    this.state = 'MATH_MODAL';
+    this.keys = {};
+    this.currentTargetObj = targetObj;
+    this.currentQuestion = { data: questionData, onSuccess: onSuccessCallback };
+
+    this.renderMathQuestionUI(questionData);
+    document.getElementById('math-modal').classList.remove('hidden');
+  }
+
+  renderMathQuestionUI(questionData) {
+    document.getElementById('math-modal-title').textContent = questionData.title;
+    const unlockedCount = this.terminals.filter(t => t.unlocked).length + 1;
+    const totalCount = this.act === 4 ? 4 : this.terminals.length;
+    document.getElementById('math-step-badge').textContent = this.act === 4
+      ? `${5 - this.boss.hp}/${totalCount}`
+      : `CHAVE ${unlockedCount}/${totalCount}`;
+
+    document.getElementById('math-question-text').textContent = questionData.question;
+    document.getElementById('math-hint-text').textContent = questionData.hint;
+
+    const fb = document.getElementById('math-feedback');
+    fb.classList.add('hidden');
+    fb.className = 'hidden';
+    document.getElementById('math-retry-bar').classList.add('hidden');
+
+    const grid = document.getElementById('math-options');
+    grid.innerHTML = '';
+
+    questionData.options.forEach(opt => {
+      const btn = document.createElement('button');
+      btn.className = 'option-btn';
+      btn.textContent = opt.label;
+      btn.addEventListener('click', () => this.handleAnswer(opt.value));
+      grid.appendChild(btn);
+    });
+
+    drawMathDiagram(questionData);
+  }
+
+  rerollCurrentQuestion() {
+    if (!this.currentQuestion) return;
+    sfx.blockHit();
+    const variant = this.currentTargetObj && typeof this.currentTargetObj.variant === 'number'
+      ? this.currentTargetObj.variant + 1
+      : (this.boss ? 5 - this.boss.hp : 0);
+    const freshQ = MathGenerator.generateUnique(this.act, variant);
+    if (this.currentTargetObj && this.currentTargetObj.question) {
+      this.currentTargetObj.question = freshQ;
+    }
+    this.currentQuestion.data = freshQ;
+    this.renderMathQuestionUI(freshQ);
+  }
+
+  handleAnswer(selectedVal) {
+    if (!this.currentQuestion) return;
+    const { data, onSuccess } = this.currentQuestion;
+    const fb = document.getElementById('math-feedback');
+    const optionBtns = document.querySelectorAll('#math-options .option-btn');
+    optionBtns.forEach(b => { b.disabled = true; b.style.opacity = '0.65'; });
+
+    if (selectedVal === data.correct) {
+      fb.textContent = `✅ EXCELENTE! ${data.explanation}`;
+      fb.className = 'feedback-success';
+      fb.classList.remove('hidden');
+      sfx.success();
+
+      setTimeout(() => {
+        document.getElementById('math-modal').classList.add('hidden');
+        this.state = 'PLAYING';
+        onSuccess();
+        this.updateHUD();
+      }, 1350);
+    } else {
+      sfx.error();
+      this.score = Math.max(0, this.score - 100);
+      const correctOption = data.options.find(o => o.value === data.correct);
+      fb.innerHTML = `❌ <strong>RESPOSTA INCORRETA!</strong><br><strong>Resposta correta:</strong> ${correctOption ? correctOption.label : data.correct}<br>${data.explanation}`;
+      fb.className = 'feedback-error';
+      fb.classList.remove('hidden');
+      document.getElementById('math-retry-bar').classList.remove('hidden');
+      this.updateHUD();
+    }
+  }
+
+  checkActCompletion() {
+    if (this.act < 4 && this.terminals.every(t => t.unlocked)) {
+      this.showToast('🔑 Todos os 3 pergaminhos foram resolvidos! Vá até a porta final!', 200);
+    }
+  }
+
+  update() {
+    this.frameTick++;
+    if (this.toastTimer > 0) {
+      this.toastTimer--;
+      if (this.toastTimer === 0) {
+        document.getElementById('toast-banner').classList.add('hidden');
+      }
+    }
+
+    if (this.state !== 'PLAYING' || !this.player) return;
+
+    this.elapsedSeconds += 1 / 60;
+
+    // Timers do jogador
+    if (this.player.invincibleTimer > 0) this.player.invincibleTimer--;
+    if (this.player.form === 'super') {
+      this.player.superTimer--;
+      if (this.frameTick % 4 === 0) {
+        this.particles.push({
+          x: this.player.x + Math.random() * 32,
+          y: this.player.y + Math.random() * 44,
+          vx: (Math.random() - 0.5) * 2,
+          vy: -1.5,
+          life: 24,
+          color: '#fde047'
+        });
+      }
+      if (this.player.superTimer <= 0) {
+        this.player.form = 'big';
+        this.showToast('A energia da Essência de Arquimedes diminuiu.', 140);
+      }
+    }
+
+    // Movimento horizontal
+    const moveSpeed = this.player.form === 'super' ? 6.2 : 4.5;
+    if (this.keys['ArrowLeft'] || this.keys['KeyA']) {
+      this.player.vx = -moveSpeed;
+      this.player.facing = -1;
+    } else if (this.keys['ArrowRight'] || this.keys['KeyD']) {
+      this.player.vx = moveSpeed;
+      this.player.facing = 1;
+    } else {
+      this.player.vx *= 0.78;
+      if (Math.abs(this.player.vx) < 0.2) this.player.vx = 0;
+    }
+
+    // Esteiras rolantes
+    this.conveyors.forEach(c => {
+      if (
+        this.player.onGround &&
+        this.player.x + this.player.w > c.x &&
+        this.player.x < c.x + c.w &&
+        Math.abs((this.player.y + this.player.h) - (c.y)) < 18
+      ) {
+        this.player.x += c.speed;
+      }
+    });
+
+    // Salto
+    if ((this.keys['Space'] || this.keys['ArrowUp'] || this.keys['KeyW']) && this.player.onGround) {
+      this.player.vy = this.player.form === 'super' ? -13.2 : -11.8;
+      this.player.onGround = false;
+      sfx.jump();
+    }
+
+    // Gravidade e integração
+    this.player.vy += 0.55;
+    if (this.player.vy > 14) this.player.vy = 14;
+
+    this.player.x += this.player.vx;
+    if (this.player.x < 10) this.player.x = 10;
+    if (this.player.x > this.levelWidth - 48) this.player.x = this.levelWidth - 48;
+
+    const prevY = this.player.y;
+    this.player.y += this.player.vy;
+    this.player.onGround = false;
+
+    // Colisão com plataformas
+    this.platforms.forEach(p => {
+      if (
+        this.player.x + this.player.w > p.x &&
+        this.player.x < p.x + p.w &&
+        prevY + this.player.h <= p.y + 8 &&
+        this.player.y + this.player.h >= p.y &&
+        this.player.vy >= 0
+      ) {
+        this.player.y = p.y - this.player.h;
+        this.player.vy = 0;
+        this.player.onGround = true;
+      }
+    });
+
+    // Colisão com Blocos Π (cabeçada por baixo)
+    this.blocks.forEach(b => {
+      if (
+        !b.used &&
+        this.player.x + this.player.w > b.x &&
+        this.player.x < b.x + 34 &&
+        prevY >= b.y + 28 &&
+        this.player.y <= b.y + 34 &&
+        this.player.vy < 0
+      ) {
+        b.used = true;
+        this.player.vy = 2;
+        sfx.blockHit();
+        if (b.reward === 'drop') {
+          this.drops++;
+          this.score += 100;
+          sfx.drop();
+          if (this.drops % 100 === 0) {
+            this.continues++;
+            this.lives++;
+            sfx.superPower();
+            this.showToast(`⭐ ${this.drops} GOTAS! +1 CONTINUE e +1 VIDA EXTRA!`, 220);
+          } else if (this.drops % 50 === 0) {
+            this.lives++;
+            sfx.powerup();
+            this.showToast(`💧 ${this.drops} GOTAS! Você ganhou +1 VIDA EXTRA!`, 200);
+          }
+        } else {
+          this.items.push({ x: b.x + 4, y: b.y - 26, type: b.reward, collected: false });
+        }
+      }
+    });
+
+    // Coleta de Power-Ups (hit-box ampliada para facilitar coleta)
+    this.items.forEach(it => {
+      if (!it.collected && Math.abs((this.player.x + 16) - (it.x + 18)) < 38 && Math.abs((this.player.y + 20) - (it.y + 18)) < 46) {
+        it.collected = true;
+        this.score += 300;
+        if (it.type === 'big') {
+          if (this.player.form === 'small') {
+            this.player.form = 'big';
+            this.player.h = 48;
+            this.player.y -= 14;
+          }
+          sfx.powerup();
+          this.showToast('🔍 LUPA DE CRESCIMENTO! Detetive Matheus ficou mais forte!', 170);
+        } else {
+          this.player.form = 'super';
+          this.player.h = 48;
+          this.player.superTimer = 600;
+          sfx.superPower();
+          this.showToast('🎩 CHAPÉU DOURADO DA SUPER FORÇA! Invencibilidade Dourada!', 180);
+        }
+      }
+    });
+
+    // Coleta de Gotas Douradas (a cada 50 = +1 Vida | a cada 100 = +1 Continue)
+    this.collectibles.forEach(d => {
+      if (!d.collected && Math.abs((this.player.x + 16) - (d.x + 12)) < 28 && Math.abs((this.player.y + 20) - (d.y + 12)) < 34) {
+        d.collected = true;
+        this.drops++;
+        this.score += 50;
+        sfx.drop();
+        if (this.drops % 100 === 0) {
+          this.continues++;
+          this.lives++;
+          sfx.superPower();
+          this.showToast(`⭐ ${this.drops} GOTAS! +1 CONTINUE e +1 VIDA EXTRA!`, 220);
+        } else if (this.drops % 50 === 0) {
+          this.lives++;
+          sfx.powerup();
+          this.showToast(`💧 ${this.drops} GOTAS! Você ganhou +1 VIDA EXTRA!`, 200);
+        }
+      }
+    });
+
+    // Ativação do Farol da Sabedoria (Checkpoint na metade do percurso)
+    if (this.beacon && !this.beacon.activated && this.player.x + this.player.w >= this.beacon.x) {
+      this.beacon.activated = true;
+      this.score += 300;
+      sfx.powerup();
+      if (!this.firstBeaconNoticeShown) {
+        this.firstBeaconNoticeShown = true;
+        this.showCenterNotice(
+          '🏮 FAROL DA SABEDORIA ACESO!',
+          'Você alcançou a metade do percurso e acendeu o <strong>Farol da Sabedoria</strong>!<br><br>Ele serve como um <strong>ponto de salvamento (checkpoint)</strong>: se você perder uma vida daqui em diante, voltará diretamente para este farol em vez do início da fase!'
+        );
+      } else {
+        this.showToast('🏮 Farol da Sabedoria ativado! Ponto de salvamento garantido!', 200);
+      }
+    }
+
+    // Animação do jogador
+    if (!this.player.onGround) this.player.anim = 'jump';
+    else if (Math.abs(this.player.vx) > 0.4) this.player.anim = 'run';
+    else this.player.anim = 'idle';
+
+    // IA dos cães Loopy e Pérola seguindo o Detetive
+    const targetLoopyX = this.player.x - this.player.facing * 42;
+    this.loopy.x += (targetLoopyX - this.loopy.x) * 0.09;
+    this.loopy.facing = targetLoopyX >= this.loopy.x ? 1 : -1;
+    this.loopy.y = 436;
+
+    const targetPerolaX = this.player.x - this.player.facing * 76;
+    this.perola.x += (targetPerolaX - this.perola.x) * 0.08;
+    this.perola.facing = targetPerolaX >= this.perola.x ? 1 : -1;
+    this.perola.y = 436;
+
+    // Dica visual dos cães perto dos terminais
+    const nearTerm = this.terminals.find(t => !t.unlocked && Math.abs(this.player.x - t.x) < 130);
+    this.loopy.hintActive = Boolean(nearTerm && this.act === 1);
+    this.perola.valveActive = Boolean(nearTerm && this.act === 2);
+
+    // Atualização dos inimigos capangas
+    this.enemies.forEach(en => {
+      if (!en.alive) {
+        if (en.defeatTimer > 0) en.defeatTimer--;
+        return;
+      }
+      en.x += en.vx;
+      if (en.x < en.minX || en.x > en.maxX) en.vx *= -1;
+
+      if (Math.abs((this.player.x + 16) - (en.x + 20)) < 30 && Math.abs((this.player.y + this.player.h / 2) - (en.y + 19)) < 34) {
+        if (this.player.form === 'super' || (this.player.vy > 0 && prevY + this.player.h <= en.y + 18)) {
+          en.alive = false;
+          en.defeatTimer = 45;
+          this.player.vy = -8.5;
+          this.score += 200;
+          sfx.stomp();
+        } else {
+          this.hurtPlayer();
+        }
+      }
+    });
+
+    // Chefe Final Barão Vácuo (Ato 4)
+    if (this.boss && this.boss.hp > 0) {
+      if (this.boss.hurtCooldown > 0) this.boss.hurtCooldown--;
+      this.boss.x += this.boss.vx;
+      if (this.boss.x < 520 || this.boss.x > 1040) this.boss.vx *= -1;
+      this.boss.facing = this.player.x < this.boss.x ? -1 : 1;
+
+      this.boss.shootCooldown--;
+      if (this.boss.shootCooldown <= 0) {
+        this.boss.shootCooldown = 125;
+        this.projectiles.push({
+          x: this.boss.x + (this.boss.facing > 0 ? 48 : -16),
+          y: this.boss.y + 34,
+          vx: this.boss.facing * 5.2
+        });
+      }
+
+      // Colisão com o Barão Vácuo
+      if (Math.abs((this.player.x + 16) - (this.boss.x + 28)) < 38 && Math.abs((this.player.y + this.player.h / 2) - (this.boss.y + 32)) < 46) {
+        if (this.boss.hurtCooldown === 0 && (this.player.vy > 0 && prevY + this.player.h <= this.boss.y + 24 || this.player.form === 'super')) {
+          this.player.vy = -10;
+          this.boss.hurtCooldown = 60;
+          sfx.bossHit();
+          const hitNumber = 5 - this.boss.hp;
+          const bossQ = MathGenerator.generateUnique(4, hitNumber);
+          this.openMathModal(this.boss, bossQ, () => {
+            this.boss.hp--;
+            this.score += 1000;
+            if (this.boss.hp <= 0) {
+              this.showToast('🌧️ O SUGADOR-3000 EXPLODIU! A chuva voltou a Numéria!', 260);
+              setTimeout(() => this.startCutscene('ENDING'), 2000);
+            } else {
+              this.showToast(`💥 Acerto crítico! Faltam ${this.boss.hp} golpes no Sugador-3000!`, 180);
+            }
+          });
+        } else if (this.boss.hurtCooldown === 0) {
+          this.hurtPlayer();
+        }
+      }
+    }
+
+    // Projéteis de água de alta pressão
+    this.projectiles.forEach((pr, idx) => {
+      pr.x += pr.vx;
+      if (Math.abs((this.player.x + 16) - (pr.x + 10)) < 24 && Math.abs((this.player.y + this.player.h / 2) - (pr.y + 5)) < 26) {
+        this.hurtPlayer();
+        this.projectiles.splice(idx, 1);
+      } else if (pr.x < 0 || pr.x > this.levelWidth) {
+        this.projectiles.splice(idx, 1);
+      }
+    });
+
+    this.updateRainParticles();
+
+    // Câmera seguindo suavemente o Detetive Matheus
+    const targetCam = this.player.x - 360;
+    this.cameraX = Math.max(0, Math.min(this.levelWidth - 960, targetCam));
+
+    // Entrada automática ao encostar na porta final quando já possui as 3 chaves
+    if (this.exitDoor && this.keysCollected >= 3 && Math.abs((this.player.x + 16) - (this.exitDoor.x + this.exitDoor.w / 2)) < 48) {
+      this.enterExitDoor();
+    }
+
+    this.updateHUD();
+  }
+
+  updateRainParticles() {
+    if (this.boss && this.boss.hp <= 0 && this.frameTick % 2 === 0) {
+      for (let i = 0; i < 4; i++) {
+        this.particles.push({
+          x: this.cameraX + Math.random() * 960,
+          y: -10,
+          vx: -1.5,
+          vy: 7 + Math.random() * 4,
+          life: 80,
+          color: '#38bdf8'
+        });
+      }
+    }
+
+    this.particles.forEach((pt, idx) => {
+      pt.x += pt.vx;
+      pt.y += pt.vy;
+      pt.life--;
+      if (pt.life <= 0) this.particles.splice(idx, 1);
+    });
+  }
+
+  formatTime(sec) {
+    const m = Math.floor(sec / 60).toString().padStart(2, '0');
+    const s = Math.floor(sec % 60).toString().padStart(2, '0');
+    return `${m}:${s}`;
+  }
+
+  updateHUD() {
+    document.getElementById('hud-player').textContent = `🕵️ ${this.playerName}`;
+    document.getElementById('hud-lives').textContent = `❤️ x${Math.max(0, this.lives)}`;
+    const contBadge = document.getElementById('hud-continues');
+    if (contBadge) contBadge.textContent = `⭐ CONT: ${this.continues}`;
+    document.getElementById('hud-drops').textContent = `💧 ${this.drops.toString().padStart(2, '0')}`;
+    const keysBadge = document.getElementById('hud-keys');
+    if (keysBadge) {
+      keysBadge.textContent = this.act === 4 ? `💥 ${4 - (this.boss ? this.boss.hp : 0)}/4` : `🔑 ${this.keysCollected}/3`;
+    }
+    document.getElementById('hud-score').textContent = `PTS: ${this.score.toString().padStart(5, '0')}`;
+    document.getElementById('hud-time').textContent = `⏱️ ${this.formatTime(this.elapsedSeconds)}`;
+  }
+
+  getRanking() {
+    try {
+      const raw = localStorage.getItem('numeria_ranking_v1');
+      if (raw) return JSON.parse(raw);
+    } catch (e) {}
+    return [];
+  }
+
+  saveRanking() {
+    const list = this.getRanking();
+    list.push({
+      name: this.playerName,
+      score: this.score,
+      time: this.formatTime(this.elapsedSeconds)
+    });
+    list.sort((a, b) => b.score - a.score);
+    const top5 = list.slice(0, 5);
+    try {
+      localStorage.setItem('numeria_ranking_v1', JSON.stringify(top5));
+    } catch (e) {}
+    return top5;
+  }
+
+  renderRankingTable(list = null) {
+    const ranking = list || this.getRanking();
+    const tbody = document.getElementById('ranking-body');
+    tbody.innerHTML = '';
+    if (ranking.length === 0) {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td colspan="4" style="color:#94a3b8;padding:12px;">Nenhum recorde registrado ainda. Seja o primeiro detetive a entrar no Top 5!</td>`;
+      tbody.appendChild(tr);
+      return;
+    }
+    ranking.forEach((entry, idx) => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td style="color:#fbbf24;">${idx + 1}º</td>
+        <td>${entry.name}</td>
+        <td style="color:#38bdf8;">${entry.score}</td>
+        <td>${entry.time}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  showEndScreen(victory = true, viewOnly = false) {
+    this.state = viewOnly ? 'MENU' : 'ENDED';
+    document.getElementById('hud').classList.add('hidden');
+    document.getElementById('touch-controls').classList.remove('active');
+
+    const titleEl = document.getElementById('end-title');
+    const subEl = document.getElementById('end-subtitle');
+    const statsEl = document.getElementById('final-stats');
+    const motBox = document.getElementById('motivational-box');
+    const contBtn = document.getElementById('btn-use-continue');
+
+    if (viewOnly) {
+      titleEl.textContent = 'HALL DA FAMA DE NUMÉRIA';
+      subEl.textContent = 'Os melhores detetives matemáticos do reino';
+      statsEl.textContent = '';
+      motBox.classList.add('hidden');
+      contBtn.classList.add('hidden');
+      this.renderRankingTable();
+    } else if (victory) {
+      titleEl.textContent = 'MISSÃO CONCLUÍDA!';
+      subEl.textContent = 'O Barão Vácuo foi derrotado e a água voltou a Numéria!';
+      statsEl.textContent = `Detetive: ${this.playerName} | Pontos: ${this.score} | Tempo: ${this.formatTime(this.elapsedSeconds)}`;
+      motBox.classList.add('hidden');
+      contBtn.classList.add('hidden');
+      const updated = this.saveRanking();
+      this.renderRankingTable(updated);
+    } else {
+      titleEl.textContent = 'FIM DE JOGO';
+      subEl.textContent = 'Não desista, Detetive! A matemática sempre dá uma nova chance!';
+      statsEl.textContent = `Detetive: ${this.playerName} | Pontos: ${this.score} | Gotas: ${this.drops}`;
+      motBox.innerHTML = '💡 <strong>Mensagem de Incentivo:</strong> Todo grande detetive aprende com cada desafio! Revise as fórmulas de volume (<em>V = c × l × h</em> e <em>V = π × r² × h</em>), junte 100 gotinhas para ganhar Continues e tente novamente!';
+      motBox.classList.remove('hidden');
+      if (this.continues > 0) {
+        contBtn.textContent = `⭐ USAR CONTINUE (${this.continues})`;
+        contBtn.classList.remove('hidden');
+      } else {
+        contBtn.classList.add('hidden');
+      }
+      this.renderRankingTable();
+    }
+
+    document.getElementById('end-screen').classList.remove('hidden');
+  }
+
+  loop(timestamp) {
+    this.lastTimestamp = timestamp;
+    this.update();
+    this.render();
+    requestAnimationFrame((t) => this.loop(t));
+  }
+
+  render() {
+    const ctx = this.ctx;
+    ctx.clearRect(0, 0, 960, 540);
+
+    this.drawBackground(ctx);
+
+    if (this.state === 'CUTSCENE') {
+      this.renderCutsceneStage(ctx);
+      return;
+    }
+
+    if (!this.player) return;
+
+    ctx.save();
+    ctx.translate(-Math.round(this.cameraX), 0);
+
+    // 1. Plataformas e Ilhas Flutuantes
+    this.platforms.forEach(plat => {
+      if (plat.x + plat.w < this.cameraX - 60 || plat.x > this.cameraX + 1020) return;
+      this.drawPlatform(ctx, plat);
+    });
+
+    // 2. Esteiras Rolantes (Ato 2)
+    this.conveyors.forEach(c => {
+      ctx.fillStyle = '#334155';
+      ctx.fillRect(c.x, c.y, c.w, 12);
+      ctx.strokeStyle = '#94a3b8';
+      ctx.strokeRect(c.x, c.y, c.w, 12);
+      const offset = Math.floor((this.frameTick * c.speed) % 24);
+      ctx.fillStyle = '#fbbf24';
+      for (let rx = c.x + ((offset + 24) % 24); rx < c.x + c.w - 8; rx += 24) {
+        ctx.fillRect(rx, c.y + 3, 10, 6);
+      }
+    });
+
+    // 3. Blocos Π de Item
+    this.blocks.forEach(b => {
+      ctx.fillStyle = b.used ? '#475569' : '#f59e0b';
+      ctx.fillRect(b.x, b.y, 34, 34);
+      ctx.strokeStyle = '#1e293b';
+      ctx.lineWidth = 3;
+      ctx.strokeRect(b.x, b.y, 34, 34);
+      if (!b.used) {
+        ctx.fillStyle = '#fef08a';
+        ctx.fillRect(b.x + 3, b.y + 3, 28, 4);
+        ctx.fillStyle = '#1e1b4b';
+        ctx.font = 'bold 20px "Press Start 2P", monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText('π', b.x + 17, b.y + 25);
+      }
+    });
+
+    // 4. Power-Ups (Lupa de Crescimento & Chapéu Dourado da Super Força)
+    this.items.forEach(it => {
+      if (it.collected) return;
+      const bob = Math.sin(this.frameTick * 0.14) * 5;
+      const ix = it.x + 16;
+      const iy = it.y + 14 + bob;
+
+      ctx.save();
+      if (it.type === 'big') {
+        const glow = ctx.createRadialGradient(ix, iy, 2, ix, iy, 28);
+        glow.addColorStop(0, 'rgba(56, 189, 248, 0.75)');
+        glow.addColorStop(1, 'rgba(56, 189, 248, 0)');
+        ctx.fillStyle = glow;
+        ctx.beginPath(); ctx.arc(ix, iy, 28, 0, Math.PI * 2); ctx.fill();
+
+        ctx.strokeStyle = '#1e1b4b';
+        ctx.lineWidth = 5;
+        ctx.beginPath(); ctx.moveTo(ix + 6, iy + 6); ctx.lineTo(ix + 16, iy + 16); ctx.stroke();
+        ctx.strokeStyle = '#92400e';
+        ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.moveTo(ix + 6, iy + 6); ctx.lineTo(ix + 16, iy + 16); ctx.stroke();
+
+        ctx.fillStyle = '#38bdf8';
+        ctx.beginPath(); ctx.arc(ix, iy, 12, 0, Math.PI * 2); ctx.fill();
+        ctx.lineWidth = 4;
+        ctx.strokeStyle = '#fbbf24';
+        ctx.stroke();
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath(); ctx.arc(ix - 4, iy - 4, 3.5, 0, Math.PI * 2); ctx.fill();
+
+        ctx.font = 'bold 11px "Press Start 2P", monospace';
+        ctx.textAlign = 'center';
+        ctx.fillStyle = '#000';
+        ctx.fillText('LUPA +', ix + 1, iy - 19);
+        ctx.fillStyle = '#7dd3fc';
+        ctx.fillText('LUPA +', ix, iy - 20);
+      } else {
+        const glow = ctx.createRadialGradient(ix, iy, 2, ix, iy, 32);
+        glow.addColorStop(0, 'rgba(253, 224, 71, 0.85)');
+        glow.addColorStop(1, 'rgba(253, 224, 71, 0)');
+        ctx.fillStyle = glow;
+        ctx.beginPath(); ctx.arc(ix, iy, 32, 0, Math.PI * 2); ctx.fill();
+
+        ctx.fillStyle = '#eab308';
+        ctx.strokeStyle = '#1c1917';
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.ellipse(ix, iy + 6, 18, 6, 0, 0, Math.PI * 2);
+        ctx.fill(); ctx.stroke();
+        ctx.fillStyle = '#facc15';
+        ctx.fillRect(ix - 11, iy - 8, 22, 14);
+        ctx.strokeRect(ix - 11, iy - 8, 22, 14);
+        ctx.fillStyle = '#dc2626';
+        ctx.fillRect(ix - 11, iy + 1, 22, 4);
+
+        for (let s = 0; s < 4; s++) {
+          const ang = this.frameTick * 0.12 + (s * Math.PI) / 2;
+          const sx = ix + Math.cos(ang) * 22;
+          const sy = iy + Math.sin(ang) * 16;
+          ctx.fillStyle = '#fef08a';
+          ctx.fillRect(sx - 2, sy - 2, 4, 4);
+        }
+
+        ctx.font = 'bold 10px "Press Start 2P", monospace';
+        ctx.textAlign = 'center';
+        ctx.fillStyle = '#000';
+        ctx.fillText('SUPER FORÇA', ix + 1, iy - 19);
+        ctx.fillStyle = '#fef08a';
+        ctx.fillText('SUPER FORÇA', ix, iy - 20);
+      }
+      ctx.restore();
+    });
+
+    // 5. Gotinhas de Água Super Visíveis
+    this.collectibles.forEach(d => {
+      if (d.collected) return;
+      if (d.x < this.cameraX - 40 || d.x > this.cameraX + 1000) return;
+      const bob = Math.sin(this.frameTick * 0.14 + d.x * 0.05) * 4;
+      const cx = d.x + 12;
+      const cy = d.y + 12 + bob;
+
+      const glow = ctx.createRadialGradient(cx, cy, 2, cx, cy, 18);
+      glow.addColorStop(0, 'rgba(56, 189, 248, 0.65)');
+      glow.addColorStop(1, 'rgba(56, 189, 248, 0)');
+      ctx.fillStyle = glow;
+      ctx.beginPath(); ctx.arc(cx, cy, 18, 0, Math.PI * 2); ctx.fill();
+
+      ctx.fillStyle = '#0ea5e9';
+      ctx.strokeStyle = '#082f49';
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.moveTo(cx, cy - 12);
+      ctx.bezierCurveTo(cx + 10, cy - 1, cx + 10, cy + 11, cx, cy + 11);
+      ctx.bezierCurveTo(cx - 10, cy + 11, cx - 10, cy - 1, cx, cy - 12);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = '#e0f2fe';
+      ctx.beginPath();
+      ctx.ellipse(cx - 3, cy + 2, 2.2, 4, -0.3, 0, Math.PI * 2);
+      ctx.fill();
+    });
+
+    // 6. Farol da Sabedoria (Checkpoint na metade da fase)
+    if (this.beacon) {
+      const bx = this.beacon.x;
+      const by = this.beacon.y;
+      ctx.fillStyle = '#334155';
+      ctx.fillRect(bx - 16, by + 118, 44, 18);
+      ctx.strokeStyle = '#0f172a';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(bx - 16, by + 118, 44, 18);
+
+      ctx.fillStyle = '#f8fafc';
+      ctx.fillRect(bx - 8, by + 24, 28, 94);
+      ctx.strokeRect(bx - 8, by + 24, 28, 94);
+      ctx.fillStyle = '#dc2626';
+      ctx.fillRect(bx - 8, by + 40, 28, 16);
+      ctx.fillRect(bx - 8, by + 76, 28, 16);
+
+      ctx.fillStyle = '#1e293b';
+      ctx.fillRect(bx - 12, by + 20, 36, 6);
+      ctx.fillStyle = this.beacon.activated ? '#fde047' : '#64748b';
+      ctx.fillRect(bx - 6, by + 2, 24, 18);
+      ctx.strokeRect(bx - 6, by + 2, 24, 18);
+
+      ctx.fillStyle = '#dc2626';
+      ctx.beginPath();
+      ctx.moveTo(bx - 10, by + 2);
+      ctx.lineTo(bx + 6, by - 14);
+      ctx.lineTo(bx + 22, by + 2);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      if (this.beacon.activated) {
+        ctx.save();
+        const beamAngle = Math.sin(this.frameTick * 0.05) * 0.25;
+        ctx.translate(bx + 6, by + 10);
+        ctx.rotate(beamAngle);
+        const beamGrad = ctx.createLinearGradient(0, 0, 240, 0);
+        beamGrad.addColorStop(0, 'rgba(253, 224, 71, 0.72)');
+        beamGrad.addColorStop(1, 'rgba(253, 224, 71, 0)');
+        ctx.fillStyle = beamGrad;
+        ctx.beginPath();
+        ctx.moveTo(0, -8); ctx.lineTo(240, -68); ctx.lineTo(240, 68); ctx.lineTo(0, 8);
+        ctx.closePath();
+        ctx.fill();
+        ctx.beginPath();
+        ctx.moveTo(0, -8); ctx.lineTo(-240, -68); ctx.lineTo(-240, 68); ctx.lineTo(0, 8);
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
+      }
+    }
+
+    // 7. Os 3 Pergaminhos Mágicos
+    this.terminals.forEach(term => {
+      const bob = term.unlocked ? 0 : Math.sin(this.frameTick * 0.12 + term.x * 0.02) * 5;
+      const tx = term.x;
+      const ty = term.y + bob;
+
+      ctx.fillStyle = term.unlocked ? '#22c55e' : '#fef3c7';
+      ctx.strokeStyle = '#78350f';
+      ctx.lineWidth = 2.5;
+      ctx.fillRect(tx + 4, ty + 6, 32, 42);
+      ctx.strokeRect(tx + 4, ty + 6, 32, 42);
+
+      ctx.fillStyle = '#d97706';
+      ctx.fillRect(tx, ty + 2, 40, 7);
+      ctx.strokeRect(tx, ty + 2, 40, 7);
+      ctx.fillRect(tx, ty + 45, 40, 7);
+      ctx.strokeRect(tx, ty + 45, 40, 7);
+
+      ctx.fillStyle = term.unlocked ? '#ffffff' : '#92400e';
+      ctx.font = 'bold 14px "Press Start 2P", monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText(term.unlocked ? '✓' : '?', tx + 20, ty + 33);
+
+      if (!term.unlocked && Math.abs((this.player.x + 16) - (tx + 20)) < 90) {
+        ctx.font = 'bold 10px "Press Start 2P", monospace';
+        ctx.fillStyle = '#000';
+        ctx.fillText('[E] LER', tx + 21, ty - 7);
+        ctx.fillStyle = '#fde047';
+        ctx.fillText('[E] LER', tx + 20, ty - 8);
+      }
+    });
+
+    // 8. Porta Monumental com 3 Cadeados no Final da Fase
+    if (this.exitDoor) {
+      const d = this.exitDoor;
+      ctx.fillStyle = '#475569';
+      ctx.fillRect(d.x - 8, d.y - 8, d.w + 16, d.h + 8);
+      ctx.strokeStyle = '#0f172a';
+      ctx.lineWidth = 3;
+      ctx.strokeRect(d.x - 8, d.y - 8, d.w + 16, d.h + 8);
+
+      ctx.fillStyle = this.keysCollected >= 3 ? '#0284c7' : '#78350f';
+      ctx.fillRect(d.x, d.y, d.w, d.h);
+      ctx.strokeRect(d.x, d.y, d.w, d.h);
+
+      // 3 Cadeados na porta
+      for (let k = 0; k < 3; k++) {
+        const unlocked = k < this.keysCollected;
+        const lx = d.x + 12 + k * 20;
+        const ly = d.y + 46;
+        ctx.fillStyle = unlocked ? '#22c55e' : '#fbbf24';
+        ctx.fillRect(lx, ly, 12, 12);
+        ctx.strokeRect(lx, ly, 12, 12);
+      }
+    }
+
+    // 9. Princesa Melina (Ato 3)
+    if (this.melina) {
+      SpriteArt.drawMelina(ctx, this.melina.x, this.melina.y, this.melina.trapped, this.frameTick);
+    }
+
+    // 10. Inimigos Capangas
+    this.enemies.forEach(en => {
+      if (!en.alive && en.defeatTimer <= 0) return;
+      this.drawShadow(ctx, en.x + 20, 460, 18);
+      SpriteArt.drawEnemy(ctx, en, this.frameTick);
+    });
+
+    // 11. Barão Vácuo (Chefe Final - Ato 4)
+    if (this.boss) {
+      this.drawShadow(ctx, this.boss.x + 28, 460, 24);
+      SpriteArt.drawBaron(ctx, this.boss.x, this.boss.y, this.boss.facing, this.frameTick, this.boss.hp, this.boss.maxHp, this.boss.hp <= 0);
+    }
+
+    // 12. Projéteis de Água de Alta Pressão
+    this.projectiles.forEach(pr => {
+      ctx.fillStyle = '#38bdf8';
+      ctx.beginPath();
+      ctx.ellipse(pr.x + 10, pr.y + 5, 12, 5, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+    });
+
+    // 13. Cães Farejadores Loopy e Pérola
+    this.drawShadow(ctx, this.loopy.x + 18, 460, 14);
+    SpriteArt.drawDog(ctx, this.loopy.x, this.loopy.y, this.loopy.facing, 'loopy', this.frameTick, this.loopy.hintActive ? 'Pista aqui! Au!' : '');
+
+    this.drawShadow(ctx, this.perola.x + 18, 460, 14);
+    SpriteArt.drawDog(ctx, this.perola.x, this.perola.y, this.perola.facing, 'perola', this.frameTick, this.perola.valveActive ? 'Válvula pronta!' : '');
+
+    // 14. Detetive Matheus
+    this.drawShadow(ctx, this.player.x + 16, 460, 16);
+    SpriteArt.drawDetective(ctx, this.player.x, this.player.y, this.player.facing, this.player.form, this.player.anim, this.frameTick, this.player.invincibleTimer);
+
+    // 15. Partículas (Estrelas Douradas e Chuva Triunfal)
+    this.particles.forEach(pt => {
+      ctx.fillStyle = pt.color;
+      ctx.fillRect(pt.x, pt.y, 4, 8);
+    });
+
+    ctx.restore();
+  }
+
+  drawShadow(ctx, cx, groundY, radiusX) {
+    ctx.save();
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.32)';
+    ctx.beginPath();
+    ctx.ellipse(cx, groundY, radiusX, 5, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  renderCutsceneStage(ctx) {
+    const line = this.cutsceneLines[this.cutsceneStep] || { speaker: '' };
+    const isEnding = this.cutsceneMode === 'ENDING';
+
+    // Praça Central de Numéria com Fonte Seca (Abertura) ou Jorrando Água (Final)
+    ctx.fillStyle = '#64748b';
+    ctx.fillRect(0, 450, 960, 90);
+    ctx.fillStyle = '#94a3b8';
+    ctx.fillRect(360, 410, 240, 40);
+    ctx.fillRect(430, 365, 100, 45);
+
+    if (isEnding) {
+      ctx.fillStyle = '#38bdf8';
+      ctx.fillRect(370, 404, 220, 10);
+      ctx.fillRect(468, 320, 24, 90);
+      for (let i = 0; i < 18; i++) {
+        const rx = (i * 57 + this.frameTick * 3) % 960;
+        const ry = (i * 41 + this.frameTick * 7) % 450;
+        ctx.fillStyle = '#7dd3fc';
+        ctx.fillRect(rx, ry, 2, 10);
+      }
+    }
+
+    // Personagens em cena interagindo
+    SpriteArt.drawDetective(ctx, 210, 402, 1, 'big', line.speaker.includes('Matheus') ? 'victory' : 'idle', this.frameTick, 0);
+    SpriteArt.drawDog(ctx, 150, 426, 1, 'loopy', this.frameTick, line.speaker.includes('Loopy') ? 'Au! Au!' : '');
+    SpriteArt.drawDog(ctx, 105, 426, 1, 'perola', this.frameTick, '');
+
+    if (isEnding) {
+      SpriteArt.drawMelina(ctx, 640, 406, false, this.frameTick);
+      SpriteArt.drawBaron(ctx, 760, 386, -1, this.frameTick, 0, 4, true);
+    } else if (this.cutsceneStep >= 2) {
+      const hoverY = 230 + Math.sin(this.frameTick * 0.1) * 8;
+      SpriteArt.drawBaron(ctx, 640, hoverY, -1, this.frameTick, 4, 4, false);
+      SpriteArt.drawMelina(ctx, 735, hoverY + 12, true, this.frameTick);
+    }
+  }
+
+  drawPlatform(ctx, plat) {
+    if (plat.style === 'stone') {
+      // Solo do Vilarejo (Ato 1): Areia dourada + lajes de pedra + tijolos terracota
+      ctx.fillStyle = '#eab308';
+      ctx.fillRect(plat.x, plat.y, plat.w, 18);
+      ctx.fillStyle = '#9a3412';
+      ctx.fillRect(plat.x, plat.y + 18, plat.w, plat.h - 18);
+      ctx.fillStyle = '#94a3b8';
+      for (let sx = plat.x + 12; sx < plat.x + plat.w - 40; sx += 95) {
+        ctx.fillRect(sx, plat.y + 2, 46, 10);
+        ctx.strokeStyle = '#475569';
+        ctx.lineWidth = 1.5;
+        ctx.strokeRect(sx, plat.y + 2, 46, 10);
+      }
+      ctx.strokeStyle = '#431407';
+      ctx.lineWidth = 2;
+      for (let by = plat.y + 32; by < plat.y + plat.h; by += 16) {
+        ctx.beginPath(); ctx.moveTo(plat.x, by); ctx.lineTo(plat.x + plat.w, by); ctx.stroke();
+      }
+    } else if (plat.style === 'metal') {
+      // Solo da Fábrica (Ato 2): Ladrilhos bege/ocre com poças d'água
+      ctx.fillStyle = '#d6d3d1';
+      ctx.fillRect(plat.x, plat.y, plat.w, 20);
+      ctx.fillStyle = '#78350f';
+      ctx.fillRect(plat.x, plat.y + 20, plat.w, plat.h - 20);
+      ctx.strokeStyle = '#57534e';
+      ctx.lineWidth = 2;
+      for (let tx = plat.x; tx < plat.x + plat.w; tx += 40) {
+        ctx.strokeRect(tx, plat.y, 40, 20);
+      }
+      ctx.fillStyle = '#38bdf8';
+      for (let px = plat.x + 140; px < plat.x + plat.w - 120; px += 340) {
+        ctx.beginPath();
+        ctx.ellipse(px, plat.y + 8, 36, 5, 0, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    } else if (plat.style === 'airship') {
+      // Solo do Convés Aéreo (Atos 3 e 4): Pranchas de madeira e casco rebitado
+      ctx.fillStyle = '#92400e';
+      ctx.fillRect(plat.x, plat.y, plat.w, 22);
+      ctx.fillStyle = '#334155';
+      ctx.fillRect(plat.x, plat.y + 22, plat.w, plat.h - 22);
+      ctx.strokeStyle = '#451a03';
+      ctx.lineWidth = 2;
+      for (let wx = plat.x; wx < plat.x + plat.w; wx += 48) {
+        ctx.strokeRect(wx, plat.y, 48, 22);
+      }
+      ctx.fillStyle = '#94a3b8';
+      for (let rx = plat.x + 16; rx < plat.x + plat.w; rx += 40) {
+        ctx.fillRect(rx, plat.y + 30, 5, 5);
+      }
+    } else {
+      // Ilhas Flutuantes estilo Pixel-Art (fiel à imagem enviada)
+      const topMain = plat.style === 'island_industrial' ? '#eab308' : plat.style === 'island_sky' ? '#38bdf8' : '#22c55e';
+      const topDark = plat.style === 'island_industrial' ? '#a16207' : plat.style === 'island_sky' ? '#0284c7' : '#15803d';
+      const topLight = plat.style === 'island_industrial' ? '#fef08a' : plat.style === 'island_sky' ? '#bae6fd' : '#86efac';
+
+      ctx.save();
+      ctx.beginPath();
+      ctx.roundRect(plat.x, plat.y + 6, plat.w, plat.h - 4, [6, 6, 18, 18]);
+      ctx.fillStyle = '#784421';
+      ctx.fill();
+      ctx.lineWidth = 3;
+      ctx.strokeStyle = '#291509';
+      ctx.stroke();
+
+      // Blocos de rocha/terra sombreados
+      ctx.fillStyle = '#5c3317';
+      for (let rx = plat.x + 10; rx < plat.x + plat.w - 22; rx += 26) {
+        ctx.fillRect(rx, plat.y + 16, 18, 12);
+      }
+
+      // Camada superior de grama com tufos
+      ctx.fillStyle = topDark;
+      ctx.fillRect(plat.x + 2, plat.y, plat.w - 4, 13);
+      ctx.fillStyle = topMain;
+      ctx.fillRect(plat.x + 2, plat.y, plat.w - 4, 9);
+      ctx.fillStyle = topLight;
+      for (let gx = plat.x + 6; gx < plat.x + plat.w - 10; gx += 12) {
+        ctx.fillRect(gx, plat.y - 2, 4, 4);
+      }
+      ctx.restore();
+    }
+  }
+
+  drawBackground(ctx) {
+    if (this.act === 1) {
+      this.drawAct1CisternVillageBackground(ctx);
+    } else if (this.act === 2) {
+      this.drawFactoryBackground(ctx);
+    } else {
+      this.drawAct3AirshipBackground(ctx);
+    }
+  }
+
+  drawAct1CisternVillageBackground(ctx) {
+    // Céu ensolarado azul-claro
+    const sky = ctx.createLinearGradient(0, 0, 0, 460);
+    sky.addColorStop(0, '#7dd3fc');
+    sky.addColorStop(0.65, '#bae6fd');
+    sky.addColorStop(1, '#fde68a');
+    ctx.fillStyle = sky;
+    ctx.fillRect(0, 0, 960, 460);
+
+    // Dunas arenosas ao fundo (paralaxe suave)
+    const p1 = -(this.cameraX * 0.15) % 960;
+    ctx.fillStyle = '#f59e0b';
+    for (let i = -1; i <= 1; i++) {
+      const ox = p1 + i * 960;
+      ctx.beginPath();
+      ctx.moveTo(ox, 330);
+      ctx.quadraticCurveTo(ox + 260, 250, ox + 520, 320);
+      ctx.quadraticCurveTo(ox + 760, 260, ox + 960, 330);
+      ctx.lineTo(ox + 960, 460);
+      ctx.lineTo(ox, 460);
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    // Aqueduto de pedra seca e cisternas cúbicas/retangulares vazias
+    const p2 = -(this.cameraX * 0.35) % 960;
+    for (let i = -1; i <= 1; i++) {
+      const ox = p2 + i * 960;
+      // Aqueduto
+      ctx.fillStyle = '#b45309';
+      ctx.fillRect(ox + 80, 210, 260, 90);
+      ctx.fillStyle = '#bae6fd';
+      for (let a = 0; a < 4; a++) {
+        ctx.beginPath();
+        ctx.arc(ox + 115 + a * 58, 265, 18, Math.PI, 0);
+        ctx.lineTo(ox + 133 + a * 58, 300);
+        ctx.lineTo(ox + 97 + a * 58, 300);
+        ctx.closePath();
+        ctx.fill();
+      }
+      // Cisterna Cúbica de Pedra Cinza
+      ctx.fillStyle = '#94a3b8';
+      ctx.fillRect(ox + 490, 240, 140, 140);
+      ctx.strokeStyle = '#334155';
+      ctx.lineWidth = 3;
+      ctx.strokeRect(ox + 490, 240, 140, 140);
+      // Tubulação de cobre conectada
+      ctx.fillStyle = '#c2410c';
+      ctx.fillRect(ox + 450, 285, 42, 12);
+      ctx.fillRect(ox + 630, 310, 55, 12);
+    }
+  }
+
+  drawFactoryBackground(ctx) {
+    // Paredes bege iluminadas por feixes de sol
+    ctx.fillStyle = '#fef3c7';
+    ctx.fillRect(0, 0, 960, 460);
+
+    // Janelas industriais e raios diagonais
+    for (let wx = 90; wx < 900; wx += 320) {
+      ctx.fillStyle = '#7dd3fc';
+      ctx.fillRect(wx, 30, 140, 46);
+      ctx.strokeStyle = '#475569';
+      ctx.lineWidth = 3;
+      ctx.strokeRect(wx, 30, 140, 46);
+
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.28)';
+      ctx.beginPath();
+      ctx.moveTo(wx, 76); ctx.lineTo(wx + 140, 76);
+      ctx.lineTo(wx + 80, 340); ctx.lineTo(wx - 60, 340);
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    // Parede inferior de tijolos
+    ctx.fillStyle = '#b45309';
+    ctx.fillRect(0, 260, 960, 200);
+
+    // Maquinário industrial e painel "m³, dm³, L e mL"
+    const p = -(this.cameraX * 0.3) % 960;
+    for (let i = -1; i <= 1; i++) {
+      const ox = p + i * 960;
+      // Caldeira de cobre
+      ctx.fillStyle = '#ea580c';
+      ctx.fillRect(ox + 720, 170, 95, 180);
+      ctx.strokeStyle = '#431407';
+      ctx.lineWidth = 3;
+      ctx.strokeRect(ox + 720, 170, 95, 180);
+
+      // Painel verde exibindo unidades de capacidade
+      ctx.fillStyle = '#064e3b';
+      ctx.fillRect(ox + 150, 220, 130, 56);
+      ctx.strokeStyle = '#94a3b8';
+      ctx.strokeRect(ox + 150, 220, 130, 56);
+      ctx.fillStyle = '#4ade80';
+      ctx.font = 'bold 16px VT323, monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText('m³, dm³, L e mL', ox + 215, 252);
+    }
+  }
+
+  drawAct3AirshipBackground(ctx) {
+    // Céu tempestuoso ao pôr do sol
+    const sky = ctx.createLinearGradient(0, 0, 0, 460);
+    sky.addColorStop(0, '#1e293b');
+    sky.addColorStop(0.55, '#475569');
+    sky.addColorStop(1, '#f59e0b');
+    ctx.fillStyle = sky;
+    ctx.fillRect(0, 0, 960, 460);
+
+    // Relâmpago animado à direita
+    if (Math.floor(this.frameTick / 45) % 4 === 0 && (this.frameTick % 45) < 8) {
+      ctx.strokeStyle = '#e0f2fe';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(790, 40); ctx.lineTo(765, 120); ctx.lineTo(800, 130); ctx.lineTo(755, 230);
+      ctx.stroke();
+    }
+
+    // Vale e aqueduto de Numéria ao fundo
+    ctx.fillStyle = '#334155';
+    ctx.beginPath();
+    ctx.moveTo(0, 320); ctx.lineTo(260, 230); ctx.lineTo(540, 310); ctx.lineTo(820, 240); ctx.lineTo(960, 300);
+    ctx.lineTo(960, 460); ctx.lineTo(0, 460); ctx.closePath();
+    ctx.fill();
+
+    // Grande Reator Cilíndrico com fórmula V = π × r² × h
+    const rx = 560 - ((this.cameraX * 0.25) % 400);
+    ctx.fillStyle = '#475569';
+    ctx.fillRect(rx, 150, 170, 260);
+    ctx.strokeStyle = '#0f172a';
+    ctx.lineWidth = 3;
+    ctx.strokeRect(rx, 150, 170, 260);
+
+    ctx.fillStyle = 'rgba(14, 165, 233, 0.72)';
+    ctx.fillRect(rx + 14, 210, 142, 160);
+
+    ctx.fillStyle = '#0f172a';
+    ctx.fillRect(rx + 16, 166, 138, 32);
+    ctx.fillStyle = '#fde047';
+    ctx.font = 'bold 18px VT323, monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText('V = π × r² × h', rx + 85, 187);
+  }
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+  window.game = new NumeriaGame();
+});
+</script>
+</body>
+</html>
