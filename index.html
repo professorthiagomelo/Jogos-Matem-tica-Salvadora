@@ -3,199 +3,151 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Portal de Jogos • Matemática Salvadora | Prof. Thiago Melo</title>
+  <title>Matemática Salvadora — Jogos Educativos</title>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
   <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       min-height: 100vh;
-      background: radial-gradient(circle at top, #0284c7 0%, #0f172a 55%, #090d16 100%);
+      background: radial-gradient(circle at top, #172038 0%, #070a12 100%);
       color: #f8fafc;
+      font-family: 'VT323', monospace;
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 28px 16px;
+      padding: 32px 16px;
     }
     header {
       text-align: center;
-      max-width: 780px;
       margin-bottom: 32px;
-    }
-    .brand-badge {
-      display: inline-block;
-      background: rgba(253, 224, 71, 0.16);
-      border: 2px solid #fde047;
-      color: #fde047;
-      font-weight: 900;
-      font-size: 13px;
-      padding: 5px 14px;
-      border-radius: 50px;
-      margin-bottom: 10px;
-      letter-spacing: 0.6px;
-      text-transform: uppercase;
+      max-width: 820px;
     }
     h1 {
-      font-size: clamp(26px, 5vw, 40px);
-      font-weight: 900;
-      color: #ffffff;
-      text-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
-      line-height: 1.15;
+      font-family: 'Press Start 2P', monospace;
+      font-size: clamp(16px, 2.8vw, 26px);
+      color: #fbbf24;
+      text-shadow: 3px 3px 0 #7c2d12, 5px 5px 0 #000;
+      line-height: 1.45;
       margin-bottom: 10px;
     }
-    .subtitle {
-      font-size: clamp(14px, 3vw, 17px);
-      color: #bae6fd;
-      line-height: 1.5;
-      font-weight: 600;
+    p.subtitle {
+      font-size: 24px;
+      color: #7dd3fc;
     }
-    .games-grid {
+    .grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-      gap: 22px;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 20px;
       width: 100%;
-      max-width: 880px;
-      margin-bottom: 36px;
+      max-width: 980px;
     }
-    .game-card {
-      background: linear-gradient(180deg, rgba(30, 41, 59, 0.95), rgba(15, 23, 42, 0.98));
+    .card {
+      background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
       border: 3px solid #38bdf8;
-      border-radius: 24px;
-      padding: 24px 22px;
+      border-radius: 14px;
+      padding: 20px;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      box-shadow: 0 16px 35px rgba(0, 0, 0, 0.55);
-      transition: transform 0.2s ease, border-color 0.2s ease;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.6);
     }
-    .game-card:hover {
-      transform: translateY(-4px);
-      border-color: #fde047;
+    .card.new-release {
+      border-color: #fbbf24;
+      box-shadow: 0 0 25px rgba(251, 191, 36, 0.25);
     }
-    .card-icon {
-      font-size: 42px;
-      margin-bottom: 10px;
-    }
-    .age-tag {
+    .badge {
       display: inline-block;
-      background: #0d9488;
-      color: #ffffff;
-      font-size: 12px;
-      font-weight: 900;
-      padding: 4px 12px;
-      border-radius: 12px;
-      margin-bottom: 10px;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 9px;
+      padding: 5px 8px;
+      border-radius: 6px;
+      background: #0284c7;
+      color: #fff;
+      margin-bottom: 12px;
       align-self: flex-start;
     }
-    .game-card h2 {
-      font-size: 22px;
-      font-weight: 900;
-      color: #fde047;
-      margin-bottom: 8px;
+    .new-release .badge {
+      background: #f59e0b;
+      color: #000;
+    }
+    .card h2 {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 13px;
+      line-height: 1.45;
+      color: #fef08a;
+      margin-bottom: 10px;
+    }
+    .card p {
+      font-size: 21px;
       line-height: 1.25;
-    }
-    .game-card p {
-      font-size: 14px;
       color: #cbd5e1;
-      line-height: 1.55;
-      margin-bottom: 16px;
-    }
-    .tips-note {
-      background: rgba(15, 23, 42, 0.7);
-      border-left: 3px solid #fde047;
-      padding: 8px 12px;
-      font-size: 12.5px;
-      color: #e2e8f0;
-      border-radius: 6px;
       margin-bottom: 18px;
-      line-height: 1.4;
     }
     .play-btn {
       display: block;
-      width: 100%;
       text-align: center;
       text-decoration: none;
-      background: linear-gradient(180deg, #2dd4bf, #0284c7);
-      color: #ffffff;
-      border: 3px solid #fde047;
-      border-radius: 50px;
-      padding: 13px 20px;
-      font-size: 16px;
-      font-weight: 900;
-      box-shadow: 0 5px 0 #0c4a6e;
-      transition: transform 0.1s;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 12px;
+      padding: 13px 14px;
+      border-radius: 8px;
+      background: linear-gradient(180deg, #22c55e 0%, #15803d 100%);
+      color: #fff;
+      border: 2px solid #bbf7d0;
+      box-shadow: 0 4px 0 #000;
     }
-    .play-btn:active {
-      transform: translateY(3px);
-      box-shadow: 0 2px 0 #0c4a6e;
+    .new-release .play-btn {
+      background: linear-gradient(180deg, #f59e0b 0%, #d97706 100%);
+      color: #000;
+      border-color: #fef08a;
     }
     footer {
-      margin-top: auto;
-      text-align: center;
-      font-size: 13px;
+      margin-top: 40px;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 10px;
       color: #94a3b8;
-      line-height: 1.6;
-      padding-top: 16px;
-      border-top: 1px solid rgba(148, 163, 184, 0.2);
-      width: 100%;
-      max-width: 880px;
-    }
-    footer strong {
-      color: #38bdf8;
+      text-align: center;
     }
   </style>
 </head>
 <body>
-
   <header>
-    <div class="brand-badge">🧮 Matemática Salvadora • Portal Oficial</div>
-    <h1>Jogos Educativos de Matemática</h1>
-    <p class="subtitle">
-      Aprenda resolvendo mistérios e grandes aventuras! Escolha um dos jogos abaixo para começar no computador, celular ou tablet.
-    </p>
+    <h1>MATEMÁTICA SALVADORA</h1>
+    <p class="subtitle">Aventuras interativas criadas pelo Professor Thiago Melo (@matematicasalvadora)</p>
   </header>
 
-  <main class="games-grid">
-    <!-- JOGO 1: DETETIVE MATEMÁTICO -->
-    <article class="game-card">
+  <main class="grid">
+    <!-- JOGO 3 (NOVO LANÇAMENTO) -->
+    <article class="card new-release">
       <div>
-        <div class="card-icon">🕵️‍♂️🔍🗝️</div>
-        <span class="age-tag">🎯 Recomendado: Ensino Fundamental II</span>
-        <h2>Detetive Matemático — Vol. 1</h2>
-        <p>
-          Assuma o papel de detetive e investigue pistas numéricas para destrancar portas secretas, superar desafios de lógica e desvendar os mistérios matemáticos em cada fase!
-        </p>
-        <div class="tips-note">
-          ✏️ <strong>Dica:</strong> Tenha papel e lápis por perto para anotar pistas e resolver os enigmas com precisão.
-        </div>
+        <span class="badge">⭐ NOVO • EDIÇÃO 32-BIT</span>
+        <h2>Detetive Matemático: Os Reservatórios de Numéria</h2>
+        <p>Explore 4 atos com Loopy e Pérola, derrote o Barão Vácuo e domine cálculos de <strong>Volume e Capacidade</strong> (m³, dm³, cm³, L e mL).</p>
       </div>
-      <a href="./detetive-matematico-vol1.html" class="play-btn">▶ JOGAR AGORA</a>
+      <a class="play-btn" href="detetive-matematico-numeria.html">▶ JOGAR AGORA</a>
     </article>
 
-    <!-- JOGO 2: A ILHA DOS CRISTAIS MATEMÁTICOS -->
-    <article class="game-card">
+    <!-- JOGO 2 -->
+    <article class="card">
       <div>
-        <div class="card-icon">💎🏝️🚀🏎️👑</div>
-        <span class="age-tag">🎯 Recomendado: 8 a 10 anos (3º ao 5º ano)</span>
-        <h2>A Ilha dos Cristais Matemáticos — Vol. 1</h2>
-        <p>
-          Guie Matheus pelos 10 reinos da Ilha de Arithmos para ajudar a Princesa Melina! Enfrente monstros, pilote o Foguete Estelar pelo Sistema Solar, vença a Super Corrida de Carros Mágicos e recupere os 10 cristais.
-        </p>
-        <div class="tips-note">
-          👨‍👩‍👧‍👦 <strong>Dica:</strong> Prepare folha de papel e lápis para os cálculos e, se possível, chame seus pais para jogar junto!
-        </div>
+        <span class="badge">AVENTURA 2</span>
+        <h2>A Ilha dos Cristais</h2>
+        <p>Desbrave a ilha misteriosa com a ajuda da Princesa Melina e solucione desafios matemáticos para restaurar os cristais.</p>
       </div>
-      <a href="./ilha-dos-cristais-vol1.html" class="play-btn">▶ JOGAR AGORA</a>
+      <a class="play-btn" href="ilha-dos-cristais-vol1.html">▶ JOGAR AGORA</a>
+    </article>
+
+    <!-- JOGO 1 -->
+    <article class="card">
+      <div>
+        <span class="badge">AVENTURA 1</span>
+        <h2>Doutor Matemático — Vol. 1</h2>
+        <p>Resolva enigmas numéricos e ajude o Doutor Matemático a desvendar os mistérios desta aventura.</p>
+      </div>
+      <a class="play-btn" href="doutor-matem%C3%A1tico-vol1.html">▶ JOGAR AGORA</a>
     </article>
   </main>
 
-  <footer>
-    Todos os direitos reservados ao <strong>Professor Thiago Melo</strong> • Matemática Salvadora<br />
-    Instagram & TikTok: <strong>@matematicasalvadora</strong>
-  </footer>
-
+  <footer>Todos os direitos reservados ao Professor Thiago Melo</footer>
 </body>
 </html>
