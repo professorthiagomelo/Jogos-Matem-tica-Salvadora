@@ -37,7 +37,9 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      min-height: 100vh;
+      width: 100vw;
+      height: 100vh;
+      height: 100dvh;
       overflow: hidden;
     }
 
@@ -55,123 +57,141 @@
       overflow: hidden;
     }
 
-    @media (max-width: 900px) and (orientation: landscape) {
+    /* NO CELULAR E TABLET OCUPA 100% DA TELA VISÍVEL (MESMO DENTRO DE FRAMES DO GITHUB) */
+    @media (max-width: 1024px) {
       #game-wrapper {
+        position: fixed;
+        inset: 0;
         width: 100vw;
+        height: 100vh;
         height: 100dvh;
-        max-height: 100dvh;
-        border-width: 2px;
+        max-width: none;
+        max-height: none;
+        aspect-ratio: auto;
+        border: none;
         border-radius: 0;
+        box-shadow: none;
+        z-index: 50;
       }
       footer { display: none; }
     }
 
-    @media (max-width: 768px) and (orientation: portrait) {
-      #game-wrapper {
-        width: 98vw;
-        aspect-ratio: 16 / 10;
-        max-height: 78dvh;
+    /* AVISO DE GIRAR O CELULAR (MODO RETRATO EM MOBILE/TABLET) */
+    #rotate-device-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: radial-gradient(circle at center, #172038 0%, #070a12 100%);
+      z-index: 9999;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      text-align: center;
+      color: #f8fafc;
+    }
+
+    @media (max-width: 900px) and (orientation: portrait) {
+      #rotate-device-overlay {
+        display: flex;
       }
+    }
+
+    .rotate-phone-icon {
+      font-size: 64px;
+      margin-bottom: 18px;
+      display: inline-block;
+      animation: rotatePhoneAnim 2s ease-in-out infinite;
+    }
+
+    @keyframes rotatePhoneAnim {
+      0%, 20% { transform: rotate(0deg); }
+      50%, 80% { transform: rotate(-90deg); }
+      100% { transform: rotate(0deg); }
     }
 
     canvas#gameCanvas {
       display: block;
       width: 100%;
       height: 100%;
-      image-rendering: auto;
-      filter: contrast(1.06) saturate(1.16) brightness(1.03);
+      image-rendering: pixelated;
     }
 
-    /* HUD SUPERIOR 32-BIT (ERA PS1 / SATURN) */
+    /* HUD SUPERIOR 32-BIT EM UMA ÚNICA LINHA COMPACTA */
     #hud {
       position: absolute;
       top: 0;
       left: 0;
       width: 100%;
-      padding: 8px 14px;
-      background: linear-gradient(180deg, rgba(8, 13, 28, 0.94) 0%, rgba(15, 23, 42, 0.72) 85%, rgba(56, 189, 248, 0.15) 100%);
+      padding: 5px 8px;
+      background: linear-gradient(180deg, rgba(8, 13, 28, 0.96) 0%, rgba(15, 23, 42, 0.88) 100%);
       border-bottom: 2px solid rgba(125, 211, 252, 0.65);
-      box-shadow: 0 4px 18px rgba(0, 0, 0, 0.65);
-      backdrop-filter: blur(4px);
       display: flex;
-      flex-wrap: wrap;
+      flex-wrap: nowrap;
       align-items: center;
       justify-content: space-between;
-      gap: 8px;
+      gap: 4px;
       z-index: 10;
       font-family: 'Press Start 2P', monospace;
-      font-size: clamp(9px, 1.25vw, 12px);
-      text-shadow: 2px 2px 2px #000;
+      font-size: clamp(7px, 1.05vw, 11px);
+      text-shadow: 1px 1px 0 #000;
+      white-space: nowrap;
+      overflow: hidden;
     }
 
     .hud-group {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 4px;
+      min-width: 0;
     }
 
     .hud-badge {
-      background: linear-gradient(180deg, rgba(30, 41, 59, 0.92) 0%, rgba(15, 23, 42, 0.95) 100%);
-      border: 2px solid #64748b;
-      border-radius: 8px;
-      padding: 5px 10px;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 3px 6px rgba(0, 0, 0, 0.55);
-    }
-
-    /* HUD SUPERIOR 16-BIT */
-    #hud {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      padding: 8px 14px;
-      background: linear-gradient(180deg, rgba(10, 15, 28, 0.92) 0%, rgba(10, 15, 28, 0.65) 100%);
-      border-bottom: 2px solid rgba(56, 189, 248, 0.45);
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      justify-content: space-between;
-      gap: 8px;
-      z-index: 10;
-      font-family: 'Press Start 2P', monospace;
-      font-size: clamp(9px, 1.25vw, 12px);
-      text-shadow: 2px 2px 0 #000;
-    }
-
-    .hud-group {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .hud-badge {
-      background: rgba(15, 23, 42, 0.85);
-      border: 2px solid #475569;
+      background: rgba(15, 23, 42, 0.92);
+      border: 1.5px solid #64748b;
       border-radius: 6px;
-      padding: 5px 9px;
+      padding: 3px 6px;
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 4px;
+      flex-shrink: 0;
+    }
+
+    #hud-player {
+      max-width: 135px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      display: block;
+    }
+
+    @media (max-width: 760px) {
+      #hud {
+        padding: 4px 5px;
+        font-size: 7px;
+        gap: 3px;
+      }
+      .hud-group { gap: 3px; }
+      .hud-badge { padding: 2px 4px; border-width: 1px; }
+      #hud-player { max-width: 82px; }
     }
 
     .hud-gold { color: var(--gold); border-color: var(--gold-dark); }
     .hud-water { color: #38bdf8; border-color: #0284c7; }
     .hud-life { color: #f87171; border-color: #b91c1c; }
 
-    #sound-btn {
+    .hud-icon-btn {
       background: #1e293b;
       color: #fff;
-      border: 2px solid #64748b;
+      border: 1.5px solid #64748b;
       border-radius: 6px;
-      padding: 5px 8px;
+      padding: 3px 6px;
       font-family: 'Press Start 2P', monospace;
-      font-size: 10px;
+      font-size: inherit;
       cursor: pointer;
+      flex-shrink: 0;
     }
-    #sound-btn:hover { background: #334155; }
+    .hud-icon-btn:hover { background: #334155; }
 
     /* OVERLAYS & MODAIS */
     .overlay-screen {
@@ -275,29 +295,29 @@
       border-color: #bbf7d0;
     }
 
-    /* CUTSCENE DIALOGUE BOX */
+    /* CUTSCENE DIALOGUE BOX (NO TOPO PARA NÃO COBRIR OS PERSONAGENS) */
     #cutscene-box {
       position: absolute;
-      bottom: 16px;
+      top: 14px;
       left: 50%;
       transform: translateX(-50%);
       width: 94%;
       max-width: 900px;
-      background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
+      background: linear-gradient(180deg, rgba(15, 23, 42, 0.96) 0%, rgba(30, 41, 59, 0.94) 100%);
       border: 4px solid #38bdf8;
       border-radius: 12px;
-      padding: 14px 18px;
+      padding: 12px 16px;
       display: flex;
       align-items: center;
-      gap: 16px;
+      gap: 14px;
       z-index: 25;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.9);
+      box-shadow: 0 10px 28px rgba(0,0,0,0.85);
     }
 
     #portrait-canvas {
-      width: 84px;
-      height: 84px;
-      min-width: 84px;
+      width: 76px;
+      height: 76px;
+      min-width: 76px;
       background: #090d16;
       border: 3px solid var(--gold);
       border-radius: 8px;
@@ -311,17 +331,17 @@
 
     #speaker-name {
       font-family: 'Press Start 2P', monospace;
-      font-size: 12px;
+      font-size: 11px;
       color: var(--gold);
-      margin-bottom: 8px;
+      margin-bottom: 6px;
       text-shadow: 2px 2px 0 #000;
     }
 
     #dialogue-text {
-      font-size: clamp(19px, 2.3vw, 24px);
-      line-height: 1.25;
+      font-size: clamp(18px, 2.1vw, 22px);
+      line-height: 1.22;
       color: #f1f5f9;
-      min-height: 54px;
+      min-height: 46px;
     }
 
     .dialogue-actions {
@@ -587,21 +607,33 @@
 </head>
 <body>
 
+  <!-- AVISO PARA GIRAR O CELULAR NA VERTICAL -->
+  <div id="rotate-device-overlay">
+    <div class="rotate-phone-icon">📱🔄</div>
+    <div style="font-family:'Press Start 2P',monospace;font-size:15px;color:#fbbf24;line-height:1.5;margin-bottom:14px;">
+      GIRE O SEU CELULAR!
+    </div>
+    <div style="font-size:24px;color:#cbd5e1;max-width:340px;line-height:1.3;">
+      Para ter a melhor experiência em <strong>Detetive Matemático</strong>, coloque o aparelho na posição <strong>horizontal (deitado)</strong>.
+    </div>
+  </div>
+
   <div id="game-wrapper">
-    <!-- HUD SUPERIOR -->
+    <!-- HUD SUPERIOR EM UMA ÚNICA LINHA -->
     <div id="hud" class="hidden">
       <div class="hud-group">
-        <div class="hud-badge hud-water" id="hud-player">🕵️ Detetive Matheus</div>
-        <div class="hud-badge hud-life" id="hud-lives">❤️ x3</div>
-        <div class="hud-badge hud-gold" id="hud-continues">⭐ CONT: 0</div>
-        <div class="hud-badge hud-gold" id="hud-drops">💧 00</div>
-        <div class="hud-badge hud-gold" id="hud-keys">🔑 0/3</div>
+        <div class="hud-badge hud-water" id="hud-player">🕵️ Matheus</div>
+        <div class="hud-badge hud-life" id="hud-lives">❤️3</div>
+        <div class="hud-badge hud-gold" id="hud-continues">⭐0</div>
+        <div class="hud-badge hud-gold" id="hud-drops">💧00</div>
+        <div class="hud-badge hud-gold" id="hud-keys">🔑0/3</div>
       </div>
       <div class="hud-group">
-        <div class="hud-badge" id="hud-act">ATO 1: CISTERNAS</div>
-        <div class="hud-badge hud-gold" id="hud-score">PTS: 00000</div>
-        <div class="hud-badge" id="hud-time">⏱️ 00:00</div>
-        <button id="sound-btn" title="Alternar Som">🔊 ON</button>
+        <div class="hud-badge" id="hud-act">ATO 1</div>
+        <div class="hud-badge hud-gold" id="hud-score">00000</div>
+        <div class="hud-badge" id="hud-time">00:00</div>
+        <button id="fullscreen-btn" class="hud-icon-btn" title="Tela Cheia">⛶</button>
+        <button id="sound-btn" class="hud-icon-btn" title="Alternar Som">🔊</button>
       </div>
     </div>
 
@@ -1815,7 +1847,7 @@ const SpriteArt = {
 class NumeriaGame {
   constructor() {
     this.canvas = document.getElementById('gameCanvas');
-    this.ctx = this.canvas.getContext('2d');
+    this.ctx = this.canvas.getContext('2d', { alpha: false });
     this.state = 'MENU'; // MENU, CUTSCENE, PLAYING, TRANSITION, MATH_MODAL, ENDED
     this.playerName = 'Detetive Matheus';
     this.act = 1;
@@ -1825,6 +1857,7 @@ class NumeriaGame {
     this.continues = 0;
     this.elapsedSeconds = 0;
     this.lastTimestamp = 0;
+    this.accumulator = 0;
     this.frameTick = 0;
     this.cameraX = 0;
     this.levelWidth = 3400;
@@ -2014,7 +2047,17 @@ class NumeriaGame {
 
     document.getElementById('sound-btn').addEventListener('click', (e) => {
       sfx.enabled = !sfx.enabled;
-      e.target.textContent = sfx.enabled ? '🔊 ON' : '🔇 OFF';
+      e.target.textContent = sfx.enabled ? '🔊' : '🔇';
+    });
+
+    document.getElementById('fullscreen-btn').addEventListener('click', () => {
+      const wrapper = document.getElementById('game-wrapper');
+      if (!document.fullscreenElement) {
+        if (wrapper.requestFullscreen) wrapper.requestFullscreen().catch(() => {});
+        else if (wrapper.webkitRequestFullscreen) wrapper.webkitRequestFullscreen();
+      } else {
+        if (document.exitFullscreen) document.exitFullscreen().catch(() => {});
+      }
     });
 
     const bindTouch = (id, keyCode, onPress = null) => {
@@ -2157,7 +2200,7 @@ class NumeriaGame {
     this.platforms.push({ x: 0, y: 460, w: this.levelWidth, h: 80, style: groundStyle });
 
     if (actNum === 1) {
-      document.getElementById('hud-act').textContent = 'ATO 1: CISTERNAS';
+      document.getElementById('hud-act').textContent = 'ATO 1';
       this.showToast('ATO 1: Encontre os 3 pergaminhos para ganhar 3 chaves e abrir a porta!', 260);
 
       const plats = [
@@ -2200,7 +2243,7 @@ class NumeriaGame {
         { type: 'knight', x: 4460, y: 422, vx: -1.4, minX: 4300, maxX: 4760, alive: true, defeatTimer: 0 }
       );
     } else if (actNum === 2) {
-      document.getElementById('hud-act').textContent = 'ATO 2: FÁBRICA';
+      document.getElementById('hud-act').textContent = 'ATO 2';
       this.showToast('ATO 2: Resolva os 3 pergaminhos de conversão para abrir os 3 cadeados!', 260);
 
       const plats = [
@@ -2249,7 +2292,7 @@ class NumeriaGame {
         { type: 'bat', x: 4540, y: 305, vx: -1.8, minX: 4400, maxX: 4780, alive: true, defeatTimer: 0 }
       );
     } else if (actNum === 3) {
-      document.getElementById('hud-act').textContent = 'ATO 3: TORRE';
+      document.getElementById('hud-act').textContent = 'ATO 3';
       this.showToast('ATO 3: Colete as 3 chaves nos pergaminhos para abrir a porta até Melina!', 260);
 
       const plats = [
@@ -2293,7 +2336,7 @@ class NumeriaGame {
         { type: 'wasp', x: 4540, y: 295, vx: -2.0, minX: 4380, maxX: 4780, alive: true, defeatTimer: 0 }
       );
     } else if (actNum === 4) {
-      document.getElementById('hud-act').textContent = 'ATO 4: BARÃO VÁCUO';
+      document.getElementById('hud-act').textContent = 'ATO 4';
       this.showToast('BATALHA FINAL: Pule sobre o Barão Vácuo para hackear o Sugador-3000!', 260);
 
       this.platforms.push(
@@ -2862,17 +2905,17 @@ class NumeriaGame {
   }
 
   updateHUD() {
-    document.getElementById('hud-player').textContent = `🕵️ ${this.playerName}`;
-    document.getElementById('hud-lives').textContent = `❤️ x${Math.max(0, this.lives)}`;
+    document.getElementById('hud-player').textContent = `🕵️${this.playerName}`;
+    document.getElementById('hud-lives').textContent = `❤️${Math.max(0, this.lives)}`;
     const contBadge = document.getElementById('hud-continues');
-    if (contBadge) contBadge.textContent = `⭐ CONT: ${this.continues}`;
-    document.getElementById('hud-drops').textContent = `💧 ${this.drops.toString().padStart(2, '0')}`;
+    if (contBadge) contBadge.textContent = `⭐${this.continues}`;
+    document.getElementById('hud-drops').textContent = `💧${this.drops.toString().padStart(2, '0')}`;
     const keysBadge = document.getElementById('hud-keys');
     if (keysBadge) {
-      keysBadge.textContent = this.act === 4 ? `💥 ${4 - (this.boss ? this.boss.hp : 0)}/4` : `🔑 ${this.keysCollected}/3`;
+      keysBadge.textContent = this.act === 4 ? `💥${4 - (this.boss ? this.boss.hp : 0)}/4` : `🔑${this.keysCollected}/3`;
     }
-    document.getElementById('hud-score').textContent = `PTS: ${this.score.toString().padStart(5, '0')}`;
-    document.getElementById('hud-time').textContent = `⏱️ ${this.formatTime(this.elapsedSeconds)}`;
+    document.getElementById('hud-score').textContent = `${this.score.toString().padStart(5, '0')}`;
+    document.getElementById('hud-time').textContent = `${this.formatTime(this.elapsedSeconds)}`;
   }
 
   getRanking() {
@@ -2965,8 +3008,17 @@ class NumeriaGame {
   }
 
   loop(timestamp) {
+    if (!this.lastTimestamp) this.lastTimestamp = timestamp;
+    const delta = Math.min(timestamp - this.lastTimestamp, 100);
     this.lastTimestamp = timestamp;
-    this.update();
+    this.accumulator += delta;
+
+    const fixedStep = 1000 / 60;
+    while (this.accumulator >= fixedStep) {
+      this.update();
+      this.accumulator -= fixedStep;
+    }
+
     this.render();
     requestAnimationFrame((t) => this.loop(t));
   }
@@ -3096,7 +3148,7 @@ class NumeriaGame {
       ctx.restore();
     });
 
-    // 5. Gotinhas de Água Super Visíveis
+    // 5. Gotinhas de Água Super Visíveis (Otimizado sem createRadialGradient por frame)
     this.collectibles.forEach(d => {
       if (d.collected) return;
       if (d.x < this.cameraX - 40 || d.x > this.cameraX + 1000) return;
@@ -3104,15 +3156,12 @@ class NumeriaGame {
       const cx = d.x + 12;
       const cy = d.y + 12 + bob;
 
-      const glow = ctx.createRadialGradient(cx, cy, 2, cx, cy, 18);
-      glow.addColorStop(0, 'rgba(56, 189, 248, 0.65)');
-      glow.addColorStop(1, 'rgba(56, 189, 248, 0)');
-      ctx.fillStyle = glow;
-      ctx.beginPath(); ctx.arc(cx, cy, 18, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = 'rgba(56, 189, 248, 0.25)';
+      ctx.beginPath(); ctx.arc(cx, cy, 15, 0, Math.PI * 2); ctx.fill();
 
       ctx.fillStyle = '#0ea5e9';
       ctx.strokeStyle = '#082f49';
-      ctx.lineWidth = 2.5;
+      ctx.lineWidth = 2;
       ctx.beginPath();
       ctx.moveTo(cx, cy - 12);
       ctx.bezierCurveTo(cx + 10, cy - 1, cx + 10, cy + 11, cx, cy + 11);
@@ -3299,34 +3348,34 @@ class NumeriaGame {
 
     // Praça Central de Numéria com Fonte Seca (Abertura) ou Jorrando Água (Final)
     ctx.fillStyle = '#64748b';
-    ctx.fillRect(0, 450, 960, 90);
+    ctx.fillRect(0, 455, 960, 85);
     ctx.fillStyle = '#94a3b8';
-    ctx.fillRect(360, 410, 240, 40);
-    ctx.fillRect(430, 365, 100, 45);
+    ctx.fillRect(360, 415, 240, 40);
+    ctx.fillRect(430, 370, 100, 45);
 
     if (isEnding) {
       ctx.fillStyle = '#38bdf8';
-      ctx.fillRect(370, 404, 220, 10);
-      ctx.fillRect(468, 320, 24, 90);
+      ctx.fillRect(370, 409, 220, 10);
+      ctx.fillRect(468, 325, 24, 90);
       for (let i = 0; i < 18; i++) {
         const rx = (i * 57 + this.frameTick * 3) % 960;
-        const ry = (i * 41 + this.frameTick * 7) % 450;
+        const ry = 135 + ((i * 41 + this.frameTick * 7) % 320);
         ctx.fillStyle = '#7dd3fc';
         ctx.fillRect(rx, ry, 2, 10);
       }
     }
 
-    // Personagens em cena interagindo
-    SpriteArt.drawDetective(ctx, 210, 402, 1, 'big', line.speaker.includes('Matheus') ? 'victory' : 'idle', this.frameTick, 0);
-    SpriteArt.drawDog(ctx, 150, 426, 1, 'loopy', this.frameTick, line.speaker.includes('Loopy') ? 'Au! Au!' : '');
-    SpriteArt.drawDog(ctx, 105, 426, 1, 'perola', this.frameTick, '');
+    // Personagens posicionados na metade inferior livre da tela para total visualização
+    SpriteArt.drawDetective(ctx, 215, 407, 1, 'big', line.speaker.includes('Matheus') ? 'victory' : 'idle', this.frameTick, 0);
+    SpriteArt.drawDog(ctx, 150, 431, 1, 'loopy', this.frameTick, line.speaker.includes('Loopy') ? 'Au! Au!' : '');
+    SpriteArt.drawDog(ctx, 102, 431, 1, 'perola', this.frameTick, '');
 
     if (isEnding) {
-      SpriteArt.drawMelina(ctx, 640, 406, false, this.frameTick);
-      SpriteArt.drawBaron(ctx, 760, 386, -1, this.frameTick, 0, 4, true);
+      SpriteArt.drawMelina(ctx, 645, 411, false, this.frameTick);
+      SpriteArt.drawBaron(ctx, 765, 391, -1, this.frameTick, 0, 4, true);
     } else if (this.cutsceneStep >= 2) {
-      const hoverY = 230 + Math.sin(this.frameTick * 0.1) * 8;
-      SpriteArt.drawBaron(ctx, 640, hoverY, -1, this.frameTick, 4, 4, false);
+      const hoverY = 275 + Math.sin(this.frameTick * 0.1) * 8;
+      SpriteArt.drawBaron(ctx, 635, hoverY, -1, this.frameTick, 4, 4, false);
       SpriteArt.drawMelina(ctx, 735, hoverY + 12, true, this.frameTick);
     }
   }
